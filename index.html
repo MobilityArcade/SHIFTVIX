@@ -53,7 +53,9 @@ canvas{display:block}
 
 <script type="module">
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
-const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x000000,0.0011);
+const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x000000,0.0011);scene.fog.density =
+0.0011 +
+warpAmount*0.0015;
 const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.1,5000);camera.position.set(0,0,72);camera.lookAt(0,0,-500);
 const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);document.body.appendChild(renderer.domElement);
 const LANE_X=[-40,0,40], LANE_Y=[30,0,-30], FAR_Z=-920, NEAR_Z=72, SPEED_START=170, COLLECT_RADIUS=18, TRAIN_GAP=20, BREAK_GRACE=.72;
@@ -61,6 +63,8 @@ let laneX=1,laneY=1,targetX=0,targetY=0,score=0,bestScore=Number(localStorage.ge
 let paused=false;
 let introCameraZ=72;
 const TARGET_CAMERA_Z=95;
+// ---------- WARP ----------
+let warpAmount = 0;
 const clock=new THREE.Clock(), beacons=[], stars=[], laneGuides=[];
 const TIERS=[{name:"WHITE",color:0xffffff,value:10,size:3.8,freq:880},{name:"BLUE",color:0x55ccff,value:25,size:4.3,freq:1046},{name:"GREEN",color:0x66ff66,value:50,size:4.8,freq:1174},{name:"PURPLE",color:0xcc66ff,value:75,size:5.1,freq:1240},{name:"ORANGE",color:0xff8800,value:100,size:5.4,freq:1318},{name:"RED",color:0xff4444,value:200,size:6.1,freq:1568}];
 function initAudio(){if(audioCtx){if(audioCtx.state!=="running")audioCtx.resume();return;}audioCtx=new (window.AudioContext||window.webkitAudioContext)();}
@@ -226,13 +230,37 @@ const arrangementsHard = [
 let arrangements;
 
 if(distance < 500){
-  arrangements = arrangementsEasy;
+
+    arrangements = arrangementsEasy;
+
+}
+else if(distance < 1000){
+
+    arrangements = arrangementsMid;
+
 }
 else if(distance < 1500){
-  arrangements = arrangementsMid;
+
+    arrangements = arrangementsHard;
+
+}
+else if(distance < 2000){
+
+    arrangements = [
+        ["A","B","C","D"],
+        ["B","C","D","A"]
+    ];
+
 }
 else{
-  arrangements = arrangementsHard;
+
+    arrangements = [
+        ["A","B","C","D"],
+        ["D","C","B","A"],
+        ["C","A","D","B"],
+        ["B","D","A","C"]
+    ];
+
 }
 
 const phraseNumber = Math.floor(step / 128);
@@ -367,9 +395,31 @@ if(musicTimer){
 startMusic();
 }
 }
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));camera.lookAt(camera.position.x,camera.position.y,-500);beacons.forEach(b=>{if(b.userData.state==="active"){b.position.z+=speed*dt;b.lookAt(camera.position);const dz=Math.abs(b.position.z-camera.position.z),dxy=Math.hypot(b.position.x-camera.position.x,b.position.y-camera.position.y);if(dz<42&&dxy<COLLECT_RADIUS)collectBeacon(b);if(b.position.z>NEAR_Z+60)b.userData.state="missed";}if(b.userData.state==="collected"||b.userData.state==="missed"){b.userData.fade-=dt*2.8;const f=Math.max(0,b.userData.fade);b.userData.core.material.transparent=true;b.userData.core.material.opacity=f;b.userData.glow.material.opacity=f*.09;b.scale.setScalar(Math.max(.001,f));}});for(let i=beacons.length-1;i>=0;i--){const b=beacons[i];if((b.userData.state==="collected"||b.userData.state==="missed")&&b.userData.fade<=0){scene.remove(b);beacons.splice(i,1);}}stars.forEach(s=>{const pos=s.geometry.attributes.position;for(let i=0;i<pos.count;i++){let z=pos.getZ(i)+speed*dt*.75;if(z>90)z=-1150-Math.random()*200;pos.setZ(i,z);}pos.needsUpdate=true;});updateHUD();}if(gameStarted&&!gameOver){
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));warpAmount = Math.min(distance / 3000, 1);
+
+scene.fog.density =
+0.0011 + warpAmount * 0.0015;camera.lookAt(camera.position.x,camera.position.y,-500);camera.fov =
+70 + warpAmount * 6;
+
+camera.updateProjectionMatrix();beacons.forEach(b=>{if(b.userData.state==="active"){b.position.z+=speed*dt;b.lookAt(camera.position);const dz=Math.abs(b.position.z-camera.position.z),dxy=Math.hypot(b.position.x-camera.position.x,b.position.y-camera.position.y);if(dz<42&&dxy<COLLECT_RADIUS)collectBeacon(b);if(b.position.z>NEAR_Z+60)b.userData.state="missed";}if(b.userData.state==="collected"||b.userData.state==="missed"){b.userData.fade-=dt*2.8;const f=Math.max(0,b.userData.fade);b.userData.core.material.transparent=true;b.userData.core.material.opacity=f;b.userData.glow.material.opacity =
+f * (
+0.09 +
+warpAmount * 0.18
+);b.scale.setScalar(Math.max(.001,f));}});for(let i=beacons.length-1;i>=0;i--){const b=beacons[i];if((b.userData.state==="collected"||b.userData.state==="missed")&&b.userData.fade<=0){scene.remove(b);beacons.splice(i,1);}};stars.forEach(s=>{const pos = s.geometry.attributes.position;const speedMultiplier =0.75 + warpAmount * 2.2;for(let i=0;i<pos.count;i++){let z =pos.getZ(i)+ speed * dt * speedMultiplier;if(z>90){z = -1150 - Math.random()*250;}pos.setZ(i,z);}pos.needsUpdate=true;s.material.size =1.3 + warpAmount*2.4;s.material.opacity =0.72 + warpAmount*0.25;});updateHUD();}if(gameStarted&&!gameOver){
 introCameraZ += (TARGET_CAMERA_Z-introCameraZ)*dt*0.18;
-camera.position.z=introCameraZ;
+camera.position.z=introCameraZ;camera.position.x +=
+(Math.random()-0.5)
+*
+warpAmount
+*
+0.08;
+
+camera.position.y +=
+(Math.random()-0.5)
+*
+warpAmount
+*
+0.08;
 }
 renderer.render(scene,camera);}
 const centerButton=document.getElementById("center");
