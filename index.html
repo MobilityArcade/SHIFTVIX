@@ -44,6 +44,7 @@ canvas{display:block}
 </style>
 </head>
 <body>
+<div id="startOverlay"><div class="startCard"><h1>SHIFTVIX</h1><p>Swipe to change lanes<br>Collect energy<br>Don't break the chain</p><div class="tap">TAP ANYWHERE</div></div></div>
 <div id="gameTitle"><span id="shift">SHIFT</span><span id="vix">VIX</span></div>
 <div id="strikes"><div class="strikeDot" id="s0"></div><div class="strikeDot" id="s1"></div><div class="strikeDot" id="s2"></div></div>
 <div id="hud"><div><b>BEST</b> <span id="bestDistance">0</span>m</div><br><div><b>DISTANCE</b> <span id="distance">0</span>m</div>
@@ -325,8 +326,13 @@ window.addEventListener("pointerdown", async e=>{
 
     if(e.target && e.target.id==="center") return;
 
-    await startMusic();
-    if(!gameStarted) startGame();
+    if(!gameStarted){
+      document.getElementById('startOverlay').style.display='none';
+      downX=e.clientX; downY=e.clientY;
+      await startGame();
+      return;
+    }
+
     downX = e.clientX;
     downY = e.clientY;
 
@@ -436,7 +442,7 @@ centerButton.addEventListener("pointerdown",e=>{
 },{passive:false});
 window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 document.addEventListener("visibilitychange",()=>{if(!document.hidden && gameStarted && !musicStarted){startMusic();}});
-makeStarField();makeLaneGuides();updateStrikes();updateHUD();startGame();animate();
+makeStarField();makeLaneGuides();updateStrikes();updateHUD();animate();
 </script>
 </body>
 </html>
