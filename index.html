@@ -43,8 +43,7 @@ canvas{display:block}
 #pauseText{position:absolute;left:50%;top:calc(50% + 52px);transform:translateX(-50%);z-index:16;font-size:12px;font-weight:900;letter-spacing:4px;color:#ffd36a;text-shadow:0 0 12px rgba(255,211,106,.9);display:none;pointer-events:none}
 </style>
 </head>
-<body>
-<div id="startOverlay"><div class="startCard"><h1>SHIFTVIX</h1><p>Swipe to change lanes<br>Collect energy<br>Don't break the chain</p><div class="tap">TAP ANYWHERE</div></div></div>
+<body></div>
 <div id="gameTitle"><span id="shift">SHIFT</span><span id="vix">VIX</span></div>
 <div id="strikes"><div class="strikeDot" id="s0"></div><div class="strikeDot" id="s1"></div><div class="strikeDot" id="s2"></div></div>
 <div id="hud"><div><b>BEST</b> <span id="bestDistance">0</span>m</div><br><div><b>DISTANCE</b> <span id="distance">0</span>m</div>
@@ -169,150 +168,194 @@ function playTone(freq,type,volume,duration){
   osc.stop(now + duration);
 }
 
-async function startMusic(){
+function playToneAt(freq,type,volume,duration,startTime){
 
-    initAudio();
+  if(!audioCtx) return;
 
-    if(audioCtx.state !== "running"){
-        await audioCtx.resume();
-    }
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, startTime);
+
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.linearRampToValueAtTime(volume, startTime + 0.01);
+  gain.gain.exponentialRampToValueAtTime(
+    0.0001,
+    startTime + duration
+  );
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start(startTime);
+  osc.stop(startTime + duration + 0.02);
+}
+
+let musicStep = 0;
+let nextNoteTime = 0;
+
+function getMusicArrangement(){
+
+  const arrangementsEasy = [
+    ["A","B"],
+    ["B","A"]
+  ];
+
+  const arrangementsMid = [
+    ["A","B","C"],
+    ["A","C","B"],
+    ["B","A","C"]
+  ];
+
+  const arrangementsHard = [
+    ["A","B","C","D"],
+    ["A","C","D","B"],
+    ["D","A","B","C"],
+    ["B","D","A","C"],
+    ["C","A","D","B"]
+  ];
+
+  if(distance < 500){
+    return arrangementsEasy;
+  }
+  else if(distance < 1000){
+    return arrangementsMid;
+  }
+  else if(distance < 1500){
+    return arrangementsHard;
+  }
+  else if(distance < 2000){
+    return [
+      ["A","B","C","D"],
+      ["B","C","D","A"]
+    ];
+  }
+
+  return [
+    ["A","B","C","D"],
+    ["D","C","B","A"],
+    ["C","A","D","B"],
+    ["B","D","A","C"]
+  ];
+}
+
+function getMusicSection(step){
+
+  const arrangements = getMusicArrangement();
+  const phraseNumber = Math.floor(step / 128);
+  const currentArrangement = arrangements[phraseNumber % arrangements.length];
+  const sectionIndex = Math.floor(step / 32) % currentArrangement.length;
+
+  return currentArrangement[sectionIndex];
+}
+
+function getPatternsForSection(section){
+
+  if(section === "A"){
+    return {bass:bassPatternA, lead:leadPatternA};
+  }
+  else if(section === "B"){
+    return {bass:bassPatternB, lead:leadPatternB};
+  }
+  else if(section === "C"){
+    return {bass:bassPatternC, lead:leadPatternC};
+  }
+
+  return {bass:bassPatternD, lead:leadPatternD};
+}
+
+function scheduleMusicStep(step, time, stepDuration){
+
+  const section = getMusicSection(step);
+  const patterns = getPatternsForSection(section);
+
+  playToneAt(
+    patterns.bass[step % patterns.bass.length],
+    "triangle",
+    0.04,
+    stepDuration * 0.9,
+    time
+  );
+
+  playToneAt(
+    patterns.lead[step % patterns.lead.length],
+    "square",
+    0.025,
+    stepDuration * 0.8,
+    time
+  );
+
+  playToneAt(
+    arpPattern[step % arpPattern.length],
+    "square",
+    0.01,
+    stepDuration * 0.5,
+    time
+  );
+}
+
+function musicScheduler(){
+
+  if(!audioCtx || !musicStarted) return;
+
+  const BPM = 148;
+  const STEP = (60 / BPM) / 2;
+  const scheduleAheadTime = 0.12;
+
+  while(nextNoteTime < audioCtx.currentTime + scheduleAheadTime){
+
+    scheduleMusicStep(
+      musicStep,
+      nextNoteTime,
+      STEP
+    );
+
+    musicStep++;
+    nextNoteTime += STEP;
+  }
+}
+
+function startMusic(){
+
+  initAudio();
+
+  if(!audioCtx) return;
+
+  const begin = () => {
 
     if(musicStarted) return;
 
     musicStarted = true;
+    musicStep = 0;
+    nextNoteTime = audioCtx.currentTime + 0.03;
 
-  const BPM = 148;
-  const STEP = (60 / BPM) / 2;
-
-  let step = 0;
-
-  playTone(
-    bassPatternA[0],
-    "triangle",
-    0.04,
-    STEP * 0.9
-);
-
-playTone(
-    leadPatternA[0],
-    "square",
-    0.025,
-    STEP * 0.8
-);
-
-playTone(
-    arpPattern[0],
-    "square",
-    0.01,
-    STEP * 0.5
-);
-  musicTimer = setInterval(()=>{
-
-    const arrangementsEasy = [
-  ["A","B"],
-  ["B","A"]
-];
-
-const arrangementsMid = [
-  ["A","B","C"],
-  ["A","C","B"],
-  ["B","A","C"]
-];
-
-const arrangementsHard = [
-  ["A","B","C","D"],
-  ["A","C","D","B"],
-  ["D","A","B","C"],
-  ["B","D","A","C"],
-  ["C","A","D","B"]
-];
-
-let arrangements;
-
-if(distance < 500){
-
-    arrangements = arrangementsEasy;
-
-}
-else if(distance < 1000){
-
-    arrangements = arrangementsMid;
-
-}
-else if(distance < 1500){
-
-    arrangements = arrangementsHard;
-
-}
-else if(distance < 2000){
-
-    arrangements = [
-        ["A","B","C","D"],
-        ["B","C","D","A"]
-    ];
-
-}
-else{
-
-    arrangements = [
-        ["A","B","C","D"],
-        ["D","C","B","A"],
-        ["C","A","D","B"],
-        ["B","D","A","C"]
-    ];
-
-}
-
-const phraseNumber = Math.floor(step / 128);
-const currentArrangement = arrangements[phraseNumber % arrangements.length];
-
-const sectionIndex = Math.floor(step / 32) % currentArrangement.length;
-const section = currentArrangement[sectionIndex];
-
-let bass;
-let lead;
-
-if(section === "A"){
-  bass = bassPatternA;
-  lead = leadPatternA;
-}
-else if(section === "B"){
-  bass = bassPatternB;
-  lead = leadPatternB;
-}
-else if(section === "C"){
-  bass = bassPatternC;
-  lead = leadPatternC;
-}
-else{
-  bass = bassPatternD;
-  lead = leadPatternD;
-}
-
-    playTone(
-      bass[step % bass.length],
+    // Tiny instant confirmation tone helps iPhone Safari begin audio immediately.
+    playToneAt(
+      440,
       "triangle",
-      0.04,
-      STEP * 0.9
+      0.015,
+      0.08,
+      audioCtx.currentTime + 0.01
     );
 
-    playTone(
-      lead[step % lead.length],
-      "square",
-      0.025,
-      STEP * 0.8
-    );
+    musicScheduler();
 
-    playTone(
-      arpPattern[step % arpPattern.length],
-      "square",
-      0.01,
-      STEP * 0.5
-    );
+    if(musicTimer){
+      clearInterval(musicTimer);
+    }
 
-    step++;
+    musicTimer = setInterval(musicScheduler, 25);
+  };
 
-  }, STEP * 1000);
+  if(audioCtx.state !== "running"){
+    audioCtx.resume().then(begin).catch(()=>{
+      console.log("Music will start after first interaction.");
+    });
+  }
+  else{
+    begin();
+  }
 }
 function makeStarField(){const count=850,positions=new Float32Array(count*3),colors=new Float32Array(count*3),palette=[0xffffff,0x777777,0x55ccff,0xff66cc,0x5d3dff,0xff8800].map(c=>new THREE.Color(c));for(let i=0;i<count;i++){positions[i*3]=(Math.random()*2-1)*260;positions[i*3+1]=(Math.random()*2-1)*180;positions[i*3+2]=-50-Math.random()*1200;const c=palette[Math.floor(Math.random()*palette.length)].clone().multiplyScalar(.35+Math.random()*.7);colors[i*3]=c.r;colors[i*3+1]=c.g;colors[i*3+2]=c.b;}const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.BufferAttribute(positions,3));geo.setAttribute("color",new THREE.BufferAttribute(colors,3));const mat=new THREE.PointsMaterial({size:1.3,sizeAttenuation:true,transparent:true,opacity:.72,vertexColors:true});const pts=new THREE.Points(geo,mat);scene.add(pts);stars.push(pts);}
 function makeLaneGuides(){LANE_X.forEach(x=>{LANE_Y.forEach(y=>{const geo=new THREE.BufferGeometry(),positions=[];for(let i=0;i<52;i++)positions.push(x,y,-80-i*25);geo.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));const mat=new THREE.PointsMaterial({color:0xff66cc,size:.85,transparent:true,opacity:.16,sizeAttenuation:true,depthWrite:false});const pts=new THREE.Points(geo,mat);scene.add(pts);laneGuides.push(pts);});});}
@@ -322,19 +365,15 @@ function spawnTrain(){trainId++;const xIndex=Math.floor(Math.random()*3),yIndex=
 function spawnWave(){const trains=Math.random()<.78?2:3;for(let i=0;i<trains;i++)setTimeout(spawnTrain,i*120);}
 function moveLane(dx,dy){if(!gameStarted||gameOver)return;laneX=Math.max(0,Math.min(2,laneX+dx));laneY=Math.max(0,Math.min(2,laneY+dy));targetX=LANE_X[laneX];targetY=LANE_Y[laneY];const namesY=["UP","CENTER","DOWN"],namesX=["LEFT","CENTER","RIGHT"];document.getElementById("laneLabel").textContent=namesY[laneY]+" "+namesX[laneX];if(navigator.vibrate)navigator.vibrate(10);}
 let downX=0,downY=0;
-window.addEventListener("pointerdown", async e=>{
+window.addEventListener("pointerdown", e=>{
 
     if(e.target && e.target.id==="center") return;
 
-    if(!gameStarted){
-      document.getElementById('startOverlay').style.display='none';
-      downX=e.clientX; downY=e.clientY;
-      await startGame();
-      return;
-    }
-
     downX = e.clientX;
     downY = e.clientY;
+
+    // Unlock/start music from the very first touch without delaying swipe tracking.
+    startMusic();
 
 },{passive:false});
 window.addEventListener("pointerup",e=>{
@@ -352,17 +391,17 @@ window.addEventListener("pointerup",e=>{
   moveLane(mx,my);
 });
 window.addEventListener("keydown",e=>{initAudio();if(!gameStarted)startGame();if(e.key==="ArrowLeft"||e.key==="a")moveLane(-1,0);if(e.key==="ArrowRight"||e.key==="d")moveLane(1,0);if(e.key==="ArrowUp"||e.key==="w")moveLane(0,-1);if(e.key==="ArrowDown"||e.key==="s")moveLane(0,1);});
-async function startGame(){
+function startGame(){
+
+    if(gameStarted) return;
 
     gameStarted = true;
 
     spawnWave();
 
-    try{
-      await startMusic();
-    }catch(e){
-      console.log("Music will start after first interaction.");
-    }
+    // Desktop browsers may allow immediate music.
+    // iPhone Safari will wait for the first touch, then startMusic() unlocks it.
+    startMusic();
 
 }
 function showScorePopup(text){const el=document.createElement("div");el.className="scorePopup";el.textContent=text;document.body.appendChild(el);setTimeout(()=>el.remove(),900);}
@@ -371,7 +410,7 @@ function takeStrike(){if(!runStarted||gameOver)return;strikes++;breakTimer=0;com
 function collectBeacon(b){if(b.userData.state!=="active")return;b.userData.state="collected";b.userData.fade=1;if(!runStarted){runStarted=true;breakTimer=0;document.getElementById("signal").textContent="Signal: run started";}const now=performance.now();combo=(now-lastFoundAt<1000)?Math.min(combo+1,5):1;lastFoundAt=now;breakTimer=0;const gained=b.userData.value*combo;score+=gained;foundCount++;if(score>bestScore){bestScore=score;localStorage.setItem("sourceLaneBestScore",String(bestScore));}playCoin(b.userData.tier);showScorePopup("+"+gained);updateHUD();if(navigator.vibrate)navigator.vibrate(4);}
 function updateHUD(){document.getElementById("distance").textContent=Math.floor(distance);document.getElementById("found").textContent=foundCount;document.getElementById("score").textContent=score;document.getElementById("bestDistance").textContent=Math.floor(bestDistance);document.getElementById("bestScore").textContent=bestScore;document.getElementById("combo").textContent=combo+"x";}
 function endRun(){gameOver=true;if(distance>bestDistance){bestDistance=distance;localStorage.setItem("sourceLaneBestDistance",String(bestDistance));}const card=document.getElementById("roundComplete");card.innerHTML=`<div class="resultsCard"><div class="big">RUN COMPLETE</div><div class="statLine"><span>DISTANCE</span><span>${Math.floor(distance)}m</span></div><div class="statLine"><span>SOURCES</span><span>${foundCount}</span></div><div class="statLine"><span>SCORE</span><span>${score}</span></div><div class="statLine"><span>DISCOVERY</span><span>${distance>=3000?"MASTER SEEKER":distance>=1500?"PATHFINDER":"SEEKER"}</span></div><div class="tapContinue">TAP TO RESTART</div></div>`;card.style.display="grid";card.onclick=resetRun;}
-function resetRun(){paused=false;const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");center.style.borderColor="rgba(255,255,255,.95)";center.style.boxShadow="0 0 10px rgba(255,255,255,.55)";document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;distance=0;strikes=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;updateStrikes();updateHUD();spawnWave();}
+function resetRun(){paused=false;const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");center.style.borderColor="rgba(255,255,255,.95)";center.style.boxShadow="0 0 10px rgba(255,255,255,.55)";document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;distance=0;strikes=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;updateStrikes();updateHUD();spawnWave();startMusic();}
 function togglePause(){
   if(gameOver)return;
   paused=!paused;
@@ -442,7 +481,7 @@ centerButton.addEventListener("pointerdown",e=>{
 },{passive:false});
 window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 document.addEventListener("visibilitychange",()=>{if(!document.hidden && gameStarted && !musicStarted){startMusic();}});
-makeStarField();makeLaneGuides();updateStrikes();updateHUD();animate();
+makeStarField();makeLaneGuides();updateStrikes();updateHUD();startGame();animate();
 </script>
 </body>
 </html>
