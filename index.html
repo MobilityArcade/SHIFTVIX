@@ -236,11 +236,24 @@ function getMusicArrangement(){
   }
 
   return [
-    ["A","B","C","D"],
-    ["D","C","B","A"],
-    ["C","A","D","B"],
-    ["B","D","A","C"]
-  ];
+
+["A","B","C","D"],
+
+["A","C","D","B"],
+
+["B","D","A","C"],
+
+["C","A","D","B"],
+
+["D","C","B","A"],
+
+["D","A","B","C"],
+
+["B","A","D","C"],
+
+["C","D","B","A"]
+
+];
 }
 
 function getMusicSection(step){
@@ -248,7 +261,7 @@ function getMusicSection(step){
   const arrangements = getMusicArrangement();
   const phraseNumber = Math.floor(step / 128);
   const currentArrangement = arrangements[phraseNumber % arrangements.length];
-  const sectionIndex = Math.floor(step / 32) % currentArrangement.length;
+  const sectionIndex = Math.floor(step / 48) % currentArrangement.length;
 
   return currentArrangement[sectionIndex];
 }
@@ -307,7 +320,7 @@ function scheduleMusicStep(step, time, stepDuration){
 
         "sine",
 
-        0.006,
+        0.009,
 
         stepDuration * 2.5,
 
@@ -327,7 +340,7 @@ if(distance > 1200){
 
         "triangle",
 
-        0.004,
+        0.006,
 
         stepDuration,
 
@@ -341,17 +354,17 @@ if(distance > 1200){
 
     playToneAt(
 
-        65,
+55,
 
-        "square",
+"sine",
 
-        0.015,
+0.012,
 
-        0.04,
+0.09,
 
-        time
+time
 
-    );
+);
 
 }
 
@@ -365,9 +378,29 @@ if(distance > 1200){
 
         "triangle",
 
-        0.003,
+        0.006,
 
         stepDuration * 3,
+
+        time
+
+    );
+
+}
+
+if(distance > 4200){
+
+    playToneAt(
+
+        patterns.lead[
+            step % patterns.lead.length
+        ] * 0.5,
+
+        "sine",
+
+        0.004,
+
+        stepDuration * 6,
 
         time
 
