@@ -470,20 +470,16 @@ if(musicTimer){
 startMusic();
 }
 }
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));warpAmount = Math.min(distance / 3000, 1);
-
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));warpAmount = Math.min(distance / 5000, 1);
 scene.fog.density =
-0.0011 + warpAmount * 0.0015;
-                              
-camera.lookAt(camera.position.x,camera.position.y,-500);camera.fov =
-70 + warpAmount * 10;
+0.0011 + warpAmount * 0.0015;camera.lookAt(camera.position.x,camera.position.y,-500);camera.fov =
+70 + warpAmount * 8;
 
 camera.updateProjectionMatrix();beacons.forEach(b=>{if(b.userData.state==="active"){b.position.z+=speed*dt;b.lookAt(camera.position);const dz=Math.abs(b.position.z-camera.position.z),dxy=Math.hypot(b.position.x-camera.position.x,b.position.y-camera.position.y);if(dz<42&&dxy<COLLECT_RADIUS)collectBeacon(b);if(b.position.z>NEAR_Z+60)b.userData.state="missed";}if(b.userData.state==="collected"||b.userData.state==="missed"){b.userData.fade-=dt*2.8;const f=Math.max(0,b.userData.fade);b.userData.core.material.transparent=true;b.userData.core.material.opacity=f;b.userData.glow.material.opacity =
 f * (
 0.09 +
 warpAmount * 0.18
-);b.scale.setScalar(Math.max(.001,f));}});for(let i=beacons.length-1;i>=0;i--){const b=beacons[i];if((b.userData.state==="collected"||b.userData.state==="missed")&&b.userData.fade<=0){scene.remove(b);beacons.splice(i,1);}};stars.forEach(s=>{const pos = s.geometry.attributes.position;const speedMultiplier =0.75 + warpAmount * 4.0;for(let i=0;i<pos.count;i++){let z =pos.getZ(i)+ speed * dt * speedMultiplier;if(z>90){z = -1150 - Math.random()*250;}pos.setZ(i,z);}pos.needsUpdate=true;s.material.size =1.3 + warpAmount*4.5;s.material.opacity =0.72 + warpAmount*0.25;
-}});updateHUD();}if(gameStarted&&!gameOver){
+);b.scale.setScalar(Math.max(.001,f));}});for(let i=beacons.length-1;i>=0;i--){const b=beacons[i];if((b.userData.state==="collected"||b.userData.state==="missed")&&b.userData.fade<=0){scene.remove(b);beacons.splice(i,1);}};stars.forEach(s=>{const pos = s.geometry.attributes.position;const speedMultiplier =0.75 + warpAmount * 4.5;for(let i=0;i<pos.count;i++){let z =pos.getZ(i)+ speed * dt * speedMultiplier;if(z>90){z = -1150 - Math.random()*250;}pos.setZ(i,z);}pos.needsUpdate=true;s.material.size =1.3 + warpAmount*4.0;s.material.opacity =0.72 + warpAmount*0.25;});updateHUD();}if(gameStarted&&!gameOver){
 introScale += (1-introScale)*dt*0.6;beacons.forEach(b=>{if(b.userData.state==="active") b.scale.lerp(new THREE.Vector3(introScale,introScale,introScale),0.08);});
 introCameraZ += (TARGET_CAMERA_Z-introCameraZ)*dt*0.18;
 camera.position.z=introCameraZ;camera.position.x +=
@@ -491,14 +487,14 @@ camera.position.z=introCameraZ;camera.position.x +=
 *
 warpAmount
 *
-0.14;
+0.16;
 
 camera.position.y +=
 (Math.random()-0.5)
 *
 warpAmount
 *
-0.14;
+0.16;
 }
 renderer.render(scene,camera);}
 const centerButton=document.getElementById("center");
