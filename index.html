@@ -435,7 +435,20 @@ function takeStrike(){if(!runStarted||gameOver)return;strikes++;breakTimer=0;com
 function collectBeacon(b){if(b.userData.state!=="active")return;b.userData.state="collected";b.userData.fade=1;if(!runStarted){runStarted=true;breakTimer=0;document.getElementById("signal").textContent="Signal: run started";}const now=performance.now();combo=(now-lastFoundAt<1000)?Math.min(combo+1,5):1;lastFoundAt=now;breakTimer=0;const gained=b.userData.value*combo;score+=gained;foundCount++;if(score>bestScore){bestScore=score;localStorage.setItem("sourceLaneBestScore",String(bestScore));}playCoin(b.userData.tier);showScorePopup("+"+gained);updateHUD();if(navigator.vibrate)navigator.vibrate(4);}
 function updateHUD(){document.getElementById("distance").textContent=Math.floor(distance);document.getElementById("found").textContent=foundCount;document.getElementById("score").textContent=score;document.getElementById("bestDistance").textContent=Math.floor(bestDistance);document.getElementById("bestScore").textContent=bestScore;document.getElementById("combo").textContent=combo+"x";}
 function endRun(){gameOver=true;if(distance>bestDistance){bestDistance=distance;localStorage.setItem("sourceLaneBestDistance",String(bestDistance));}const card=document.getElementById("roundComplete");card.innerHTML=`<div class="resultsCard"><div class="big">RUN COMPLETE</div><div class="statLine"><span>DISTANCE</span><span>${Math.floor(distance)}m</span></div><div class="statLine"><span>SOURCES</span><span>${foundCount}</span></div><div class="statLine"><span>SCORE</span><span>${score}</span></div><div class="statLine"><span>DISCOVERY</span><span>${distance>=3000?"MASTER SEEKER":distance>=1500?"PATHFINDER":"SEEKER"}</span></div><div class="tapContinue">TAP TO RESTART</div></div>`;card.style.display="grid";card.onclick=resetRun;}
-function resetRun(){paused=false;const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");center.style.borderColor="rgba(255,255,255,.95)";center.style.boxShadow="0 0 10px rgba(255,255,255,.55)";document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;distance=0;strikes=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;updateStrikes();updateHUD();spawnWave();startMusic();}
+function resetRun(){
+
+    paused = false;
+
+    const title = document.getElementById("gameTitle");
+
+    title.style.opacity = 1;
+
+    title.style.textShadow =
+        "0 0 25px rgba(255,255,255,.95), 0 0 45px rgba(255,255,255,.35)";
+
+    const pauseText = document.getElementById("pauseText");
+
+}const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");center.style.borderColor="rgba(255,255,255,.95)";center.style.boxShadow="0 0 10px rgba(255,255,255,.55)";document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;distance=0;strikes=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;updateStrikes();updateHUD();spawnWave();startMusic();}
 function togglePause(){
   if(gameOver)return;
   paused=!paused;
@@ -550,6 +563,19 @@ introCameraZ
 Math.pow(warpAmount,1.6)
 *
 5;
+
+const title = document.getElementById("gameTitle");
+
+const fade = Math.max(
+    0.35,
+    1 - distance / 3500
+);
+
+title.style.opacity = fade;
+
+title.style.textShadow =
+    `0 0 ${fade * 25}px rgba(255,255,255,${fade}),
+     0 0 ${fade * 45}px rgba(255,255,255,${fade * 0.35})`;
 renderer.render(scene,camera);
 }
 
