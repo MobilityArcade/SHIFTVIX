@@ -698,8 +698,23 @@ const fogLevels = [
 ];
 
 scene.fog.density =
-fogLevels[stage] +
-warpAmount * 0.0008;const atmosphereColors = [
+fogLevels[stage]
++
+warpAmount*0.0008;
+
+if(distance>4600){
+
+    const t =
+        Math.min(
+            1,
+            (distance-4600)/400
+        );
+
+    scene.fog.density +=
+        t*0.0025;
+
+}
+const atmosphereColors = [
 0x000000,
 0x061221,
 0x15092d,
@@ -712,13 +727,27 @@ warpAmount * 0.0008;const atmosphereColors = [
 
 scene.fog.color.setHex(
 atmosphereColors[stage]
-);if(distance > 5000){
+);
+
+if(distance>4600){
+
+    const t =
+        Math.min(
+            1,
+            (distance-4600)/400
+        );
+
+    scene.fog.color.lerp(
+        new THREE.Color(0xffffff),
+        t
+    );
+
+}if(distance > 5000){
 
     scene.fog.density = 0.006;
 
     scene.fog.color.setHex(0xffffff);
 
-    camera.fov = 88;
 
 }camera.lookAt(
 
@@ -728,16 +757,31 @@ camera.position.y * 0.995,
 
 -500
 
-);camera.fov =
+);let targetFov =
 70
 +
-warpAmount * 11
+warpAmount*11
 +
 Math.sin(distance*0.004)
 *
 warpAmount
 *
 0.6;
+
+if(distance>4600){
+
+    const t =
+        Math.min(
+            1,
+            (distance-4600)/400
+        );
+
+    targetFov +=
+        t*7;
+
+}
+
+camera.fov = targetFov;
 camera.updateProjectionMatrix();beacons.forEach(b=>{if(b.userData.state==="active"){b.position.z+=speed*dt;b.lookAt(camera.position);const dz=Math.abs(b.position.z-camera.position.z),dxy=Math.hypot(b.position.x-camera.position.x,b.position.y-camera.position.y);if(dz<42&&dxy<COLLECT_RADIUS)collectBeacon(b);if(b.position.z>NEAR_Z+60)b.userData.state="missed";}if(b.userData.state==="collected"||b.userData.state==="missed"){b.userData.fade-=dt*2.8;const f=Math.max(0,b.userData.fade);b.userData.core.material.transparent=true;b.userData.core.material.opacity=f;b.userData.glow.material.opacity =
 f * (
 0.09 +
