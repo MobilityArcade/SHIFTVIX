@@ -255,15 +255,76 @@ function getMusicArrangement(){
 
 ];
 }
-
+let currentArrangement = null;
+let currentPhraseLength = 128;
+let nextPhraseStep = 0;
+let lastArrangement = -1;
+  
 function getMusicSection(step){
 
-  const arrangements = getMusicArrangement();
-  const phraseNumber = Math.floor(step / 128);
-  const currentArrangement = arrangements[phraseNumber % arrangements.length];
-  const sectionIndex = Math.floor(step / 48) % currentArrangement.length;
+    const arrangements = getMusicArrangement();
 
-  return currentArrangement[sectionIndex];
+    if(step >= nextPhraseStep){
+
+        let index;
+
+        do{
+
+            index = Math.floor(
+                Math.random() *
+                arrangements.length
+            );
+
+        }while(index === lastArrangement);
+
+        lastArrangement = index;
+
+        currentArrangement =
+            arrangements[index];
+
+        // Weighted phrase lengths
+        const phraseChoices = [
+
+            32,
+            32,
+            32,
+            32,
+
+            36,
+            36,
+
+            28,
+
+            39,
+
+            44
+
+        ];
+
+        currentPhraseLength =
+            phraseChoices[
+                Math.floor(
+                    Math.random() *
+                    phraseChoices.length
+                )
+            ];
+
+        nextPhraseStep =
+            step + currentPhraseLength;
+
+    }
+
+    const sectionLength = 12;
+
+    const sectionIndex =
+        Math.floor(
+            (step % currentPhraseLength) /
+            sectionLength
+        ) %
+        currentArrangement.length;
+
+    return currentArrangement[sectionIndex];
+
 }
 
 function getPatternsForSection(section){
