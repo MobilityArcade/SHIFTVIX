@@ -296,6 +296,85 @@ function scheduleMusicStep(step, time, stepDuration){
     stepDuration * 0.5,
     time
   );
+
+  if(distance > 500){
+
+    playToneAt(
+
+        patterns.lead[
+            step % patterns.lead.length
+        ] / 2,
+
+        "sine",
+
+        0.006,
+
+        stepDuration * 2.5,
+
+        time
+
+    );
+
+}
+
+if(distance > 1200){
+
+    playToneAt(
+
+        patterns.lead[
+            step % patterns.lead.length
+        ] * 2,
+
+        "triangle",
+
+        0.004,
+
+        stepDuration,
+
+        time
+
+    );
+
+}
+
+  if(distance > 2200){
+
+    playToneAt(
+
+        65,
+
+        "square",
+
+        0.015,
+
+        0.04,
+
+        time
+
+    );
+
+}
+
+  if(distance > 3200){
+
+    playToneAt(
+
+        patterns.bass[
+            step % patterns.bass.length
+        ] * 4,
+
+        "triangle",
+
+        0.003,
+
+        stepDuration * 3,
+
+        time
+
+    );
+
+}
+
 }
 
 function musicScheduler(){
@@ -568,7 +647,11 @@ startMusic();
 }
 }
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));warpAmount = Math.min(distance / 5000, 1);
-const stage = Math.min(7, Math.floor(distance / 500));
+const stage =
+Math.min(
+    7,
+    Math.floor(distance / 500)
+);
 
 const fogLevels = [
 0.0011,
@@ -596,7 +679,15 @@ warpAmount * 0.0008;const atmosphereColors = [
 
 scene.fog.color.setHex(
 atmosphereColors[stage]
-);camera.lookAt(
+);if(distance > 5000){
+
+    scene.fog.density = 0.006;
+
+    scene.fog.color.setHex(0xffffff);
+
+    camera.fov = 88;
+
+}camera.lookAt(
 
 camera.position.x * 0.995,
 
@@ -662,13 +753,22 @@ const curveStrength =
     speedMultiplier *
     0.18;
 
+  const inwardPull =
+    warpAmount *
+    edge *
+    0.15;
+
+const newRadius =
+    radius *
+    (1 - inwardPull * dt);
+
 const newX =
     Math.cos(newAngle) *
-    radius;
+    newRadius;
 
 const newY =
     Math.sin(newAngle) *
-    radius;
+    newRadius;
 
     if(z>90){
 
