@@ -471,7 +471,7 @@ startMusic();
 }
 }
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));warpAmount = Math.min(distance / 5000, 1);
-const stage = Math.min(7, Math.floor(distance / 700));
+const stage = Math.min(7, Math.floor(distance / 500));
 
 const fogLevels = [
 0.0011,
@@ -513,7 +513,21 @@ camera.updateProjectionMatrix();beacons.forEach(b=>{if(b.userData.state==="activ
 f * (
 0.09 +
 warpAmount * 0.18
-);b.scale.setScalar(Math.max(.001,f));}});for(let i=beacons.length-1;i>=0;i--){const b=beacons[i];if((b.userData.state==="collected"||b.userData.state==="missed")&&b.userData.fade<=0){scene.remove(b);beacons.splice(i,1);}};stars.forEach(s=>{const pos = s.geometry.attributes.position;const speedMultiplier =1 + warpAmount * 7;for(let i=0;i<pos.count;i++){let z =pos.getZ(i)+ speed * dt * speedMultiplier;if(z>90){z = -1150 - Math.random()*250;}pos.setZ(i,z);}pos.needsUpdate=true;s.material.size =1.3 + warpAmount*6.2;s.material.opacity =0.70 + warpAmount*0.28;});updateHUD();}if(gameStarted&&!gameOver){
+);b.scale.setScalar(Math.max(.001,f));}});for(let i=beacons.length-1;i>=0;i--){const b=beacons[i];if((b.userData.state==="collected"||b.userData.state==="missed")&&b.userData.fade<=0){scene.remove(b);beacons.splice(i,1);}};stars.forEach(s=>{const pos = s.geometry.attributes.position;const speedMultiplier =1 + warpAmount * 7;for(let i=0;i<pos.count;i++){let z =pos.getZ(i)+ speed * dt * speedMultiplier;if(z>90){z = -1150 - Math.random()*250;}pos.setZ(i,z);}pos.needsUpdate=true;// Stretch stars into streaks
+
+// Warp Drive 2.1
+
+const warpSize =
+1.3 +
+warpAmount * 12;
+
+const warpOpacity =
+0.70 +
+warpAmount * 0.30;
+
+s.material.size = warpSize;
+
+s.material.opacity = warpOpacity;});updateHUD();}if(gameStarted&&!gameOver){
 introScale += (1-introScale)*dt*0.6;beacons.forEach(b=>{if(b.userData.state==="active") b.scale.lerp(new THREE.Vector3(introScale,introScale,introScale),0.08);});
 introCameraZ += (TARGET_CAMERA_Z-introCameraZ)*dt*0.18;
 camera.position.z=introCameraZ;camera.position.x +=
