@@ -524,7 +524,60 @@ camera.updateProjectionMatrix();beacons.forEach(b=>{if(b.userData.state==="activ
 f * (
 0.09 +
 warpAmount * 0.18
-);b.scale.setScalar(Math.max(.001,f));}});for(let i=beacons.length-1;i>=0;i--){const b=beacons[i];if((b.userData.state==="collected"||b.userData.state==="missed")&&b.userData.fade<=0){scene.remove(b);beacons.splice(i,1);}};stars.forEach(s=>{const pos = s.geometry.attributes.position;const speedMultiplier =1 + warpAmount * 7;for(let i=0;i<pos.count;i++){let z =pos.getZ(i)+ speed * dt * speedMultiplier;if(z>90){z = -1150 - Math.random()*250;}pos.setZ(i,z);}pos.needsUpdate=true;// Stretch stars into streaks
+);b.scale.setScalar(Math.max(.001,f));}});for(let i=beacons.length-1;i>=0;i--){const b=beacons[i];if((b.userData.state==="collected"||b.userData.state==="missed")&&b.userData.fade<=0){scene.remove(b);beacons.splice(i,1);}};stars.forEach(s=>{const pos = s.geometry.attributes.position;const speedMultiplier =1 + warpAmount * 7;for(let i=0;i<pos.count;i++){let z =pos.getZ(i)+ speed * dt * speedMultiplier;if(z>90){z = -1150 - Math.random()*250;}pos.setZ(i,z);}pos.needsUpdate=true;const colors = s.geometry.attributes.color;
+
+let target = new THREE.Color(0xffffff);
+
+if(distance > 500)
+    target = new THREE.Color(0x66ccff);
+
+if(distance > 1000)
+    target = new THREE.Color(0xaa66ff);
+
+if(distance > 1500)
+    target = new THREE.Color(0xff44cc);
+
+if(distance > 2000)
+    target = new THREE.Color(0xffaa33);
+
+if(distance > 2500)
+    target = new THREE.Color(0xff5555);
+
+if(distance > 3000)
+    target = new THREE.Color(0xffee66);
+
+if(distance > 5000)
+    target = new THREE.Color(0xffffff);
+
+for(let i=0;i<colors.count;i++){
+
+    colors.setXYZ(
+
+        i,
+
+        THREE.MathUtils.lerp(
+            colors.getX(i),
+            target.r,
+            0.015
+        ),
+
+        THREE.MathUtils.lerp(
+            colors.getY(i),
+            target.g,
+            0.015
+        ),
+
+        THREE.MathUtils.lerp(
+            colors.getZ(i),
+            target.b,
+            0.015
+        )
+
+    );
+
+}
+
+colors.needsUpdate = true;// Stretch stars into streaks
 
 // Warp Drive 2.1
 
