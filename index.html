@@ -526,30 +526,85 @@ f * (
 warpAmount * 0.18
 );b.scale.setScalar(Math.max(.001,f));}});for(let i=beacons.length-1;i>=0;i--){const b=beacons[i];if((b.userData.state==="collected"||b.userData.state==="missed")&&b.userData.fade<=0){scene.remove(b);beacons.splice(i,1);}};stars.forEach(s=>{const pos = s.geometry.attributes.position;const speedMultiplier =1 + warpAmount * 7;for(let i=0;i<pos.count;i++){let z =pos.getZ(i)+ speed * dt * speedMultiplier;if(z>90){z = -1150 - Math.random()*250;}pos.setZ(i,z);}pos.needsUpdate=true;const colors = s.geometry.attributes.color;
 
-let target = new THREE.Color(0xffffff);
+const palettes = [
 
-if(distance > 500)
-    target = new THREE.Color(0x66ccff);
+    [
+        new THREE.Color(0xffffff),
+        new THREE.Color(0x777777),
+        new THREE.Color(0x55ccff),
+        new THREE.Color(0xff66cc),
+        new THREE.Color(0x5d3dff),
+        new THREE.Color(0xff8800)
+    ],
 
-if(distance > 1000)
-    target = new THREE.Color(0xaa66ff);
+    [
+        new THREE.Color(0xffffff),
+        new THREE.Color(0x99ddff),
+        new THREE.Color(0x55ccff),
+        new THREE.Color(0xaa66ff),
+        new THREE.Color(0xff66cc),
+        new THREE.Color(0x777777)
+    ],
 
-if(distance > 1500)
-    target = new THREE.Color(0xff44cc);
+    [
+        new THREE.Color(0xffffff),
+        new THREE.Color(0xaa66ff),
+        new THREE.Color(0x55ccff),
+        new THREE.Color(0xff66cc),
+        new THREE.Color(0x8844ff),
+        new THREE.Color(0x777777)
+    ],
 
-if(distance > 2000)
-    target = new THREE.Color(0xffaa33);
+    [
+        new THREE.Color(0xffaa33),
+        new THREE.Color(0xff8800),
+        new THREE.Color(0xffffff),
+        new THREE.Color(0xaa66ff),
+        new THREE.Color(0xff66cc),
+        new THREE.Color(0x55ccff)
+    ],
 
-if(distance > 2500)
-    target = new THREE.Color(0xff5555);
+    [
+        new THREE.Color(0xff4444),
+        new THREE.Color(0xff8844),
+        new THREE.Color(0xffcc66),
+        new THREE.Color(0xffffff),
+        new THREE.Color(0xaa66ff),
+        new THREE.Color(0x777777)
+    ],
 
-if(distance > 3000)
-    target = new THREE.Color(0xffee66);
+    [
+        new THREE.Color(0xffee66),
+        new THREE.Color(0xffffff),
+        new THREE.Color(0xffcc66),
+        new THREE.Color(0x55ccff),
+        new THREE.Color(0xaa66ff),
+        new THREE.Color(0xff8844)
+    ],
 
-if(distance > 5000)
-    target = new THREE.Color(0xffffff);
+    [
+        new THREE.Color(0xffffff),
+        new THREE.Color(0xffffff),
+        new THREE.Color(0xffeeaa),
+        new THREE.Color(0x99ddff),
+        new THREE.Color(0xaa66ff),
+        new THREE.Color(0xffcc66)
+    ]
+
+];
+
+const stage =
+Math.min(
+    palettes.length-1,
+    Math.floor(distance/500)
+);
+
+const palette = palettes[stage];
 
 for(let i=0;i<colors.count;i++){
+
+    const target =
+        palette[i % palette.length];
 
     colors.setXYZ(
 
@@ -558,26 +613,27 @@ for(let i=0;i<colors.count;i++){
         THREE.MathUtils.lerp(
             colors.getX(i),
             target.r,
-            0.015
+            0.01
         ),
 
         THREE.MathUtils.lerp(
             colors.getY(i),
             target.g,
-            0.015
+            0.01
         ),
 
         THREE.MathUtils.lerp(
             colors.getZ(i),
             target.b,
-            0.015
+            0.01
         )
 
     );
 
 }
 
-colors.needsUpdate = true;// Stretch stars into streaks
+colors.needsUpdate = true;
+// Stretch stars into streaks
 
 // Warp Drive 2.1
 
