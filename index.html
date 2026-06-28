@@ -571,9 +571,8 @@ const fade = Math.max(
 
 title.style.opacity = fade;
 
-title.style.textShadow =
-    `0 0 ${fade * 25}px rgba(255,255,255,${fade}),
-     0 0 ${fade * 45}px rgba(255,255,255,${fade * 0.35})`;
+title.style.filter =
+    `drop-shadow(0 0 ${fade * 22}px white)`;
 renderer.render(scene,camera);
 }
 
