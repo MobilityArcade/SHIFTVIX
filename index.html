@@ -434,7 +434,93 @@ function updateStrikes(){for(let i=0;i<3;i++)document.getElementById("s"+i).clas
 function takeStrike(){if(!runStarted||gameOver)return;strikes++;breakTimer=0;combo=1;playStrike();if(navigator.vibrate)navigator.vibrate([30,40,30]);updateStrikes();document.getElementById("signal").textContent="Signal: break "+strikes+"/3";if(strikes>=3)endRun();}
 function collectBeacon(b){if(b.userData.state!=="active")return;b.userData.state="collected";b.userData.fade=1;if(!runStarted){runStarted=true;breakTimer=0;document.getElementById("signal").textContent="Signal: run started";}const now=performance.now();combo=(now-lastFoundAt<1000)?Math.min(combo+1,5):1;lastFoundAt=now;breakTimer=0;const gained=b.userData.value*combo;score+=gained;foundCount++;if(score>bestScore){bestScore=score;localStorage.setItem("sourceLaneBestScore",String(bestScore));}playCoin(b.userData.tier);showScorePopup("+"+gained);updateHUD();if(navigator.vibrate)navigator.vibrate(4);}
 function updateHUD(){document.getElementById("distance").textContent=Math.floor(distance);document.getElementById("found").textContent=foundCount;document.getElementById("score").textContent=score;document.getElementById("bestDistance").textContent=Math.floor(bestDistance);document.getElementById("bestScore").textContent=bestScore;document.getElementById("combo").textContent=combo+"x";}
-function endRun(){gameOver=true;if(distance>bestDistance){bestDistance=distance;localStorage.setItem("sourceLaneBestDistance",String(bestDistance));}const card=document.getElementById("roundComplete");card.innerHTML=`<div class="resultsCard"><div class="big">RUN COMPLETE</div><div class="statLine"><span>DISTANCE</span><span>${Math.floor(distance)}m</span></div><div class="statLine"><span>SOURCES</span><span>${foundCount}</span></div><div class="statLine"><span>SCORE</span><span>${score}</span></div><div class="statLine"><span>DISCOVERY</span><span>${distance>=3000?"MASTER SEEKER":distance>=1500?"PATHFINDER":"SEEKER"}</span></div><div class="tapContinue">TAP TO RESTART</div></div>`;card.style.display="grid";card.onclick=resetRun;}
+function endRun(){
+
+    gameOver = true;
+
+    const isNewBestDistance = distance > bestDistance;
+    if(isNewBestDistance){
+        bestDistance = distance;
+        localStorage.setItem(
+            "sourceLaneBestDistance",
+            String(bestDistance)
+        );
+    }
+
+    const isNewBestScore = score > bestScore;
+    if(isNewBestScore){
+        bestScore = score;
+        localStorage.setItem(
+            "sourceLaneBestScore",
+            String(bestScore)
+        );
+    }
+
+    const bestSources =
+        Number(localStorage.getItem("sourceLaneBestSources") || 0);
+
+    const isNewBestSources =
+        foundCount > bestSources;
+
+    if(isNewBestSources){
+        localStorage.setItem(
+            "sourceLaneBestSources",
+            foundCount
+        );
+    }
+
+    const finalBestSources =
+        Math.max(foundCount, bestSources);
+
+    const card =
+        document.getElementById("roundComplete");
+
+    card.innerHTML = `
+    <div class="resultsCard">
+
+        <div class="big">RUN COMPLETE</div>
+
+        <div class="statLine">
+            <span>DISTANCE</span>
+            <span>${Math.floor(distance)}m</span>
+        </div>
+
+        <div class="statLine">
+            <span>BEST</span>
+            <span>${Math.floor(bestDistance)}m ${isNewBestDistance ? "⭐" : ""}</span>
+        </div>
+
+        <div class="statLine">
+            <span>SOURCES</span>
+            <span>${foundCount}</span>
+        </div>
+
+        <div class="statLine">
+            <span>BEST</span>
+            <span>${finalBestSources} ${isNewBestSources ? "⭐" : ""}</span>
+        </div>
+
+        <div class="statLine">
+            <span>SCORE</span>
+            <span>${score}</span>
+        </div>
+
+        <div class="statLine">
+            <span>BEST</span>
+            <span>${bestScore} ${isNewBestScore ? "⭐" : ""}</span>
+        </div>
+
+        <div class="tapContinue">
+            TAP TO RESTART
+        </div>
+
+    </div>
+    `;
+
+    card.style.display = "grid";
+    card.onclick = resetRun;
+
+}
 function resetRun(){
 
     paused = false;
