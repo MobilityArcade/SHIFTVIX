@@ -510,7 +510,15 @@ warpAmount * 0.0008;const atmosphereColors = [
 
 scene.fog.color.setHex(
 atmosphereColors[stage]
-);camera.lookAt(camera.position.x,camera.position.y,-500);camera.fov =
+);camera.lookAt(
+
+camera.position.x * 0.995,
+
+camera.position.y * 0.995,
+
+-500
+
+);camera.fov =
 70
 +
 warpAmount * 11
@@ -524,7 +532,44 @@ camera.updateProjectionMatrix();beacons.forEach(b=>{if(b.userData.state==="activ
 f * (
 0.09 +
 warpAmount * 0.18
-);b.scale.setScalar(Math.max(.001,f));}});for(let i=beacons.length-1;i>=0;i--){const b=beacons[i];if((b.userData.state==="collected"||b.userData.state==="missed")&&b.userData.fade<=0){scene.remove(b);beacons.splice(i,1);}};stars.forEach(s=>{const pos = s.geometry.attributes.position;const speedMultiplier =1 + warpAmount * 7;for(let i=0;i<pos.count;i++){let z =pos.getZ(i)+ speed * dt * speedMultiplier;if(z>90){z = -1150 - Math.random()*250;}pos.setZ(i,z);}pos.needsUpdate=true;const colors = s.geometry.attributes.color;
+);b.scale.setScalar(Math.max(.001,f));}});for(let i=beacons.length-1;i>=0;i--){const b=beacons[i];if((b.userData.state==="collected"||b.userData.state==="missed")&&b.userData.fade<=0){scene.remove(b);beacons.splice(i,1);}};stars.forEach(s=>{const pos = s.geometry.attributes.position;const speedMultiplier =1 + warpAmount * 7;const stretch =1 + warpAmount * 5;for(let i=0;i<pos.count;i++){
+
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+
+    // Distance from the center of the playfield
+    const edge =
+        Math.min(
+            1,
+            Math.hypot(x,y)/220
+        );
+
+    // Outer stars travel faster than center stars
+    const edgeBoost =
+        1 +
+        edge *
+        warpAmount *
+        3.0;
+
+    let z =
+        pos.getZ(i)
+        +
+        speed *
+        dt *
+        speedMultiplier *
+        edgeBoost;
+
+    if(z>90){
+
+        z =
+            -1150 -
+            Math.random()*250;
+
+    }
+
+    pos.setZ(i,z);
+
+}pos.needsUpdate=true;const colors = s.geometry.attributes.color;
 
 const palettes = [
 
@@ -639,15 +684,20 @@ colors.needsUpdate = true;
 
 const warpSize =
 1.3 +
-warpAmount * 12;
+warpAmount * 8;
 
 const warpOpacity =
 0.70 +
 warpAmount * 0.30;
 
-s.material.size = warpSize;
+s.material.size = warpSize * stretch;
 
-s.material.opacity = warpOpacity;});updateHUD();}if(gameStarted&&!gameOver){
+s.material.opacity = warpOpacity;camera.rotation.z =
+Math.sin(distance * 0.0015)
+*
+warpAmount
+*
+0.004;});updateHUD();}if(gameStarted&&!gameOver){
 introScale += (1-introScale)*dt*0.6;beacons.forEach(b=>{if(b.userData.state==="active") b.scale.lerp(new THREE.Vector3(introScale,introScale,introScale),0.08);});
 introCameraZ += (TARGET_CAMERA_Z-introCameraZ)*dt*0.18;
 camera.position.z=introCameraZ;camera.position.x +=
@@ -655,14 +705,14 @@ camera.position.z=introCameraZ;camera.position.x +=
 *
 warpAmount
 *
-0.22;
+0.12;
 
 camera.position.y +=
 (Math.random()-0.5)
 *
 warpAmount
 *
-0.22;
+0.12;
 
 camera.position.z =
 introCameraZ
