@@ -713,16 +713,6 @@ warpAmount * 0.18
 
     const x = pos.getX(i);
     const y = pos.getY(i);
-  // ---------- SPACE CURVATURE ----------
-
-const angle = Math.atan2(y, x);
-
-const radius = Math.hypot(x, y);
-
-const curveStrength =
-    warpAmount *
-    0.065 *
-    (radius / 220);
 
     // Distance from the center of the playfield
     const edge =
@@ -746,30 +736,6 @@ const curveStrength =
         speedMultiplier *
         edgeBoost;
 
-  const newAngle =
-    angle +
-    curveStrength *
-    dt *
-    speedMultiplier *
-    0.18;
-
-  const inwardPull =
-    warpAmount *
-    edge *
-    0.15;
-
-const newRadius =
-    radius *
-    (1 - inwardPull * dt);
-
-const newX =
-    Math.cos(newAngle) *
-    newRadius;
-
-const newY =
-    Math.sin(newAngle) *
-    newRadius;
-
     if(z>90){
 
         z =
@@ -780,11 +746,10 @@ const newY =
 
     pos.setXYZ(
     i,
-    newX,
-    newY,
+    x,
+    y,
     z
 );
-
 }pos.needsUpdate=true;const colors = s.geometry.attributes.color;
 
 const palettes = [
