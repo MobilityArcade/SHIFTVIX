@@ -556,7 +556,6 @@ function spawnTrain(){trainId++;const xIndex=Math.floor(Math.random()*3),yIndex=
 function spawnWave(){const trains=Math.random()<.78?2:3;for(let i=0;i<trains;i++)setTimeout(spawnTrain,i*120);}
 function moveLane(dx,dy){if(!gameStarted||gameOver)return;laneX=Math.max(0,Math.min(2,laneX+dx));laneY=Math.max(0,Math.min(2,laneY+dy));targetX=LANE_X[laneX];targetY=LANE_Y[laneY];const namesY=["UP","CENTER","DOWN"],namesX=["LEFT","CENTER","RIGHT"];document.getElementById("laneLabel").textContent=namesY[laneY]+" "+namesX[laneX];if(navigator.vibrate)navigator.vibrate(10);}
 let downX=0,downY=0;
-let swipeUsed=false; 
 
 // iPhone Safari audio unlock: capture the earliest touch event possible.
 // This does not move the player; it only opens the audio path.
@@ -571,44 +570,11 @@ window.addEventListener("pointerdown", e=>{
     downX = e.clientX;
     downY = e.clientY;
 
-    swipeUsed = false;
-
+    // Unlock/start music from the very first touch without delaying swipe tracking.
     startMusic();
 
 },{passive:false});
-
- window.addEventListener("pointermove", e=>{
-
-    if(e.target && e.target.id==="center") return;
-    if(paused || gameOver || swipeUsed) return;
-
-    const dx = e.clientX - downX;
-    const dy = e.clientY - downY;
-
-    const threshold = 18;
-
-    if(Math.hypot(dx,dy) < threshold) return;
-
-    let mx = 0;
-    let my = 0;
-
-    if(Math.abs(dx) > Math.abs(dy)){
-        mx = dx > 0 ? 1 : -1;
-    }else{
-        my = dy > 0 ? 1 : -1;
-    }
-
-    moveLane(mx,my);
-
-    swipeUsed = true;
-
-},{passive:false});
-
 window.addEventListener("pointerup",e=>{
-  if(swipeUsed){
-  swipeUsed = false;
-  return;
-}
   if(e.target&&e.target.id==="center")return;
   if(paused)return;
   const dx=e.clientX-downX;
