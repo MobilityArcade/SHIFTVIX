@@ -584,8 +584,7 @@ window.addEventListener("pointerup",e=>{
   if(Math.hypot(dx,dy)<12)return;
 
   const threshold=18;
-  const dominance=1.35;
-
+  
 let mx = 0;
 let my = 0;
 
@@ -616,8 +615,10 @@ else if(absY > threshold){
 }
 
 if(mx!==0 || my!==0){
-    moveLane(mx,my);
-}
+        moveLane(mx,my);
+    }
+
+});
 window.addEventListener("keydown",e=>{initAudio();if(!gameStarted)startGame();if(e.key==="ArrowLeft"||e.key==="a")moveLane(-1,0);if(e.key==="ArrowRight"||e.key==="d")moveLane(1,0);if(e.key==="ArrowUp"||e.key==="w")moveLane(0,-1);if(e.key==="ArrowDown"||e.key==="s")moveLane(0,1);});
 function startGame(){
 
