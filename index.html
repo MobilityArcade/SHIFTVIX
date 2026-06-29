@@ -494,9 +494,9 @@ function musicScheduler(){
 
 function startMusic(){
 
-  initAudio();
-
   if(!audioCtx) return;
+
+if(musicStarted) return;
 
   const begin = () => {
 
@@ -559,19 +559,29 @@ let downX=0,downY=0;
 
 // iPhone Safari audio unlock: capture the earliest touch event possible.
 // This does not move the player; it only opens the audio path.
-window.addEventListener("touchstart", e=>{
-  startMusic();
-},{passive:true,capture:true});
 
-window.addEventListener("pointerdown", e=>{
+function beginExperience(){
+
+    if(gameStarted) return;
+
+    initAudio();
+
+    audioCtx.resume().then(()=>{
+
+        startGame();
+
+    });
+
+}
+  
+window.addEventListener("pointerdown",e=>{
 
     if(e.target && e.target.id==="center") return;
 
     downX = e.clientX;
     downY = e.clientY;
 
-    // Unlock/start music from the very first touch without delaying swipe tracking.
-    startMusic();
+    beginExperience();
 
 },{passive:false});
 window.addEventListener("pointerup",e=>{
@@ -597,8 +607,6 @@ function startGame(){
 
     spawnWave();
 
-    // Desktop browsers may allow immediate music.
-    // iPhone Safari will wait for the first touch, then startMusic() unlocks it.
     startMusic();
 
 }
@@ -1064,7 +1072,7 @@ centerButton.addEventListener("pointerdown",e=>{
 },{passive:false});
 window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 document.addEventListener("visibilitychange",()=>{if(!document.hidden && gameStarted && !musicStarted){startMusic();}});
-makeStarField();makeLaneGuides();updateStrikes();updateHUD();startGame();animate();
+makeStarField();makeLaneGuides();updateStrikes();updateHUD();animate();
 </script>
 </body>
 </html>
