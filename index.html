@@ -586,29 +586,33 @@ window.addEventListener("pointerup",e=>{
   const threshold=18;
   const dominance=1.35;
 
-  let mx = 0;
+let mx = 0;
 let my = 0;
 
-const diagonalThreshold = threshold * 14;
+const threshold = 18;
+const diagonalThreshold = 14;
 
-// Horizontal
-if(Math.abs(dx) > threshold){
-    mx = dx > 0 ? 1 : -1;
-}
+const absX = Math.abs(dx);
+const absY = Math.abs(dy);
 
-// Vertical
-if(Math.abs(dy) > threshold){
-    my = dy > 0 ? 1 : -1;
-}
+// True diagonal
+if(absX > diagonalThreshold && absY > diagonalThreshold){
 
-// If BOTH axes are strong enough,
-// allow a diagonal move.
-if(
-    Math.abs(dx) > diagonalThreshold &&
-    Math.abs(dy) > diagonalThreshold
-){
     mx = dx > 0 ? 1 : -1;
     my = dy > 0 ? 1 : -1;
+
+}
+// Mostly horizontal
+else if(absX > threshold){
+
+    mx = dx > 0 ? 1 : -1;
+
+}
+// Mostly vertical
+else if(absY > threshold){
+
+    my = dy > 0 ? 1 : -1;
+
 }
 
 if(mx!==0 || my!==0){
