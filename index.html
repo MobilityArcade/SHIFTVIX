@@ -516,14 +516,14 @@ function startMusic(){
 
     if(!audioCtx) return;
 
-    const begin = () => {
+    if(musicStarted) return;
+
+    const begin = ()=>{
 
         if(audioCtx.state !== "running"){
             musicStarted = false;
             return;
         }
-
-        if(musicStarted) return;
 
         musicStarted = true;
         musicStep = 0;
@@ -541,20 +541,19 @@ function startMusic(){
 
     };
 
-    if(audioCtx.state !== "running"){
+    if(audioCtx.state === "running"){
 
-        audioCtx.resume()
-            .then(()=>{
-                setTimeout(begin,0);
-            })
-            .catch(()=>{
-                musicStarted = false;
-                console.log("Music will start after first interaction.");
-            });
+        begin();
 
     }else{
 
-        begin();
+        audioCtx.resume()
+        .then(begin)
+        .catch(()=>{
+
+            musicStarted = false;
+
+        });
 
     }
 
@@ -723,9 +722,6 @@ function togglePause(){
   const center=document.getElementById("center");
   const pauseText=document.getElementById("pauseText");
   if(paused){
-
-  clearInterval(musicTimer);
-  musicTimer = null;
 
   if(pauseText)
     pauseText.style.display="block";
