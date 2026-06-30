@@ -182,7 +182,13 @@ function playToneAt(freq,type,volume,duration,startTime){
   osc.frequency.setValueAtTime(freq, startTime);
 
   gain.gain.setValueAtTime(0.0001, startTime);
-  gain.gain.linearRampToValueAtTime(volume, startTime + 0.01);
+// Music Fade-In based on distance
+const musicFade = Math.min(1, distance / 100);
+
+gain.gain.linearRampToValueAtTime(
+    volume * musicFade,
+    startTime + 0.01
+);
   gain.gain.exponentialRampToValueAtTime(
     0.0001,
     startTime + duration
@@ -370,6 +376,18 @@ function scheduleMusicStep(step, time, stepDuration){
     stepDuration * 0.5,
     time
   );
+
+  if(distance > 10){
+
+    playToneAt(
+        55,
+        "sine",
+        0.003,
+        stepDuration * 4,
+        time
+    );
+
+}
 
   if(distance > 500){
 
