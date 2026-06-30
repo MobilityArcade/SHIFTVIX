@@ -740,6 +740,9 @@ if(musicTimer){
 startMusic();
 }
 }
+const title = document.getElementById("gameTitle");
+const shift = document.getElementById("shift");
+const vix = document.getElementById("vix");
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));warpAmount = Math.min(distance / 5000, 1);
 const stage =
 Math.min(
@@ -1042,15 +1045,22 @@ Math.pow(warpAmount,1.6)
 
 const title = document.getElementById("gameTitle");
 
-const fade = Math.max(
-    0.35,
-    1 - distance / 3500
-);
+const introProgress = Math.min(distance / 60, 1);
+
+const fade = 1 - introProgress;
 
 title.style.opacity = fade;
 
+shift.style.transform =
+    `translateY(${-introProgress * 80}px)`;
+
+vix.style.transform =
+    `translateY(${introProgress * 80}px)`;
+
 title.style.filter =
-    `drop-shadow(0 0 ${fade * 22}px white)`;
+`drop-shadow(0 0 ${fade*22}px rgba(255,255,255,.9))
+ drop-shadow(0 0 ${fade*44}px rgba(255,0,255,.5))`;
+  
 renderer.render(scene,camera);
 }
 
