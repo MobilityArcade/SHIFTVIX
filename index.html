@@ -18,8 +18,8 @@
 html,body{margin:0;height:100%;overflow:hidden;background:#000;color:white;font-family:Arial,Helvetica,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 canvas{display:block}
 #gameTitle{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);}transform:translateX(-50%);z-index:20;pointer-events:none;text-align:center;line-height:.82;font-family:Arial Black,sans-serif;filter:drop-shadow(0 0 8px rgba(255,255,255,.85))drop-shadow(0 0 22px rgba(255,0,255,.45));}
-#shift{display:block;color:#ffffff;font-size:clamp(42px,7vw,72px);font-weight:900;letter-spacing:6px;-webkit-text-stroke:1px #ff4dff;text-shadow:0 0 5px rgba(255,255,255,.95),0 0 14px rgba(255,0,255,.75);}
-#vix{display:block;margin-top:-22px;color:transparent;-webkit-text-fill-color:transparent;-webkit-text-stroke:4px #ffffff;font-size:clamp(58px,12vw,124px);font-weight:900;letter-spacing:4px;text-shadow:0 0 8px rgba(255,255,255,.8),0 0 22px rgba(255,0,255,.55);}
+#shift{display:block;color:#ffffff;font-size:clamp(70px,11vw,110px);font-weight:900;letter-spacing:4px;-webkit-text-stroke:1px #ff4dff;text-shadow:0 0 5px rgba(255,255,255,.95),0 0 14px rgba(255,0,255,.75);}
+#vix{display:block;margin-top:-22px;color:transparent;-webkit-text-fill-color:transparent;-webkit-text-stroke:4px #ffffff;font-size:clamp(82px,13vw,124px);font-weight:900;letter-spacing:4px;text-shadow:0 0 8px rgba(255,255,255,.8),0 0 22px rgba(255,0,255,.55);}
 #hud{position:absolute;top:96px;left:14px;z-index:10;background:transparent;font-size:13px;line-height:1.45;letter-spacing:.4px;text-shadow:0 0 8px rgba(255,255,255,.35),0 0 18px rgba(80,180,255,.25);opacity:.9;pointer-events:none}
 #world{color:#ffd36a;text-shadow:0 0 10px rgba(255,211,106,.65)}
 #strikes{position:absolute;top:58px;left:14px;z-index:20;display:flex;gap:8px}
@@ -1048,18 +1048,18 @@ const title = document.getElementById("gameTitle");
 const introProgress = Math.min(distance / 40, 1);
 
   title.style.transform =
-`translate(-50%,
-calc(-50% - ${introProgress*180}px))`;
+"translate(-50%,-50%)";
 
 const fade = 1 - introProgress;
 
-title.style.opacity = fade;
+shift.style.opacity = fade;
+vix.style.opacity = fade;
 
 shift.style.transform =
-    `translateY(${-introProgress * 65}px)`;
+    `translateY(${-introProgress * 320}px)`;
 
 vix.style.transform =
-    `translateY(${introProgress * 105}px)`;
+    `translateY(${introProgress * 320}px)`;
 
 title.style.filter =
 `drop-shadow(0 0 ${fade*22}px rgba(255,255,255,.9))
