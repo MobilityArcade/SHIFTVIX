@@ -495,7 +495,7 @@ function musicScheduler(){
 
   const BPM = 148;
   const STEP = (60 / BPM) / 2;
-  const scheduleAheadTime = 0.12;
+  const scheduleAheadTime = 0.20;
 
   while(nextNoteTime < audioCtx.currentTime + scheduleAheadTime){
 
@@ -531,7 +531,7 @@ function startMusic(){
 
     musicStarted = true;
     musicStep = 0;
-    nextNoteTime = audioCtx.currentTime + 0.035;
+    nextNoteTime = audioCtx.currentTime + 0.01;
 
     // Instant audible unlock ping. Very short and quiet, but it confirms
     // Safari has actually opened the audio path.
@@ -545,13 +545,11 @@ function startMusic(){
 
     musicScheduler();
 
-    if(musicTimer){
-      clearInterval(musicTimer);
-    }
-
-    musicTimer = setInterval(musicScheduler, 25);
-  };
-
+    // Music scheduler now runs from animate().
+if(musicTimer){
+    clearInterval(musicTimer);
+    musicTimer = null;
+}
   if(audioCtx.state !== "running"){
     audioCtx.resume().then(()=>{
       // iOS Safari can resolve resume() before state is immediately visible.
@@ -752,13 +750,15 @@ function togglePause(){
 
 if(musicTimer){
     clearInterval(musicTimer);
-    musicTimer = null;
 }
 
 startMusic();
 }
 }
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));warpAmount = Math.min(distance / 5000, 1);
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);// Keep the music scheduler synchronized with rendering.
+if(musicStarted && audioCtx){
+    musicScheduler();
+}if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));warpAmount = Math.min(distance / 5000, 1);
 const stage =
 Math.min(
     7,
