@@ -799,19 +799,6 @@ scene.fog.color.setHex(
 atmosphereColors[stage]
 );
 
-if(distance>4600){
-
-    const t =
-        Math.min(
-            1,
-            (distance-4600)/400
-        );
-
-    scene.fog.color.lerp(
-        new THREE.Color(0xffffff),
-        t
-    );
-
 camera.lookAt(
 
 camera.position.x * 0.995,
