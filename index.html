@@ -18,8 +18,8 @@
 html,body{margin:0;height:100%;overflow:hidden;background:#000;color:white;font-family:Arial,Helvetica,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 canvas{display:block}
 #gameTitle{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:20;pointer-events:none;text-align:center;line-height:.78;font-family:Arial Black,sans-serif;filter:none;}
-#shift{display:block;color:transparent;font-size:clamp(96px,13vw,132px);font-weight:900;letter-spacing:4px;-webkit-text-stroke:4px #ffffff;}
-#vix{display:block;margin-top:-0001px;color:transparent;-webkit-text-fill-color:transparent;-webkit-text-stroke:4px #ffffff;font-size:clamp(112px,16vw,160px);font-weight:900;letter-spacing:4px;}
+#shift{display:block;color:transparent;font-size:clamp(96px,13vw,132px);font-weight:900;letter-spacing:4px;-webkit-text-stroke:4px #ffd36a;}
+#vix{display:block;margin-top:-0001px;color:transparent;-webkit-text-fill-color:transparent;-webkit-text-stroke:4px #ffd36a;font-size:clamp(112px,16vw,160px);font-weight:900;letter-spacing:4px;}
 #hud{position:absolute;top:96px;left:14px;z-index:10;background:transparent;font-size:13px;line-height:1.45;letter-spacing:.4px;text-shadow:0 0 8px rgba(255,255,255,.35),0 0 18px rgba(80,180,255,.25);opacity:.9;pointer-events:none}
 #world{color:#ffd36a;text-shadow:0 0 10px rgba(255,211,106,.65)}
 #strikes{position:absolute;top:58px;left:14px;z-index:20;display:flex;gap:8px}
@@ -709,9 +709,6 @@ shift.style.transform = "translateY(0)";
 vix.style.transform = "translateY(0)";
 
 title.style.transform = "translate(-50%,-50%)";
-
-    title.style.textShadow =
-        "0 0 25px rgba(255,255,255,.95), 0 0 45px rgba(255,255,255,.35)";
 
 const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");center.style.borderColor="rgba(255,255,255,.95)";center.style.boxShadow="0 0 10px rgba(255,255,255,.55)";document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;distance=0;strikes=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;updateStrikes();updateHUD();spawnWave();startMusic();}
 function togglePause(){
