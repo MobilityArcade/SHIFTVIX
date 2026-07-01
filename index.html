@@ -813,7 +813,7 @@ if(distance>4600){
 
 }if(distance > 5000){
 
-    scene.fog.density = 0.006;
+    scene.fog.density = 0.0035;
 
     scene.fog.color.setHex(0xffffff);
 
@@ -955,12 +955,12 @@ const palettes = [
     ],
 
     [
-        new THREE.Color(0xffffff),
-        new THREE.Color(0xffffff),
+        new THREE.Color(0xffd36a),
+        new THREE.Color(0xffc857),
         new THREE.Color(0xffeeaa),
         new THREE.Color(0x99ddff),
         new THREE.Color(0xaa66ff),
-        new THREE.Color(0xffcc66)
+        new THREE.Color(0xff8844)
     ]
 
 ];
@@ -1011,11 +1011,11 @@ colors.needsUpdate = true;
 
 const warpSize =
 1.3 +
-warpAmount * 8;
+warpAmount * 3.5;
 
 const warpOpacity =
-0.70 +
-warpAmount * 0.30;
+0.55 +
+warpAmount * 0.18;
 
 s.material.size = warpSize * stretch;
 
