@@ -13,6 +13,12 @@ function gtag(){
 gtag('js', new Date());
 
 gtag('config', 'G-M88902RHLE');
+    
+function track(eventName, data = {}) {
+    if (typeof gtag === "function") {
+        gtag("event", eventName, data);
+    }
+}
 </script>
 <head>
 <meta charset="utf-8">
@@ -76,6 +82,8 @@ const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(
 const LANE_X=[-40,0,40], LANE_Y=[30,0,-30], FAR_Z=-920, NEAR_Z=72, SPEED_START=170, COLLECT_RADIUS=18, TRAIN_GAP=20, BREAK_GRACE=.72;
 let laneX=1,laneY=1,targetX=0,targetY=0,score=0,bestScore=Number(localStorage.getItem("sourceLaneBestScore")||0),bestDistance=Number(localStorage.getItem("sourceLaneBestDistance")||0),foundCount=0,combo=1,lastFoundAt=0,distance=0,speed=SPEED_START,spawnTimer=0,trainId=0,strikes=0,runStarted=false,gameStarted=false,gameOver=false,breakTimer=0,audioCtx=null;
 let paused=false;
+let milestonesReached = {};
+let runStartTime = 0;
 let introCameraZ=48;
 const TARGET_CAMERA_Z=72;
 // ---------- WARP ----------
@@ -609,25 +617,59 @@ function startGame(){
 
     gameStarted = true;
 
+    sessionRuns++;
+
+    track("game_started");
+
+    runStartTime = performance.now();
+
     spawnWave();
 
-    // Desktop browsers may allow immediate music.
-    // iPhone Safari will wait for the first touch, then startMusic() unlocks it.
     startMusic();
+}
 
 }
 function showScorePopup(text){const el=document.createElement("div");el.className="scorePopup";el.textContent=text;document.body.appendChild(el);setTimeout(()=>el.remove(),900);}
 function updateStrikes(){for(let i=0;i<3;i++)document.getElementById("s"+i).classList.toggle("used",i<strikes);}
-function takeStrike(){if(!runStarted||gameOver)return;strikes++;breakTimer=0;combo=1;playStrike();if(navigator.vibrate)navigator.vibrate([30,40,30]);updateStrikes();document.getElementById("signal").textContent="Signal: break "+strikes+"/3";if(strikes>=3)endRun();}
-function collectBeacon(b){if(b.userData.state!=="active")return;b.userData.state="collected";b.userData.fade=1;if(!runStarted){runStarted=true;breakTimer=0;document.getElementById("signal").textContent="Signal: run started";}const now=performance.now();combo=(now-lastFoundAt<1000)?Math.min(combo+1,5):1;lastFoundAt=now;breakTimer=0;const gained=b.userData.value*combo;score+=gained;foundCount++;if(score>bestScore){bestScore=score;localStorage.setItem("sourceLaneBestScore",String(bestScore));}playCoin(b.userData.tier);showScorePopup("+"+gained);updateHUD();if(navigator.vibrate)navigator.vibrate(4);}
+function takeStrike(){if(!runStarted||gameOver)return;strikes++;track("strike",{
+
+    strike_number:strikes,
+
+    distance:Math.floor(distance)
+
+});breakTimer=0;combo=1;playStrike();if(navigator.vibrate)navigator.vibrate([30,40,30]);updateStrikes();document.getElementById("signal").textContent="Signal: break "+strikes+"/3";if(strikes>=3)endRun();}
+function collectBeacon(b){if(b.userData.state!=="active")return;b.userData.state="collected";b.userData.fade=1;if(!runStarted){runStarted=true;breakTimer=0;document.getElementById("signal").textContent="Signal: run started";}const now=performance.now();combo=(now-lastFoundAt<1000)?Math.min(combo+1,5):1;lastFoundAt=now;breakTimer=0;const gained=b.userData.value*combo;score+=gained;foundCount++;if(foundCount===1){
+
+    track("first_source_collected");
+
+}if(score>bestScore){bestScore=score;localStorage.setItem("sourceLaneBestScore",String(bestScore));}playCoin(b.userData.tier);showScorePopup("+"+gained);updateHUD();if(navigator.vibrate)navigator.vibrate(4);}
 function updateHUD(){document.getElementById("distance").textContent=Math.floor(distance);document.getElementById("found").textContent=foundCount;document.getElementById("score").textContent=score;document.getElementById("bestDistance").textContent=Math.floor(bestDistance);document.getElementById("bestScore").textContent=bestScore;document.getElementById("combo").textContent=combo+"x";}
 function endRun(){
 
     gameOver = true;
+const runSeconds =
+    (performance.now() - runStartTime) / 1000;
+
+track("run_ended",{
+
+    distance: Math.floor(distance),
+
+    score: score,
+
+    sources: foundCount,
+
+    duration: Math.round(runSeconds)
+
+});
 
     const isNewBestDistance = distance > bestDistance;
     if(isNewBestDistance){
         bestDistance = distance;
+        track("new_best_distance",{
+
+    distance: Math.floor(bestDistance)
+
+});
         localStorage.setItem(
             "sourceLaneBestDistance",
             String(bestDistance)
@@ -637,6 +679,11 @@ function endRun(){
     const isNewBestScore = score > bestScore;
     if(isNewBestScore){
         bestScore = score;
+        track("new_best_score",{
+
+    score: bestScore
+
+});
         localStorage.setItem(
             "sourceLaneBestScore",
             String(bestScore)
@@ -724,7 +771,7 @@ vix.style.transform = "translateY(0)";
 
 title.style.transform = "translate(-50%,-50%)";
 
-const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");center.style.borderColor="rgba(255,255,255,.95)";center.style.boxShadow="0 0 10px rgba(255,255,255,.55)";document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;distance=0;strikes=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;updateStrikes();updateHUD();spawnWave();startMusic();}
+const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");center.style.borderColor="rgba(255,255,255,.95)";center.style.boxShadow="0 0 10px rgba(255,255,255,.55)";document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;distance=0;milestonesReached = {};=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;updateStrikes();updateHUD();spawnWave();startMusic();}
 function togglePause(){
   if(gameOver)return;
   paused=!paused;
@@ -762,7 +809,41 @@ startMusic();
 const title = document.getElementById("gameTitle");
 const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));const cycleDistance = distance % 5000;warpAmount = Math.min(cycleDistance / 5000, 1);
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;const milestones = [
+
+100,
+
+250,
+
+500,
+
+1000,
+
+2500,
+
+5000,
+
+7500,
+
+10000
+
+];
+
+for(const m of milestones){
+
+    if(distance >= m && !milestonesReached[m]){
+
+        milestonesReached[m]=true;
+
+        track("distance_milestone",{
+
+            distance:m
+
+        });
+
+    }
+
+}spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));const cycleDistance = distance % 5000;warpAmount = Math.min(cycleDistance / 5000, 1);
 
 const stage =
 Math.min(
@@ -1071,6 +1152,15 @@ centerButton.addEventListener("pointerdown",e=>{
   e.stopPropagation();
   togglePause();
 },{passive:false});
+window.addEventListener("beforeunload",()=>{
+
+    track("session_finished",{
+
+        runs:sessionRuns
+
+    });
+
+});
 window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 document.addEventListener("visibilitychange",()=>{if(!document.hidden && gameStarted && !musicStarted){startMusic();}});
 makeStarField();makeLaneGuides();updateStrikes();updateHUD();startGame();animate();
