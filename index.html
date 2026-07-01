@@ -17,9 +17,9 @@
 <style>
 html,body{margin:0;height:100%;overflow:hidden;background:#000;color:white;font-family:Arial,Helvetica,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 canvas{display:block}
-#gameTitle{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:20;pointer-events:none;text-align:center;line-height:1.0;font-family:Arial Black,sans-serif;filter:drop-shadow(0 0 8px rgba(255,255,255,.85))drop-shadow(0 0 22px rgba(255,0,255,.45));}
-#shift{display:block;color:#ffffff;font-size:clamp(72px,10vw,100px);font-weight:900;letter-spacing:4px;-webkit-text-stroke:1px #ff4dff;text-shadow:0 0 2px rgba(255,255,255,.95),0 0 6px rgba(255,0,255,.55),0 0 12px rgba(255,0,255,.30);}
-#vix{display:block;margin-top:6px;color:transparent;-webkit-text-fill-color:transparent;-webkit-text-stroke:4px #ffffff;font-size:clamp(112px,16vw,160px);font-weight:900;letter-spacing:4px;text-shadow:none;filter:drop-shadow(0 0 3px rgba(255,255,255,.9))drop-shadow(0 0 10px rgba(255,0,255,.35));}
+#gameTitle{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:20;pointer-events:none;text-align:center;line-height:.74;font-family:Arial Black,sans-serif;filter:none;}
+#shift{display:block;color:#ffffff;font-size:clamp(96px,13vw,132px);font-weight:900;letter-spacing:4px;-webkit-text-stroke:1.5px #ff4dff;text-shadow:none;}
+#vix{display:block;margin-top:-14px;color:transparent;-webkit-text-fill-color:transparent;-webkit-text-stroke:4px #ffffff;font-size:clamp(112px,16vw,160px);font-weight:900;letter-spacing:4px;text-shadow:none;filter:none;}
 #hud{position:absolute;top:96px;left:14px;z-index:10;background:transparent;font-size:13px;line-height:1.45;letter-spacing:.4px;text-shadow:0 0 8px rgba(255,255,255,.35),0 0 18px rgba(80,180,255,.25);opacity:.9;pointer-events:none}
 #world{color:#ffd36a;text-shadow:0 0 10px rgba(255,211,106,.65)}
 #strikes{position:absolute;top:58px;left:14px;z-index:20;display:flex;gap:8px}
@@ -59,7 +59,7 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x000000,0.0011);
 const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.1,5000);camera.position.set(0,0,48);camera.lookAt(0,0,-500);
 const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);document.body.appendChild(renderer.domElement);
-const LANE_X=[-40,0,40], LANE_Y=[30,0,-30], FAR_Z=-620, NEAR_Z=72, SPEED_START=170, COLLECT_RADIUS=18, TRAIN_GAP=20, BREAK_GRACE=.72;
+const LANE_X=[-40,0,40], LANE_Y=[30,0,-30], FAR_Z=-920, NEAR_Z=72, SPEED_START=170, COLLECT_RADIUS=18, TRAIN_GAP=20, BREAK_GRACE=.72;
 let laneX=1,laneY=1,targetX=0,targetY=0,score=0,bestScore=Number(localStorage.getItem("sourceLaneBestScore")||0),bestDistance=Number(localStorage.getItem("sourceLaneBestDistance")||0),foundCount=0,combo=1,lastFoundAt=0,distance=0,speed=SPEED_START,spawnTimer=0,trainId=0,strikes=0,runStarted=false,gameStarted=false,gameOver=false,breakTimer=0,audioCtx=null;
 let paused=false;
 let introCameraZ=48;
@@ -1078,9 +1078,7 @@ vix.style.transform =
 
 const glow = fade * 10;
 
-title.style.filter =
-`drop-shadow(0 0 ${glow}px rgba(255,255,255,.75))
- drop-shadow(0 0 ${glow*2}px rgba(255,0,255,.35))`;
+title.style.filter = "none";
   
 renderer.render(scene,camera);
 }
