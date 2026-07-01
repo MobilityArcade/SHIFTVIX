@@ -749,7 +749,6 @@ const title = document.getElementById("gameTitle");
 const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));const cycleDistance = distance % 5000;warpAmount = Math.min(cycleDistance / 5000, 1);
-const cycleDistance = distance % 5000;
 
 const stage =
 Math.min(
