@@ -748,11 +748,13 @@ startMusic();
 const title = document.getElementById("gameTitle");
 const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));warpAmount = Math.min(distance / 5000, 1);
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));const cycleDistance = distance % 5000;warpAmount = Math.min(cycleDistance / 5000, 1);
+const cycleDistance = distance % 5000;
+
 const stage =
 Math.min(
-    7,
-    Math.floor(distance / 500)
+    6,
+    Math.floor(cycleDistance / 700)
 );
 
 const fogLevels = [
@@ -811,14 +813,7 @@ if(distance>4600){
         t
     );
 
-}if(distance > 5000){
-
-    scene.fog.density = 0.006;
-
-    scene.fog.color.setHex(0xffffff);
-
-
-}camera.lookAt(
+camera.lookAt(
 
 camera.position.x * 0.995,
 
@@ -837,18 +832,6 @@ warpAmount
 *
 0.6;
 
-if(distance>4600){
-
-    const t =
-        Math.min(
-            1,
-            (distance-4600)/400
-        );
-
-    targetFov +=
-        t*7;
-
-}
 
 camera.fov = targetFov;
 camera.updateProjectionMatrix();beacons.forEach(b=>{if(b.userData.state==="active"){b.position.z+=speed*dt;b.lookAt(camera.position);const dz=Math.abs(b.position.z-camera.position.z),dxy=Math.hypot(b.position.x-camera.position.x,b.position.y-camera.position.y);if(dz<42&&dxy<COLLECT_RADIUS)collectBeacon(b);if(b.position.z>NEAR_Z+60)b.userData.state="missed";}if(b.userData.state==="collected"||b.userData.state==="missed"){b.userData.fade-=dt*2.8;const f=Math.max(0,b.userData.fade);b.userData.core.material.transparent=true;b.userData.core.material.opacity=f;b.userData.glow.material.opacity =
@@ -1011,11 +994,11 @@ colors.needsUpdate = true;
 
 const warpSize =
 1.3 +
-warpAmount * 8;
+warpAmount * 5;
 
 const warpOpacity =
-0.70 +
-warpAmount * 0.30;
+0.60 +
+warpAmount * 0.22;
 
 s.material.size = warpSize * stretch;
 
