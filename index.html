@@ -600,43 +600,17 @@ window.addEventListener("pointerdown", e=>{
 window.addEventListener("pointerup",e=>{
   if(e.target&&e.target.id==="center")return;
   if(paused)return;
-  const dx = e.clientX - downX;
-const dy = e.clientY - downY;
-
-if (Math.hypot(dx, dy) < 20) return;
-
-const straightThreshold = 70;
-const diagonalThreshold = 45;
-
-let mx = 0;
-let my = 0;
-
-// ---------- Diagonals first ----------
-if (
-    Math.abs(dx) > diagonalThreshold &&
-    Math.abs(dy) > diagonalThreshold
-){
-    mx = dx > 0 ? 1 : -1;
-    my = dy > 0 ? 1 : -1;
-}
-// ---------- Horizontal ----------
-else if (Math.abs(dx) > Math.abs(dy)){
-
-    if(dx > straightThreshold) mx = 1;
-    if(dx < -straightThreshold) mx = -1;
-
-}
-// ---------- Vertical ----------
-else{
-
-    if(dy > straightThreshold) my = 1;
-    if(dy < -straightThreshold) my = -1;
-
-}
-
-if(mx !== 0 || my !== 0){
-    moveLane(mx,my);
-}
+  const dx=e.clientX-downX;
+  const dy=e.clientY-downY;
+  if(Math.hypot(dx,dy)<20)return;
+  const threshold=80;
+  let mx=0,my=0;
+  if(dx>threshold)mx=1;
+  if(dx<-threshold)mx=-1;
+  if(dy>threshold)my=1;
+  if(dy<-threshold)my=-1;
+  moveLane(mx,my);
+});
 window.addEventListener("keydown",e=>{initAudio();if(!gameStarted)startGame();if(e.key==="ArrowLeft"||e.key==="a")moveLane(-1,0);if(e.key==="ArrowRight"||e.key==="d")moveLane(1,0);if(e.key==="ArrowUp"||e.key==="w")moveLane(0,-1);if(e.key==="ArrowDown"||e.key==="s")moveLane(0,1);});
 function startGame(){
 
