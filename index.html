@@ -871,7 +871,7 @@ startMusic();
 const title = document.getElementById("gameTitle");
 const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;const milestones = [
+function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;const milestones = [
 
 100,
 
@@ -1207,7 +1207,63 @@ renderer.render(scene,camera);
 }
 
 }
+// ---------------------------
+// GAMEPAD SUPPORT
+// ---------------------------
 
+let lastPadMove = 0;
+
+function updateGamepad(){
+
+    const pads = navigator.getGamepads
+        ? navigator.getGamepads()
+        : [];
+
+    const pad = pads[0];
+
+    if(!pad) return;
+
+    const now = performance.now();
+
+    // Prevent repeated movement every frame
+    if(now - lastPadMove < 120) return;
+
+    const deadZone = 0.45;
+
+    const x = pad.axes[0];
+    const y = pad.axes[1];
+
+    let dx = 0;
+    let dy = 0;
+
+    if(x > deadZone) dx = 1;
+    if(x < -deadZone) dx = -1;
+
+    if(y > deadZone) dy = 1;
+    if(y < -deadZone) dy = -1;
+
+    if(pad.buttons[12]?.pressed) dy = -1; // Up
+    if(pad.buttons[13]?.pressed) dy = 1;  // Down
+    if(pad.buttons[14]?.pressed) dx = -1; // Left
+    if(pad.buttons[15]?.pressed) dx = 1;  // Right
+
+    if(dx || dy){
+
+        moveLane(dx,dy);
+
+        lastPadMove = now;
+
+    }
+
+    // Pause button
+
+    if(pad.buttons[9]?.pressed){
+
+        togglePause();
+
+    }
+
+}
 const centerButton=document.getElementById("center");
 centerButton.addEventListener("pointerdown",e=>{
   e.preventDefault();
