@@ -52,9 +52,32 @@ canvas{display:block}
 #shift{display:block;color:transparent;font-size:clamp(96px,13vw,132px);font-weight:900;letter-spacing:4px;-webkit-text-stroke:4px #ffd36a;}
 #vix{display:block;margin-top:-0001px;color:transparent;-webkit-text-fill-color:transparent;-webkit-text-stroke:4px #ffd36a;font-size:clamp(112px,16vw,160px);font-weight:900;letter-spacing:4px;}
 @media (max-width:768px){#shift{font-size:clamp(76px,11vw,108px);}#vix{font-size:clamp(88px,13vw,128px);margin-top:14px;}}
-#hud{position:absolute;top:96px;left:14px;z-index:10;background:transparent;font-size:13px;line-height:1.45;letter-spacing:.4px;text-shadow:0 0 8px rgba(255,255,255,.35),0 0 18px rgba(80,180,255,.25);opacity:.9;pointer-events:none}
+#hud{position:absolute;top:108px;left:50%;transform:translateX(-50%);display:flex;gap:110px;z-index:20;pointer-events:none;}
+    .hudBlock{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+}
+
+.hudLabel{
+    font-size:15px;
+    font-weight:800;
+    letter-spacing:1.5px;
+    color:#ffffff;
+    text-shadow:
+        0 0 8px rgba(255,255,255,.45);
+}
+
+.hudValue{
+    margin-top:4px;
+    font-size:24px;
+    font-weight:900;
+    color:#ffffff;
+    text-shadow:
+        0 0 10px rgba(255,255,255,.5);
+}
 #world{color:#ffd36a;text-shadow:0 0 10px rgba(255,211,106,.65)}
-#strikes{position:absolute;top:58px;left:14px;z-index:20;display:flex;gap:8px}
+#strikes{position:absolute;top:52px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:10px;}
 .strikeDot{width:15px;height:15px;border-radius:50%;background:#ff3333;box-shadow:0 0 10px rgba(255,40,40,.85),0 0 22px rgba(255,40,40,.45);border:1px solid rgba(255,255,255,.75)}
 .strikeDot.used{background:rgba(255,255,255,.08);box-shadow:none;border:1px solid rgba(255,255,255,.28)}
 #center{position:absolute;left:50%;top:50%;width:20px;height:20px;border-radius:50%;transform:translate(-50%,-50%);background:transparent;border:2px solid rgba(255,255,255,.95);box-shadow:0 0 10px rgba(255,255,255,.55);z-index:13;pointer-events:auto;cursor:pointer}
@@ -81,7 +104,7 @@ canvas{display:block}
 <body>
 <div id="gameTitle"><span id="shift">SHIFT</span><span id="vix">VIX</span></div>
 <div id="strikes"><div class="strikeDot" id="s0"></div><div class="strikeDot" id="s1"></div><div class="strikeDot" id="s2"></div></div>
-<div id="hud"><div><b>BEST</b> <span id="bestDistance">0</span>m</div><br><div><b>DISTANCE</b> <span id="distance">0</span>m</div>
+<div id="hud"><div class="hudBlock"><div class="hudLabel">DISTANCE</div><div class="hudValue"> <span id="distance">0</span>m</div></div><div class="hudBlock"><div class="hudLabel">BEST</div><div class="hudValue"><span id="bestDistance">0</span>m</div></div></div>
 <div style="display:none"><span id="world">Distance Run</span>
 <span id="found">0</span><span id="score">0</span><span id="bestScore">0</span><span id="combo">1x</span><div id="signal"></div></div></div>
 <div id="center"></div><div id="pauseText">PAUSED</div><div id="laneLabel">CENTER</div><div id="roundComplete"></div>
