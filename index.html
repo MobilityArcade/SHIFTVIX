@@ -1236,18 +1236,11 @@ function updateGamepad(){
     let dx = 0;
     let dy = 0;
 
-   if(x > deadZone) dx = 1;
-   else if(x < -deadZone) dx = -1;
+    if(x > deadZone) dx = 1;
+    if(x < -deadZone) dx = -1;
 
-   if(y > deadZone) dy = 1;
-   else if(y < -deadZone) dy = -1;
-    
-const up    = pad.buttons[12]?.pressed;
-const down  = pad.buttons[13]?.pressed;
-const left  = pad.buttons[14]?.pressed;
-const right = pad.buttons[15]?.pressed;
-
-if(dx === 0 && dy === 0){
+    if(y > deadZone) dy = 1;
+    if(y < -deadZone) dy = -1;
 
     const up    = pad.buttons[12]?.pressed;
     const down  = pad.buttons[13]?.pressed;
@@ -1256,7 +1249,13 @@ if(dx === 0 && dy === 0){
 
     dx = (right ? 1 : 0) + (left ? -1 : 0);
     dy = (down  ? 1 : 0) + (up   ? -1 : 0);
-}
+    if(dx || dy){
+
+        moveLane(dx,dy);
+
+        lastPadMove = now;
+
+    }
 
     // Pause button
 
