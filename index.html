@@ -1226,7 +1226,7 @@ function updateGamepad(){
     const now = performance.now();
 
     // Prevent repeated movement every frame
-    if(now - lastPadMove < 100) return;
+    if(now - lastPadMove < 250) return;
 
     const deadZone = 0.70;
 
