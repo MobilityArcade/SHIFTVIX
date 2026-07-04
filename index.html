@@ -99,7 +99,7 @@ canvas{display:block}
 .scorePopup{position:absolute;left:50%;top:43%;transform:translate(-50%,-50%);z-index:60;pointer-events:none;font-size:26px;font-weight:900;letter-spacing:2px;color:#ffd36a;text-shadow:0 0 12px rgba(255,211,106,.95),0 0 38px rgba(255,120,0,.6);animation:scoreRise .9s ease-out forwards}
 @keyframes scoreRise{0%{opacity:0;transform:translate(-50%,-10%) scale(.8)}18%{opacity:1}100%{opacity:0;transform:translate(-50%,-145%) scale(1.08)}}
 
-#sectorBanner{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) scale(.9);z-index:50;pointer-events:none;font-size:34px;font-weight:900;letter-spacing:8px;color:#ffd36a;text-shadow:0 0 18px rgba(255,211,106,.9),0 0 55px rgba(255,211,106,.45);opacity:0;transition:opacity .22s ease,transform .45s ease}
+#sectorBanner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);z-index:50;pointer-events:none;font-size:34px;font-weight:900;letter-spacing:8px;color:#ffd36a;text-shadow:0 0 18px rgba(255,211,106,.9),0 0 55px rgba(255,211,106,.45);opacity:0;transition:opacity .22s ease,transform .45s ease}
 #sectorBanner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 #warpFlash{position:absolute;inset:0;z-index:45;pointer-events:none;background:radial-gradient(circle,rgba(255,255,255,.9),rgba(255,211,106,.26),rgba(0,0,0,0) 70%);opacity:0;transition:opacity .28s ease}
 #warpFlash.show{opacity:.82}
@@ -125,12 +125,17 @@ const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(
 const LANE_X=[-40,0,40], LANE_Y=[30,0,-30], FAR_Z=-920, NEAR_Z=72, SPEED_START=170, COLLECT_RADIUS=18, TRAIN_GAP=20, BREAK_GRACE=.72;
 const SECTOR_LENGTH = 3000;
 let journeyDistance = Number(localStorage.getItem("shiftvixJourneyDistance") || 0);
+// V2.1: saved journeys always resume at the beginning of the unlocked sector,
+// not at the exact crash distance inside that sector.
+journeyDistance = Math.floor(journeyDistance / SECTOR_LENGTH) * SECTOR_LENGTH;
 let highestSector = Number(localStorage.getItem("shiftvixHighestSector") || 1);
+highestSector = Math.max(highestSector, Math.floor(journeyDistance / SECTOR_LENGTH) + 1);
 let laneX=1,laneY=1,targetX=0,targetY=0,score=0,bestScore=Number(localStorage.getItem("sourceLaneBestScore")||0),bestDistance=Number(localStorage.getItem("sourceLaneBestDistance")||0),foundCount=0,combo=1,lastFoundAt=0,distance=journeyDistance,speed=SPEED_START,spawnTimer=0,trainId=0,strikes=0,runStarted=false,gameStarted=false,gameOver=false,breakTimer=0,audioCtx=null;
 let currentSector = Math.floor(distance / SECTOR_LENGTH) + 1;
 let runBaseDistance = distance;
 let lastSavedAt = 0;
 let warpPulse = 0;
+let introSectorBannerShown = false;
 let paused=false;
 let milestonesReached = {};
 let sessionRuns = 0;
@@ -153,10 +158,21 @@ function getSectorDistance(){
     return Math.floor(distance % SECTOR_LENGTH);
 }
 
+function getSectorStartDistance(sectorNumber=getSector()){
+    return Math.max(0, (sectorNumber - 1) * SECTOR_LENGTH);
+}
+
 function saveJourney(){
-    journeyDistance = Math.max(journeyDistance, distance);
     currentSector = getSector();
     highestSector = Math.max(highestSector, currentSector);
+
+    // V2.1: checkpoint save. If you die in Sector 3, Continue starts at
+    // the beginning of Sector 3, not at the crash point.
+    journeyDistance = Math.max(
+        journeyDistance,
+        getSectorStartDistance(highestSector)
+    );
+
     localStorage.setItem("shiftvixJourneyDistance", String(journeyDistance));
     localStorage.setItem("shiftvixHighestSector", String(highestSector));
 }
@@ -183,6 +199,7 @@ function showSectorBanner(sectorNumber){
     const flash = document.getElementById("warpFlash");
     if(!banner || !flash) return;
     banner.textContent = "SECTOR " + sectorNumber;
+    banner.style.opacity = "";
     flash.classList.add("show");
     banner.classList.add("show");
     setTimeout(()=>flash.classList.remove("show"),320);
@@ -769,8 +786,7 @@ function startGame(){
     runStartTime = performance.now();
 
     runBaseDistance = distance;
-
-    showSectorBanner(getSector());
+    introSectorBannerShown = false;
 
     spawnWave();
 
@@ -923,20 +939,79 @@ track("run_ended",{
 function resetRun(startFresh=false){
 
     paused = false;
+    introSectorBannerShown = false;
 
     const title = document.getElementById("gameTitle");
+    const sectorBanner = document.getElementById("sectorBanner");
+    const warpFlash = document.getElementById("warpFlash");
 
     title.style.opacity = 1;
 
-  shift.style.opacity = 1;
-vix.style.opacity = 1;
+    shift.style.opacity = 1;
+    vix.style.opacity = 1;
 
-shift.style.transform = "translateY(0)";
-vix.style.transform = "translateY(0)";
+    shift.style.transform = "translateY(0)";
+    vix.style.transform = "translateY(0)";
 
-title.style.transform = "translate(-50%,-50%)";
+    title.style.transform = "translate(-50%,-50%)";
 
-const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");center.style.borderColor="rgba(255,255,255,.95)";center.style.boxShadow="0 0 10px rgba(255,255,255,.55)";document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;if(startFresh){distance=0;}else{distance=journeyDistance;}currentSector=getSector();runBaseDistance=distance;strikes = 0;milestonesReached = {};runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;updateStrikes();updateHUD();showSectorBanner(getSector());spawnWave();startMusic();}
+    if(sectorBanner){
+        sectorBanner.classList.remove("show");
+        sectorBanner.style.opacity = 0;
+    }
+
+    if(warpFlash){
+        warpFlash.classList.remove("show");
+    }
+
+    const pauseText=document.getElementById("pauseText");
+    if(pauseText)pauseText.style.display="none";
+
+    const center=document.getElementById("center");
+    center.style.borderColor="rgba(255,255,255,.95)";
+    center.style.boxShadow="0 0 10px rgba(255,255,255,.55)";
+
+    document.getElementById("roundComplete").style.display="none";
+
+    beacons.forEach(b=>scene.remove(b));
+    beacons.length=0;
+
+    score=0;
+    foundCount=0;
+    combo=1;
+
+    if(startFresh){
+        distance=0;
+        journeyDistance=0;
+        highestSector=1;
+        saveJourney();
+    }else{
+        // V2.1: Continue from the beginning of your highest unlocked sector.
+        distance=journeyDistance;
+    }
+
+    currentSector=getSector();
+    runBaseDistance=distance;
+    strikes = 0;
+    milestonesReached = {};
+    runStarted=false;
+    gameOver=false;
+    gameStarted=true;
+    breakTimer=0;
+    speed=SPEED_START;
+    laneX=1;
+    laneY=1;
+    targetX=0;
+    targetY=0;
+
+    updateStrikes();
+    updateHUD();
+
+    // Do NOT show the sector banner immediately. Let SHIFT/VIX split first,
+    // then the sector title appears cleanly in the center.
+    spawnWave();
+    startMusic();
+}
 function togglePause(){
   if(gameOver)return;
   paused=!paused;
@@ -978,7 +1053,7 @@ function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Mat
 const sectorProgress=distance % SECTOR_LENGTH;
 speed=SPEED_START+Math.min(150,sectorProgress*.03);
 distance+=speed*dt*.08;
-journeyDistance=Math.max(journeyDistance,distance);
+journeyDistance=Math.max(journeyDistance,getSectorStartDistance(getSector()));
 const nextSector=getSector();
 if(nextSector>previousSector){
     enterSector(nextSector);
@@ -1283,6 +1358,11 @@ shift.style.transform =
 
 vix.style.transform =
     `translateY(${introProgress * 320}px)`;
+
+if(!introSectorBannerShown && introProgress >= 0.92){
+    introSectorBannerShown = true;
+    showSectorBanner(getSector());
+}
 
 const glow = fade * 10;
 
