@@ -254,9 +254,6 @@ function buildSectorLandmark(){
 
     }
 
-    landmark.maxScale =
-    5.5 + Math.random()*3;
-
     const preset =
         landmarkPresets[
             (getSector()-1) %
@@ -275,6 +272,8 @@ function buildSectorLandmark(){
         objects:[]
 
     };
+
+    landmark.maxScale = 5.5 + Math.random()*3;
 
     landmark.spinSpeed =
     (Math.random()-.5)*0.04;
@@ -1381,9 +1380,6 @@ const scale =
     // =====================================
 // SHIFTVIX 3.0 HERO FLYBY
 // =====================================
-
-const smoothT =
-    THREE.MathUtils.smootherstep(t,0,1);
 
 // Huge cinematic scaling
 
