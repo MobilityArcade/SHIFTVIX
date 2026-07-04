@@ -1450,7 +1450,13 @@ shift.style.transform =
 vix.style.transform =
     `translateY(${introProgress * 320}px)`;
 
-if(!introSectorBannerShown && introProgress >= 0.92){
+// Show the Sector title around 45 meters into every sector
+const sectorDistance = distance % SECTOR_LENGTH;
+
+if(
+    !introSectorBannerShown &&
+    sectorDistance >= 45
+){
     introSectorBannerShown = true;
     showSectorBanner(getSector());
 }
