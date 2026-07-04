@@ -144,88 +144,34 @@ let heroRing = null;
 function buildSectorPlanet(){
 
     if(heroPlanet){
-
-    const sectorDistance =
-        getSectorDistance();
-
-    // ---------- ARRIVAL ----------
-    if(sectorDistance<1500){
-
-        heroPlanet.position.x+=
-            heroPlanet.userData.vx*dt;
-
-        heroPlanet.position.y+=
-            heroPlanet.userData.vy*dt;
-
-        heroPlanet.position.z+=
-            heroPlanet.userData.vz*dt;
-
+        scene.remove(heroPlanet);
+        heroPlanet.geometry.dispose();
+        heroPlanet.material.dispose();
+        heroPlanet=null;
     }
-
-    // ---------- WARP ----------
-    else{
-
-        heroPlanet.position.z+=
-            heroPlanet.userData.vz*
-            dt*
-            2.8;
-
-    }
-
-    const approach =
-
-        THREE.MathUtils.clamp(
-
-            1-
-            Math.abs(heroPlanet.position.z)
-            /4200,
-
-            0,
-
-            1
-
-        );
-
-    const scale =
-
-        0.2 +
-
-        approach*
-
-        6.5;
-
-    heroPlanet.scale.setScalar(scale);
-
-    heroPlanet.rotation.x+=
-        dt*.015;
-
-    heroPlanet.rotation.y+=
-        dt*.03;
-
-    heroPlanet.rotation.z+=
-        dt*.01;
-
     if(heroRing){
-
-        heroRing.position.copy(
-            heroPlanet.position
-        );
-
-        heroRing.scale.copy(
-            heroPlanet.scale
-        );
-
-        heroRing.rotation.z+=
-            dt*.01;
-
+        scene.remove(heroRing);
+        heroRing.geometry.dispose();
+        heroRing.material.dispose();
+        heroRing=null;
     }
 
-    if(heroPlanet.position.z>220){
+    const theme=sectorThemes[(getSector()-1)%sectorThemes.length];
 
-        buildSectorPlanet();
+    heroPlanet=new THREE.Mesh(
+        new THREE.SphereGeometry(120,48,48),
+        new THREE.MeshBasicMaterial({color:theme.planet,transparent:true,opacity:0.36})
+    );
+    heroPlanet.position.set((Math.random()-.5)*900,(Math.random()-.5)*500,-3200);
+    heroPlanet.userData={vx:(Math.random()-.5)*8,vy:(Math.random()-.5)*6,vz:140};
+    scene.add(heroPlanet);
 
-    }
-
+    heroRing=new THREE.Mesh(
+        new THREE.RingGeometry(165,240,96),
+        new THREE.MeshBasicMaterial({color:theme.ring,side:THREE.DoubleSide,transparent:true,opacity:.2})
+    );
+    heroRing.rotation.x=Math.PI/2.8;
+    scene.add(heroRing);
 }
 let journeyDistance = Number(localStorage.getItem("shiftvixJourneyDistance") || 0);
 // V2.1: saved journeys always resume at the beginning of the unlocked sector,
@@ -1483,25 +1429,9 @@ shift.style.transform =
 vix.style.transform =
     `translateY(${introProgress * 320}px)`;
 
-const introDistance =
-
-distance-runBaseDistance;
-
-if(
-
-!introSectorBannerShown &&
-
-introDistance>=45
-
-){
-
+if(!introSectorBannerShown && introDistance>=45){
 introSectorBannerShown=true;
-
 showSectorBanner(getSector());
-
-}{
-    introSectorBannerShown = true;
-    showSectorBanner(getSector());
 }
 
 const glow = fade * 10;
