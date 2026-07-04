@@ -124,6 +124,86 @@ const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.1,5000);cam
 const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);document.body.appendChild(renderer.domElement);
 const LANE_X=[-40,0,40], LANE_Y=[30,0,-30], FAR_Z=-920, NEAR_Z=72, SPEED_START=170, COLLECT_RADIUS=18, TRAIN_GAP=20, BREAK_GRACE=.72;
 const SECTOR_LENGTH = 3000;
+
+// =========================================
+// SHIFTVIX 2.2 SECTOR ENVIRONMENTS
+// =========================================
+const sectorThemes = [
+    { planet:0x4da6ff, ring:0xffffff },
+    { planet:0xaa55ff, ring:0xff88ff },
+    { planet:0xffaa33, ring:0xffdd88 },
+    { planet:0x55ffcc, ring:0xffffff },
+    { planet:0xff6699, ring:0xffffff },
+    { planet:0xff4444, ring:0xffaa66 },
+    { planet:0x99ddff, ring:0xffffff }
+];
+
+let heroPlanet = null;
+let heroRing = null;
+
+function buildSectorPlanet(){
+
+    // Remove the previous sector planet/ring.
+    if(heroPlanet){
+        scene.remove(heroPlanet);
+        heroPlanet.geometry.dispose();
+        heroPlanet.material.dispose();
+        heroPlanet = null;
+    }
+
+    if(heroRing){
+        scene.remove(heroRing);
+        heroRing.geometry.dispose();
+        heroRing.material.dispose();
+        heroRing = null;
+    }
+
+    const theme = sectorThemes[(getSector() - 1) % sectorThemes.length];
+
+    const radius = 70 + ((getSector() * 17) % 38);
+
+    heroPlanet = new THREE.Mesh(
+        new THREE.SphereGeometry(radius, 48, 48),
+        new THREE.MeshBasicMaterial({
+            color: theme.planet,
+            transparent: true,
+            opacity: 0.34,
+            depthWrite: false
+        })
+    );
+
+    // Keep it far back and off-center so it feels like background scenery,
+    // not a gameplay obstacle.
+    const side = getSector() % 2 === 0 ? -1 : 1;
+
+    heroPlanet.position.set(
+        side * (170 + (getSector() % 4) * 28),
+        95 + (getSector() % 3) * 26,
+        -900
+    );
+
+    scene.add(heroPlanet);
+
+    // Most sectors get a ring. Some sectors are just planets.
+    if(getSector() % 3 !== 0){
+
+        heroRing = new THREE.Mesh(
+            new THREE.RingGeometry(radius * 1.25, radius * 1.75, 64),
+            new THREE.MeshBasicMaterial({
+                color: theme.ring,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.18,
+                depthWrite: false
+            })
+        );
+
+        heroRing.position.copy(heroPlanet.position);
+        heroRing.rotation.x = 1.12;
+        heroRing.rotation.y = 0.35 + (getSector() % 5) * 0.12;
+        scene.add(heroRing);
+    }
+}
 let journeyDistance = Number(localStorage.getItem("shiftvixJourneyDistance") || 0);
 // V2.1: saved journeys always resume at the beginning of the unlocked sector,
 // not at the exact crash distance inside that sector.
@@ -212,6 +292,7 @@ function enterSector(sectorNumber){
     warpPulse = 1;
     saveJourney();
     playWarpSound();
+    buildSectorPlanet();
     showSectorBanner(sectorNumber);
     track("sector_reached",{
         sector:sectorNumber,
@@ -1051,6 +1132,16 @@ const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
 function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){const previousSector=getSector();
 const sectorProgress=distance % SECTOR_LENGTH;
+if(heroPlanet){
+    const fade = Math.max(0, 1 - sectorProgress / 1800);
+    heroPlanet.material.opacity = fade * 0.34;
+    heroPlanet.rotation.y += dt * 0.035;
+    if(heroRing){
+        heroRing.material.opacity = fade * 0.18;
+        heroRing.rotation.z += dt * 0.01;
+    }
+}
+
 speed=SPEED_START+Math.min(150,sectorProgress*.03);
 distance+=speed*dt*.08;
 journeyDistance=Math.max(journeyDistance,getSectorStartDistance(getSector()));
