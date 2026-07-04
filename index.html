@@ -228,7 +228,7 @@ function buildSectorLandmark(){
         new THREE.Mesh(
 
             new THREE.SphereGeometry(
-                420,
+                850,
                 64,
                 64
             ),
@@ -247,17 +247,28 @@ function buildSectorLandmark(){
 
     planet.position.set(
 
-        950,
+        0,
 
-        150,
+        0,
 
-        -1800
+        0
 
     );
 
     group.add(planet);
 
     landmark.planet=planet;
+
+group.position.set(
+
+    900,
+
+    120,
+
+    -1700
+
+);
+    
         if(preset.rings){
 
         for(let i=0;i<5;i++){
@@ -1271,7 +1282,7 @@ if(landmark){
     const sectorDistance = getSectorDistance();
 
     const t = THREE.MathUtils.clamp(
-        sectorDistance / 1500,
+        sectorDistance / 1800,
         0,
         1
     );
@@ -1283,26 +1294,33 @@ if(landmark){
     );
 
     const scale = THREE.MathUtils.lerp(
-        0.75,
-        2.8,
+        0.55,
+        4.5,
         t
     );
 
     landmark.group.scale.setScalar(scale);
 
     landmark.group.position.x =
-        THREE.MathUtils.lerp(
-            0,
-            -900,
-            t
-        );
+    THREE.MathUtils.lerp(
+        900,
+        -1300,
+        t
+    );
 
-    landmark.group.position.z =
-        THREE.MathUtils.lerp(
-            -500,
-            400,
-            t
-        );
+landmark.group.position.y =
+    THREE.MathUtils.lerp(
+        120,
+        -80,
+        t
+    );
+
+landmark.group.position.z =
+    THREE.MathUtils.lerp(
+        -1700,
+        350,
+        t
+    );
 
     landmark.group.rotation.y += dt * 0.05;
 
