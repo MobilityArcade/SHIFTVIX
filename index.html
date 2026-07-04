@@ -228,9 +228,9 @@ function buildSectorLandmark(){
         new THREE.Mesh(
 
             new THREE.SphereGeometry(
-                850,
-                64,
-                64
+                1100,
+                  96,
+                  96
             ),
 
             new THREE.MeshBasicMaterial({
@@ -278,9 +278,9 @@ group.position.set(
 
                     new THREE.RingGeometry(
 
-                        520+i*28,
+                        850+i*90,
 
-                        560+i*36,
+                        1100+i*120,
 
                         96
 
@@ -333,7 +333,7 @@ group.position.set(
 
         moon.position.set(
 
-            620+i*120,
+            1100+i*250,
 
             -100+i*80,
 
@@ -1288,41 +1288,57 @@ if(landmark){
     );
 
     const fadeOut = THREE.MathUtils.clamp(
-        (sectorDistance - 1450) / 250,
+        (sectorDistance - 1725) / 175,
         0,
         1
     );
 
-    const scale = THREE.MathUtils.lerp(
-        0.55,
-        4.5,
-        t
+    // =====================================
+// SHIFTVIX 3.0 HERO FLYBY
+// =====================================
+
+const smoothT =
+    THREE.MathUtils.smootherstep(t,0,1);
+
+// Huge cinematic scaling
+const scale =
+    THREE.MathUtils.lerp(
+        0.8,
+        7.0,
+        smoothT
     );
 
-    landmark.group.scale.setScalar(scale);
+landmark.group.scale.setScalar(scale);
 
-    landmark.group.position.x =
+// Long cinematic fly-by
+landmark.group.position.x =
     THREE.MathUtils.lerp(
-        900,
-        -1300,
-        t
+        1400,
+        -2600,
+        smoothT
     );
 
 landmark.group.position.y =
     THREE.MathUtils.lerp(
-        120,
-        -80,
-        t
+        180,
+        -140,
+        smoothT
     );
 
+// NEVER reaches camera
 landmark.group.position.z =
     THREE.MathUtils.lerp(
-        -1700,
-        350,
-        t
+        -2400,
+        -650,
+        smoothT
     );
 
-    landmark.group.rotation.y += dt * 0.05;
+// Slow rotation
+landmark.group.rotation.y += dt * 0.015;
+
+// Tiny wobble
+landmark.group.rotation.z =
+    Math.sin(distance*0.0003)*0.04;
 
     landmark.group.traverse(obj=>{
 
@@ -1338,8 +1354,8 @@ landmark.group.position.z =
 
     });
 
-    if(sectorDistance > 1700){
-
+    if(sectorDistance > 1900){
+        
         scene.remove(landmark.group);
         landmark = null;
 
