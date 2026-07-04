@@ -1208,61 +1208,81 @@ renderer.render(scene,camera);
 
 }
 // ---------------------------
-// GAMEPAD SUPPORT
+// GAMEPAD SUPPORT — 8 WAY SNAP
 // ---------------------------
 
 let lastPadMove = 0;
+let lastPadDir = "0,0";
 
 function updateGamepad(){
 
-    const pads = navigator.getGamepads
-        ? navigator.getGamepads()
-        : [];
-
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     const pad = pads[0];
 
     if(!pad) return;
 
     const now = performance.now();
 
-    // Prevent repeated movement every frame
-    if(now - lastPadMove < 250) return;
-
-    const deadZone = 0.70;
-
-    const x = pad.axes[0];
-    const y = pad.axes[1];
+    const deadZone = 0.55;
+    const repeatDelay = 175;
 
     let dx = 0;
     let dy = 0;
 
-    if(x > deadZone) dx = 1;
-    if(x < -deadZone) dx = -1;
+    // Analog stick
+    const x = pad.axes[0] || 0;
+    const y = pad.axes[1] || 0;
 
-    if(y > deadZone) dy = 1;
-    if(y < -deadZone) dy = -1;
+    if(Math.abs(x) > deadZone || Math.abs(y) > deadZone){
 
-    if(pad.buttons[12]?.pressed) dy = -1; // Up
-    if(pad.buttons[13]?.pressed) dy = 1;  // Down
-    if(pad.buttons[14]?.pressed) dx = -1; // Left
-    if(pad.buttons[15]?.pressed) dx = 1;  // Right
+        const angle = Math.atan2(y, x);
+        const snap = Math.round(angle / (Math.PI / 4)) * (Math.PI / 4);
 
-    if(dx || dy){
+        dx = Math.round(Math.cos(snap));
+        dy = Math.round(Math.sin(snap));
+
+    } else {
+
+        // D-pad
+        const up    = pad.buttons[12]?.pressed;
+        const down  = pad.buttons[13]?.pressed;
+        const left  = pad.buttons[14]?.pressed;
+        const right = pad.buttons[15]?.pressed;
+
+        dx = (right ? 1 : 0) + (left ? -1 : 0);
+        dy = (down  ? 1 : 0) + (up   ? -1 : 0);
+    }
+
+    const dir = dx + "," + dy;
+
+    // Reset when controller returns to center
+    if(dx === 0 && dy === 0){
+        lastPadDir = "0,0";
+        return;
+    }
+
+    // First press is instant
+    if(dir !== lastPadDir){
 
         moveLane(dx,dy);
+        lastPadMove = now;
+        lastPadDir = dir;
+        return;
 
+    }
+
+    // Holding repeats slower
+    if(now - lastPadMove > repeatDelay){
+
+        moveLane(dx,dy);
         lastPadMove = now;
 
     }
 
     // Pause button
-
     if(pad.buttons[9]?.pressed){
-
         togglePause();
-
     }
-
 }
 const centerButton=document.getElementById("center");
 centerButton.addEventListener("pointerdown",e=>{
