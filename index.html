@@ -138,41 +138,206 @@ const sectorThemes = [
     { planet:0x99ddff, ring:0xffffff }
 ];
 
-let heroPlanet = null;
-let heroRing = null;
+// ============================
+// SHIFTVIX 3.0 Landmark System
+// ============================
 
-function buildSectorPlanet(){
+let landmark = null;
 
-    if(heroPlanet){
-        scene.remove(heroPlanet);
-        heroPlanet.geometry.dispose();
-        heroPlanet.material.dispose();
-        heroPlanet=null;
-    }
-    if(heroRing){
-        scene.remove(heroRing);
-        heroRing.geometry.dispose();
-        heroRing.material.dispose();
-        heroRing=null;
-    }
+const landmarkPresets = [
 
-    const theme=sectorThemes[(getSector()-1)%sectorThemes.length];
+{
+    type:"gas",
+    color:0x5ca9ff,
+    rings:false,
+    moons:1,
+    fog:true,
+    meteors:false
+},
 
-    heroPlanet=new THREE.Mesh(
-        new THREE.SphereGeometry(120,48,48),
-        new THREE.MeshBasicMaterial({color:theme.planet,transparent:true,opacity:0.36})
-    );
-    heroPlanet.position.set((Math.random()-.5)*900,(Math.random()-.5)*500,-3200);
-    heroPlanet.userData={vx:(Math.random()-.5)*8,vy:(Math.random()-.5)*6,vz:140};
-    scene.add(heroPlanet);
+{
+    type:"saturn",
+    color:0xd6c08d,
+    rings:true,
+    moons:2,
+    fog:false,
+    meteors:true
+},
 
-    heroRing=new THREE.Mesh(
-        new THREE.RingGeometry(165,240,96),
-        new THREE.MeshBasicMaterial({color:theme.ring,side:THREE.DoubleSide,transparent:true,opacity:.2})
-    );
-    heroRing.rotation.x=Math.PI/2.8;
-    scene.add(heroRing);
+{
+    type:"twins",
+    color:0x8c6bff,
+    rings:false,
+    moons:0,
+    fog:true,
+    meteors:false
+},
+
+{
+    type:"asteroids",
+    color:0x999999,
+    rings:false,
+    moons:0,
+    fog:false,
+    meteors:true
+},
+
+{
+    type:"nebula",
+    color:0xff66dd,
+    rings:false,
+    moons:0,
+    fog:true,
+    meteors:false
 }
+
+];
+
+function buildSectorLandmark(){
+
+    if(landmark){
+
+        scene.remove(landmark.group);
+
+    }
+
+    const preset =
+        landmarkPresets[
+            (getSector()-1) %
+            landmarkPresets.length
+        ];
+
+    const group =
+        new THREE.Group();
+
+    landmark={
+
+        group,
+
+        preset,
+
+        objects:[]
+
+    };
+
+    // ------------------
+    // MAIN PLANET
+    // ------------------
+
+    const planet =
+        new THREE.Mesh(
+
+            new THREE.SphereGeometry(
+                420,
+                64,
+                64
+            ),
+
+            new THREE.MeshBasicMaterial({
+
+                color:preset.color,
+
+                transparent:true,
+
+                opacity:.42
+
+            })
+
+        );
+
+    planet.position.set(
+
+        950,
+
+        150,
+
+        -1800
+
+    );
+
+    group.add(planet);
+
+    landmark.planet=planet;
+        if(preset.rings){
+
+        for(let i=0;i<5;i++){
+
+            const ring =
+                new THREE.Mesh(
+
+                    new THREE.RingGeometry(
+
+                        520+i*28,
+
+                        560+i*36,
+
+                        96
+
+                    ),
+
+                    new THREE.MeshBasicMaterial({
+
+                        color:0xffffff,
+
+                        side:THREE.DoubleSide,
+
+                        transparent:true,
+
+                        opacity:.05+i*.03
+
+                    })
+
+                );
+
+            ring.rotation.x=1.2;
+
+            planet.add(ring);
+
+        }
+
+    }
+
+    for(let i=0;i<preset.moons;i++){
+
+        const moon=
+            new THREE.Mesh(
+
+                new THREE.SphereGeometry(
+                    45,
+                    32,
+                    32
+                ),
+
+                new THREE.MeshBasicMaterial({
+
+                    color:0xffffff,
+
+                    transparent:true,
+
+                    opacity:.55
+
+                })
+
+            );
+
+        moon.position.set(
+
+            620+i*120,
+
+            -100+i*80,
+
+            -100
+
+        );
+
+        planet.add(moon);
+
+    }
+
+    scene.add(group);
+
+}
+    
 let journeyDistance = Number(localStorage.getItem("shiftvixJourneyDistance") || 0);
 // V2.1: saved journeys always resume at the beginning of the unlocked sector,
 // not at the exact crash distance inside that sector.
@@ -261,7 +426,7 @@ function enterSector(sectorNumber){
     warpPulse = 1;
     saveJourney();
     playWarpSound();
-    buildSectorPlanet();
+    buildSectorLandmark();
     showSectorBanner(sectorNumber);
     track("sector_reached",{
         sector:sectorNumber,
@@ -1101,24 +1266,67 @@ const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
 function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){const previousSector=getSector();
 const sectorProgress=distance % SECTOR_LENGTH;
-if(heroPlanet){
-    heroPlanet.position.x+=heroPlanet.userData.vx*dt;
-    heroPlanet.position.y+=heroPlanet.userData.vy*dt;
-    heroPlanet.position.z+=heroPlanet.userData.vz*dt;
-    const t=THREE.MathUtils.clamp((3000+heroPlanet.position.z)/3200,0,1);
-    const sc=0.45+t*3.8;
-    heroPlanet.scale.setScalar(sc);
-    heroPlanet.rotation.x+=dt*0.01;
-    heroPlanet.rotation.y+=dt*0.025;
-    heroPlanet.rotation.z+=dt*0.008;
-    heroPlanet.material.opacity=heroPlanet.position.z>150?Math.max(0,heroPlanet.material.opacity-dt*0.6):0.36;
-    if(heroRing){
-      heroRing.position.copy(heroPlanet.position);
-      heroRing.scale.copy(heroPlanet.scale);
-      heroRing.material.opacity=heroPlanet.material.opacity*0.55;
-      heroRing.rotation.z+=dt*0.012;
+if(landmark){
+
+    const sectorDistance = getSectorDistance();
+
+    const t = THREE.MathUtils.clamp(
+        sectorDistance / 1500,
+        0,
+        1
+    );
+
+    const fadeOut = THREE.MathUtils.clamp(
+        (sectorDistance - 1450) / 250,
+        0,
+        1
+    );
+
+    const scale = THREE.MathUtils.lerp(
+        0.75,
+        2.8,
+        t
+    );
+
+    landmark.group.scale.setScalar(scale);
+
+    landmark.group.position.x =
+        THREE.MathUtils.lerp(
+            0,
+            -900,
+            t
+        );
+
+    landmark.group.position.z =
+        THREE.MathUtils.lerp(
+            -500,
+            400,
+            t
+        );
+
+    landmark.group.rotation.y += dt * 0.05;
+
+    landmark.group.traverse(obj=>{
+
+        if(obj.material && obj.material.transparent){
+
+            obj.material.opacity =
+                Math.max(
+                    0,
+                    obj.material.opacity * (1 - fadeOut)
+                );
+
+        }
+
+    });
+
+    if(sectorDistance > 1700){
+
+        scene.remove(landmark.group);
+        landmark = null;
+
     }
-    if(heroPlanet.position.z>350){buildSectorPlanet();}
+
 }
 
 speed=SPEED_START+Math.min(150,sectorProgress*.03);
@@ -1539,7 +1747,7 @@ window.addEventListener("beforeunload",()=>{
 window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 document.addEventListener("visibilitychange",()=>{if(!document.hidden && gameStarted && !musicStarted){startMusic();}});
 makeStarField();makeLaneGuides();
-buildSectorPlanet();updateStrikes();updateHUD();startGame();animate();
+buildSectorLandmark();updateStrikes();updateHUD();startGame();animate();
 </script>
 </body>
 </html>
