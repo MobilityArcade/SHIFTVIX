@@ -172,16 +172,10 @@ function buildSectorPlanet(){
         })
     );
 
-    // Keep it far back and off-center so it feels like background scenery,
-    // not a gameplay obstacle.
-    const side = getSector() % 2 === 0 ? -1 : 1;
-
-    heroPlanet.position.set(
-        side * (170 + (getSector() % 4) * 28),
-        95 + (getSector() % 3) * 26,
-        -900
-    );
-
+    const anchors=[[-650,260],[-650,-260],[650,260],[650,-260],[-760,0],[760,0]];
+    const a=anchors[Math.floor(Math.random()*anchors.length)];
+    heroPlanet.position.set(a[0],a[1],-3000);
+    heroPlanet.userData={vx:(Math.random()-0.5)*8,vy:(Math.random()-0.5)*4,vz:240,baseRadius:radius};
     scene.add(heroPlanet);
 
     // Most sectors get a ring. Some sectors are just planets.
@@ -1133,13 +1127,23 @@ const vix = document.getElementById("vix");
 function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){const previousSector=getSector();
 const sectorProgress=distance % SECTOR_LENGTH;
 if(heroPlanet){
-    const fade = Math.max(0, 1 - sectorProgress / 1800);
-    heroPlanet.material.opacity = fade * 0.34;
-    heroPlanet.rotation.y += dt * 0.035;
+    heroPlanet.position.x+=heroPlanet.userData.vx*dt;
+    heroPlanet.position.y+=heroPlanet.userData.vy*dt;
+    heroPlanet.position.z+=heroPlanet.userData.vz*dt;
+    const t=THREE.MathUtils.clamp((3000+heroPlanet.position.z)/3200,0,1);
+    const sc=0.45+t*3.8;
+    heroPlanet.scale.setScalar(sc);
+    heroPlanet.rotation.x+=dt*0.01;
+    heroPlanet.rotation.y+=dt*0.025;
+    heroPlanet.rotation.z+=dt*0.008;
+    heroPlanet.material.opacity=heroPlanet.position.z>150?Math.max(0,heroPlanet.material.opacity-dt*0.6):0.36;
     if(heroRing){
-        heroRing.material.opacity = fade * 0.18;
-        heroRing.rotation.z += dt * 0.01;
+      heroRing.position.copy(heroPlanet.position);
+      heroRing.scale.copy(heroPlanet.scale);
+      heroRing.material.opacity=heroPlanet.material.opacity*0.55;
+      heroRing.rotation.z+=dt*0.012;
     }
+    if(heroPlanet.position.z>350){buildSectorPlanet();}
 }
 
 speed=SPEED_START+Math.min(150,sectorProgress*.03);
@@ -1450,13 +1454,7 @@ shift.style.transform =
 vix.style.transform =
     `translateY(${introProgress * 320}px)`;
 
-// Show the Sector title around 45 meters into every sector
-const sectorDistance = distance % SECTOR_LENGTH;
-
-if(
-    !introSectorBannerShown &&
-    sectorDistance >= 45
-){
+if(!introSectorBannerShown && introProgress >= 0.92){
     introSectorBannerShown = true;
     showSectorBanner(getSector());
 }
