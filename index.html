@@ -448,7 +448,7 @@ let journeyDistance = Number(localStorage.getItem("shiftvixJourneyDistance") || 
 let highestSector = Number(localStorage.getItem("shiftvixHighestSector") || 1);
 journeyDistance = getSectorStartDistance(highestSector);
 let laneX=1,laneY=1,targetX=0,targetY=0,score=0,bestScore=Number(localStorage.getItem("sourceLaneBestScore")||0),bestDistance=Number(localStorage.getItem("sourceLaneBestDistance")||0),foundCount=0,combo=1,lastFoundAt=0,distance=journeyDistance,speed=SPEED_START,spawnTimer=0,trainId=0,strikes=0,runStarted=false,gameStarted=false,gameOver=false,breakTimer=0,audioCtx=null;
-let currentSector = Math.floor(distance / SECTOR_LENGTH) + 1;
+let currentSector = getSector();
 let runBaseDistance = distance;
 let lastSavedAt = 0;
 let warpPulse = 0;
@@ -1138,7 +1138,7 @@ function collectBeacon(b){if(b.userData.state!=="active")return;b.userData.state
 }if(score>bestScore){bestScore=score;localStorage.setItem("sourceLaneBestScore",String(bestScore));}playCoin(b.userData.tier);showScorePopup("+"+gained);updateHUD();if(navigator.vibrate)navigator.vibrate(4);}
 function updateHUD(){
     const sectorDistance = getSectorDistance();const cinematicMode =sectorDistance<1800;
-    document.getElementById("distance").textContent = getSectorRemaining();
+    document.getElementById("distance").textContent =getSectorRemaining() + "m";
     document.getElementById("found").textContent=foundCount;
     document.getElementById("score").textContent=score;
     document.getElementById("bestScore").textContent=bestScore;
