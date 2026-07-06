@@ -441,6 +441,27 @@ group.position.set(
     scene.add(group);
 
 }
+
+// ======================================
+// SHIFTVIX 3.1 Environment Manager
+// ======================================
+
+const EnvironmentManager = {
+
+    fog: null,
+    meteors: [],
+    lightning: [],
+    solarWind: [],
+
+    update(dt, sectorProgress){
+
+    },
+
+    reset(){
+
+    }
+
+};
     
 let journeyDistance = Number(localStorage.getItem("shiftvixJourneyDistance") || 0);
 // V2.1: saved journeys always resume at the beginning of the unlocked sector,
