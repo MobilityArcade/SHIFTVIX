@@ -448,18 +448,237 @@ group.position.set(
 
 const EnvironmentManager = {
 
-    fog: null,
+    fog: [],
     meteors: [],
     lightning: [],
     solarWind: [],
 
-    update(dt, sectorProgress){
+    initialized:false,
+
+    update(dt, progress){
+
+        if(!this.initialized){
+            this.createFog();
+            this.createMeteorField();
+            this.createSolarWind();
+            this.initialized=true;
+        }
+
+        this.updateFog(progress);
+        this.updateMeteorField(dt,progress);
+        this.updateSolarWind(dt,progress);
 
     },
 
     reset(){
 
+        this.fog.forEach(f=>scene.remove(f));
+        this.meteors.forEach(m=>scene.remove(m));
+        this.solarWind.forEach(s=>scene.remove(s));
+
+        this.fog=[];
+        this.meteors=[];
+        this.solarWind=[];
+        this.initialized=false;
+
     }
+
+};
+
+    EnvironmentManager.createFog=function(){
+
+    for(let i=0;i<6;i++){
+
+        const fog=new THREE.Mesh(
+
+            new THREE.SphereGeometry(
+                140,
+                32,
+                32
+            ),
+
+            new THREE.MeshBasicMaterial({
+
+                color:0xffffff,
+
+                transparent:true,
+
+                opacity:.06
+
+            })
+
+        );
+
+        fog.position.set(
+
+            (Math.random()-.5)*700,
+
+            (Math.random()-.5)*400,
+
+            -900-Math.random()*800
+
+        );
+
+        scene.add(fog);
+
+        this.fog.push(fog);
+
+    }
+
+};
+
+    EnvironmentManager.updateFog=function(progress){
+
+    this.fog.forEach(f=>{
+
+        f.position.x-=0.25;
+
+        f.position.y+=0.04;
+
+        if(progress<0.45){
+
+            f.material.opacity=.07;
+
+        }else{
+
+            const fade=
+
+                1-
+                THREE.MathUtils.clamp(
+                    (progress-.45)/.10,
+                    0,
+                    1
+                );
+
+            f.material.opacity=.07*fade;
+
+        }
+
+    });
+
+};
+
+EnvironmentManager.createMeteorField=function(){
+
+    for(let i=0;i<40;i++){
+
+        const meteor=new THREE.Mesh(
+
+            new THREE.SphereGeometry(
+                2,
+                8,
+                8
+            ),
+
+            new THREE.MeshBasicMaterial({
+
+                color:0xffcc66
+
+            })
+
+        );
+
+        meteor.position.set(
+
+            (Math.random()-.5)*900,
+
+            (Math.random()-.5)*500,
+
+            -400-Math.random()*1200
+
+        );
+
+        scene.add(meteor);
+
+        this.meteors.push(meteor);
+
+    }
+
+};
+
+EnvironmentManager.updateMeteorField=function(dt,progress){
+
+    if(progress>.35 && progress<.50){
+
+        this.meteors.forEach(m=>{
+
+            m.position.x-=12*dt*60;
+
+            m.position.y-=5*dt*60;
+
+            if(m.position.x<-600){
+
+                m.position.x=600;
+                m.position.y=Math.random()*500-250;
+
+            }
+
+        });
+
+    }
+
+};
+
+    EnvironmentManager.createSolarWind=function(){
+
+    for(let i=0;i<5;i++){
+
+        const ribbon=new THREE.Mesh(
+
+            new THREE.PlaneGeometry(
+                450,
+                35
+            ),
+
+            new THREE.MeshBasicMaterial({
+
+                color:0x66ccff,
+
+                transparent:true,
+
+                opacity:.05,
+
+                side:THREE.DoubleSide
+
+            })
+
+        );
+
+        ribbon.position.set(
+
+            (Math.random()-.5)*600,
+
+            (Math.random()-.5)*350,
+
+            -700-Math.random()*400
+
+        );
+
+        ribbon.rotation.z=Math.random();
+
+        scene.add(ribbon);
+
+        this.solarWind.push(ribbon);
+
+    }
+
+};
+
+    EnvironmentManager.updateSolarWind=function(dt,progress){
+
+    this.solarWind.forEach((r,i)=>{
+
+        r.rotation.z+=dt*.08;
+
+        r.position.x+=Math.sin(performance.now()*.0002+i)*.3;
+
+        if(progress>.50){
+
+            r.material.opacity*=.985;
+
+        }
+
+    });
 
 };
     
@@ -561,6 +780,7 @@ function enterSector(sectorNumber){
     warpPulse = 1;
     saveJourney();
     playWarpSound();
+    EnvironmentManager.reset();
     buildSectorLandmark();
     showSectorBanner(sectorNumber);
     track("sector_reached",{
@@ -1158,7 +1378,7 @@ function collectBeacon(b){if(b.userData.state!=="active")return;b.userData.state
 
 }if(score>bestScore){bestScore=score;localStorage.setItem("sourceLaneBestScore",String(bestScore));}playCoin(b.userData.tier);showScorePopup("+"+gained);updateHUD();if(navigator.vibrate)navigator.vibrate(4);}
 function updateHUD(){
-    const sectorDistance = getSectorDistance();const cinematicMode =sectorDistance<1800;
+    const sectorDistance = getSectorDistance();const journeyProgress=sectorDistance/getSectorLength(getSector());EnvironmentManager.update(dt,journeyProgress);cinematicMode =sectorDistance<1800;
     document.getElementById("distance").textContent =getSectorRemaining() + "m";
     document.getElementById("found").textContent=foundCount;
     document.getElementById("score").textContent=score;
