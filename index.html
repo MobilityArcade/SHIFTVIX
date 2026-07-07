@@ -1378,14 +1378,14 @@ function collectBeacon(b){if(b.userData.state!=="active")return;b.userData.state
 
 }if(score>bestScore){bestScore=score;localStorage.setItem("sourceLaneBestScore",String(bestScore));}playCoin(b.userData.tier);showScorePopup("+"+gained);updateHUD();if(navigator.vibrate)navigator.vibrate(4);}
 function updateHUD(){
-    const sectorDistance = getSectorDistance();const journeyProgress=sectorDistance/getSectorLength(getSector());EnvironmentManager.update(dt,journeyProgress);cinematicMode =sectorDistance<1800;
-    document.getElementById("distance").textContent =getSectorRemaining() + "m";
-    document.getElementById("found").textContent=foundCount;
-    document.getElementById("score").textContent=score;
-    document.getElementById("bestScore").textContent=bestScore;
-    document.getElementById("combo").textContent=combo+"x";
-}
-function endRun(){
+    document.getElementById("distance").textContent =
+        getSectorRemaining() + "m";
+
+    document.getElementById("found").textContent = foundCount;
+    document.getElementById("score").textContent = score;
+    document.getElementById("bestScore").textContent = bestScore;
+    document.getElementById("combo").textContent = combo + "x";
+}function endRun(){
 
     gameOver = true;
     saveJourney();
@@ -1619,6 +1619,15 @@ const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
 function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){const previousSector=getSector();
 const sectorProgress = getSectorDistance();
+const journeyProgress =
+    sectorProgress /
+    getSectorLength(getSector());
+
+EnvironmentManager.update(
+    dt,
+    journeyProgress
+);
+
 if(landmark){
 
     const sectorDistance = getSectorDistance();
