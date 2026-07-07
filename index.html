@@ -558,35 +558,34 @@ const EnvironmentManager = {
 
 };
 
-EnvironmentManager.createMeteorField=function(){
+EnvironmentManager.createMeteorField = function(){
 
-    for(let i=0;i<40;i++){
+    this.meteorTimer = 0;
+    this.meteorActive = false;
 
-        const meteor=new THREE.Mesh(
+    for(let i=0;i<70;i++){
 
-            new THREE.SphereGeometry(
+        const meteor = new THREE.Mesh(
+
+            new THREE.BoxGeometry(
                 2,
-                8,
-                8
+                2,
+                40
             ),
 
             new THREE.MeshBasicMaterial({
 
-                color:0xffcc66
+                color:0xffddaa,
+
+                transparent:true,
+
+                opacity:0
 
             })
 
         );
 
-        meteor.position.set(
-
-            (Math.random()-.5)*900,
-
-            (Math.random()-.5)*500,
-
-            -400-Math.random()*1200
-
-        );
+        meteor.visible = false;
 
         scene.add(meteor);
 
@@ -596,24 +595,69 @@ EnvironmentManager.createMeteorField=function(){
 
 };
 
-EnvironmentManager.updateMeteorField=function(dt,progress){
+EnvironmentManager.updateMeteorField = function(dt,progress){
 
-    if(progress>.35 && progress<.50){
+    this.meteorTimer += dt;
+
+    // Trigger a shower every 20–40 seconds
+    if(
+        !this.meteorActive &&
+        this.meteorTimer > 20 + Math.random()*20
+    ){
+
+        this.meteorActive = true;
+        this.meteorTimer = 0;
 
         this.meteors.forEach(m=>{
 
-            m.position.x-=12*dt*60;
+            m.visible = true;
 
-            m.position.y-=5*dt*60;
+            m.material.opacity = .85;
 
-            if(m.position.x<-600){
+            m.position.set(
 
-                m.position.x=600;
-                m.position.y=Math.random()*500-250;
+                (Math.random()-.5)*1400,
 
-            }
+                300 + Math.random()*500,
+
+                -1200 - Math.random()*1200
+
+            );
+
+            m.rotation.z =
+                -Math.PI/4;
 
         });
+
+    }
+
+    // Shower lasts about 3 seconds
+    if(this.meteorActive){
+
+        this.meteors.forEach(m=>{
+
+            m.position.x -= 26;
+
+            m.position.y -= 14;
+
+            m.position.z += 18;
+
+            m.material.opacity *= .985;
+
+        });
+
+        if(this.meteorTimer > 3){
+
+            this.meteorActive = false;
+            this.meteorTimer = 0;
+
+            this.meteors.forEach(m=>{
+
+                m.visible = false;
+
+            });
+
+        }
 
     }
 
