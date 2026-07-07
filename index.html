@@ -1617,13 +1617,7 @@ startMusic();
 const title = document.getElementById("gameTitle");
 const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
-function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){const previousSector=getSector();
-const sectorDistance = getSectorDistance();
-
-const sectorLength = getSectorLength(getSector());
-
-const journeyProgress = sectorDistance / sectorLength;
-
+function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){
 const remainingDistance = sectorLength - sectorDistance;
 
 EnvironmentManager.update(
@@ -1755,6 +1749,11 @@ if (landmark) {
 
 }
 
+const previousSector=getSector();
+const sectorDistance = getSectorDistance();
+const sectorLength = getSectorLength(getSector());
+const journeyProgress = sectorDistance / sectorLength;
+                   
 speed =SPEED_START +Math.min(150,sectorDistance * .03);
 distance+=speed*dt*.08;
 journeyDistance=Math.max(journeyDistance,getSectorStartDistance(getSector()));
