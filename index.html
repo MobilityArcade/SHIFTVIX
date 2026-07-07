@@ -1772,12 +1772,12 @@ fogLevels[stage]
 +
 warpAmount*0.0008;
 
-if(cycleDistance>2760){
+if(sectorDistance > sectorLength * 0.92){
 
     const t =
         Math.min(
             1,
-            (cycleDistance-2760)/240
+            (sectorDistance - sectorLength * 0.92) / (sectorLength * 0.08)
         );
 
     scene.fog.density +=
@@ -1937,13 +1937,13 @@ const palettes = [
 
 ];
 
-const stage =
+const colorStage =
 Math.min(
     palettes.length-1,
-   Math.floor(getSectorDistance()/430)
+    Math.floor(journeyProgress * palettes.length)
 );
 
-const palette = palettes[stage];
+const palette = palettes[colorStage];
 
 for(let i=0;i<colors.count;i++){
 
