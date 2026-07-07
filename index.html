@@ -1700,24 +1700,6 @@ function animate(){
         // =====================================
         if(landmark){
 
-            const approach = THREE.MathUtils.smoothstep(
-                journeyProgress,
-                0.00,
-                0.25
-            );
-
-            const flyby = THREE.MathUtils.smoothstep(
-                journeyProgress,
-                0.12,
-                0.72
-            );
-
-            const depart = THREE.MathUtils.smoothstep(
-                journeyProgress,
-                0.65,
-                0.95
-            );
-
             const fade =
 THREE.MathUtils.clamp(
 
@@ -1732,12 +1714,6 @@ THREE.MathUtils.clamp(
            // Planet is already huge.
 // Never animate its size.
 landmark.group.scale.setScalar(1);
-
-            const drift = THREE.MathUtils.smoothstep(
-                journeyProgress,
-                0.55,
-                1.00
-            );
 
 // ======================================
 // CINEMATIC CURVED FLYBY
