@@ -102,7 +102,7 @@ canvas{display:block}
 .scorePopup{position:absolute;left:50%;top:43%;transform:translate(-50%,-50%);z-index:60;pointer-events:none;font-size:26px;font-weight:900;letter-spacing:2px;color:#ffd36a;text-shadow:0 0 12px rgba(255,211,106,.95),0 0 38px rgba(255,120,0,.6);animation:scoreRise .9s ease-out forwards}
 @keyframes scoreRise{0%{opacity:0;transform:translate(-50%,-10%) scale(.8)}18%{opacity:1}100%{opacity:0;transform:translate(-50%,-145%) scale(1.08)}}
 
-#sectorBanner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);z-index:50;pointer-events:none;font-size:clamp(18px,4vw,30px);font-weight:900;letter-spacing:8px;color:#ffd36a;background:rgba(0,0,0,.62);padding:18px 30px;border-radius:18px;border:1px solid rgba(255,211,106,.25);text-shadow:0 0 18px rgba(255,211,106,.9),0 0 55px rgba(255,211,106,.45);box-shadow:0 0 35px rgba(0,0,0,.55);opacity:0;transition:opacity .22s ease,transform .45s ease;}
+#sectorBanner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);z-index:50;pointer-events:none;font-size:clamp(44px,7vw,72px);font-weight:900;letter-spacing:12px;color:#ffd36a;background:rgba(0,0,0,.62);padding:28px 60px;border-radius:26px;border:1px solid rgba(255,211,106,.25);text-shadow:0 0 18px rgba(255,211,106,.9),0 0 55px rgba(255,211,106,.45);box-shadow:0 0 35px rgba(0,0,0,.55);opacity:0;transition:opacity .22s ease,transform .45s ease;}
 #sectorBanner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 #warpFlash{position:absolute;inset:0;z-index:45;pointer-events:none;background:radial-gradient(circle,rgba(255,255,255,.9),rgba(255,211,106,.26),rgba(0,0,0,0) 70%);opacity:0;transition:opacity .28s ease}
 #warpFlash.show{opacity:.82}
@@ -741,16 +741,20 @@ function playWarpSound(){
     osc.stop(now + 1.0);
 }
 
-function showSectorBanner(sectorNumber){
+function showSectorBanner(sectorNumber, showFlash = true){
     const banner = document.getElementById("sectorBanner");
     const flash = document.getElementById("warpFlash");
     if(!banner || !flash) return;
     banner.textContent = "SECTOR " + sectorNumber;
     banner.style.opacity = "";
+    if(showFlash){
+
     flash.classList.add("show");
-    banner.classList.add("show");
+
     setTimeout(()=>flash.classList.remove("show"),320);
-    setTimeout(()=>banner.classList.remove("show"),1200);
+
+}
+    setTimeout(()=>banner.classList.remove("show"),5500);
 }
 
 function enterSector(sectorNumber){
@@ -2196,7 +2200,7 @@ s.material.size =
 
         if(!introSectorBannerShown && introDistance >= 45){
             introSectorBannerShown = true;
-            showSectorBanner(getSector());
+            showSectorBanner(getSector(), false);
         }
 
         title.style.filter = "none";
