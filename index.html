@@ -1757,21 +1757,68 @@ const baseX =
     );
 
 // Final position
+// ======================================
+// CINEMATIC CURVED FLYBY
+// ======================================
+
+const curve = Math.sin(flyby * Math.PI);
+
+const side =
+    landmark.route.startX > 0 ? 1 : -1;
+
+// Main sideways movement
+const baseX =
+THREE.MathUtils.lerp(
+
+    landmark.route.startX,
+
+    landmark.route.endX,
+
+    depart
+
+);
+
+// Push the planet farther away as it grows
+const edgeOffset =
+curve *
+900 *
+side;
+
+// Curved downward arc
+const arcY =
+Math.sin(
+flyby * Math.PI
+) *
+180;
+
+// Camera pass distance
+const arcZ =
+THREE.MathUtils.lerp(
+
+    -2600,
+
+    -150,
+
+    flyby
+
+);
+
 landmark.group.position.x =
-    baseX + (side * growthOffset);
+baseX + edgeOffset;
 
-            landmark.group.position.y = THREE.MathUtils.lerp(
-                landmark.route.startY,
-                landmark.route.endY,
-                depart
-            );
+landmark.group.position.y =
+THREE.MathUtils.lerp(
 
-            landmark.group.position.z =
-            THREE.MathUtils.lerp(
-                -2400,
-                -350,
-                flyby
-            );
+    landmark.route.startY,
+
+    landmark.route.endY,
+
+    depart
+
+) + arcY;
+
+landmark.group.position.z =
+arcZ;
 
             landmark.group.rotation.y +=
                 dt * landmark.spinSpeed;
