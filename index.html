@@ -442,6 +442,59 @@ group.position.set(
 
 }
 
+//==================================================
+// JOURNEY MANAGER
+// SHIFTVIX 4.1
+//==================================================
+
+const JourneyManager={
+
+    progress:0,
+
+    phase:"approach",
+
+    update(dt){
+
+        const total=getSectorLength(getSector());
+
+        const travelled=getSectorDistance();
+
+        this.progress=travelled/total;
+
+        if(this.progress<0.20){
+
+            this.phase="arrival";
+
+        }
+
+        else if(this.progress<0.45){
+
+            this.phase="approach";
+
+        }
+
+        else if(this.progress<0.70){
+
+            this.phase="flyby";
+
+        }
+
+        else if(this.progress<0.90){
+
+            this.phase="departure";
+
+        }
+
+        else{
+
+            this.phase="warp";
+
+        }
+
+    }
+
+};    
+
 // ======================================
 // SHIFTVIX 3.1 Environment Manager
 // ======================================
@@ -1636,10 +1689,12 @@ function animate(){
             1
         );
 
+        JourneyManager.update(dt);
+
         EnvironmentManager.update(
-            dt,
-            journeyProgress
-        );
+        dt,
+        JourneyManager.progress
+);
 
         // =====================================
         // SHIFTVIX 4.0 HERO LANDMARK JOURNEY
