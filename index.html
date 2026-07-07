@@ -1631,106 +1631,127 @@ EnvironmentManager.update(
     journeyProgress
 );
 
-if(landmark){
+if (landmark) {
 
+    const sectorLength = getSectorLength(getSector());
     const sectorDistance = getSectorDistance();
 
-    const t = THREE.MathUtils.clamp(
-        sectorDistance / 1800,
-        0,
-        1
-    );
+    const journeyProgress =
+        THREE.MathUtils.clamp(
+            sectorDistance / sectorLength,
+            0,
+            1
+        );
 
-    const fadeOut = THREE.MathUtils.clamp(
-        (sectorDistance - 1725) / 175,
-        0,
-        1
-    );
+    //---------------------------------
+    // PHASES
+    //---------------------------------
 
-   const smoothT =
-    THREE.MathUtils.smootherstep(
-        t,
-        0,
-        1
-    );
+    const approach =
+        THREE.MathUtils.smoothstep(
+            journeyProgress,
+            0.00,
+            0.25
+        );
 
-const scale =
-    THREE.MathUtils.lerp(
-        0.9,
-        landmark.maxScale,
-        smoothT
-    );
+    const flyby =
+        THREE.MathUtils.smoothstep(
+            journeyProgress,
+            0.25,
+            0.75
+        );
 
-    // =====================================
-// SHIFTVIX 3.0 HERO FLYBY
-// =====================================
+    const depart =
+        THREE.MathUtils.smoothstep(
+            journeyProgress,
+            0.75,
+            1.00
+        );
 
-// Huge cinematic scaling
+    //---------------------------------
+    // SCALE
+    //---------------------------------
 
-landmark.group.scale.setScalar(scale);
+    const scale =
+        THREE.MathUtils.lerp(
+            1.0,
+            landmark.maxScale,
+            flyby
+        );
 
-// Long cinematic fly-by
-landmark.group.position.x =
-    THREE.MathUtils.lerp(
+    landmark.group.scale.setScalar(scale);
 
-        landmark.route.startX,
+    //---------------------------------
+    // POSITION
+    //---------------------------------
 
-        landmark.route.endX,
+    landmark.group.position.x =
+        THREE.MathUtils.lerp(
+            landmark.route.startX,
+            landmark.route.endX,
+            depart
+        );
 
-        smoothT
+    landmark.group.position.y =
+        THREE.MathUtils.lerp(
+            landmark.route.startY,
+            landmark.route.endY,
+            depart
+        );
 
-    );
+    landmark.group.position.z =
+        THREE.MathUtils.lerp(
+            -2400,
+            -650,
+            flyby
+        );
 
-landmark.group.position.y =
-    THREE.MathUtils.lerp(
+    //---------------------------------
+    // ROTATION
+    //---------------------------------
 
-        landmark.route.startY,
+    landmark.group.rotation.y +=
+        dt * landmark.spinSpeed;
 
-        landmark.route.endY,
+    landmark.group.rotation.z =
+        landmark.tilt +
+        Math.sin(distance * 0.00025) * 0.05;
 
-        smoothT
+    //---------------------------------
+    // FADE OUT
+    //---------------------------------
 
-    );
+    const fade =
+        THREE.MathUtils.clamp(
+            (journeyProgress - 0.85) / 0.15,
+            0,
+            1
+        );
 
-// NEVER reaches camera
-landmark.group.position.z =
-    THREE.MathUtils.lerp(
-        -2400,
-        -650,
-        smoothT
-    );
+    landmark.group.traverse(obj => {
 
-// Slow rotation
-landmark.group.rotation.y +=
-    dt *
-    landmark.spinSpeed;
-
-landmark.group.rotation.z =
-    landmark.tilt +
-    Math.sin(distance*0.00025)*0.05;
-
-// Tiny wobble
-
-    landmark.group.traverse(obj=>{
-
-        if(obj.material && obj.material.transparent){
+        if(obj.material){
 
             obj.material.opacity =
-                Math.max(
-                    0,
-                    obj.material.opacity * (1 - fadeOut)
-                );
+                obj.material.opacity *
+                (1 - fade);
 
         }
 
     });
 
-    if(sectorDistance > 1900){
-        
+    //---------------------------------
+    // REMOVE
+    //---------------------------------
+
+    if(journeyProgress >= 1){
+
         scene.remove(landmark.group);
         landmark = null;
 
     }
+
+}
 
 }
 
