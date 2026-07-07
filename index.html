@@ -458,13 +458,11 @@ const EnvironmentManager = {
     update(dt, progress){
 
         if(!this.initialized){
-            this.createFog();
             this.createMeteorField();
             this.createSolarWind();
             this.initialized=true;
         }
 
-        this.updateFog(progress);
         this.updateMeteorField(dt,progress);
         this.updateSolarWind(dt,progress);
 
@@ -472,11 +470,9 @@ const EnvironmentManager = {
 
     reset(){
 
-        this.fog.forEach(f=>scene.remove(f));
         this.meteors.forEach(m=>scene.remove(m));
         this.solarWind.forEach(s=>scene.remove(s));
 
-        this.fog=[];
         this.meteors=[];
         this.solarWind=[];
         this.initialized=false;
@@ -485,79 +481,7 @@ const EnvironmentManager = {
 
 };
 
-    EnvironmentManager.createFog=function(){
-
-    for(let i=0;i<6;i++){
-
-        const fog=new THREE.Mesh(
-
-            new THREE.SphereGeometry(
-                140,
-                32,
-                32
-            ),
-
-            new THREE.MeshBasicMaterial({
-
-                color:0xffffff,
-
-                transparent:true,
-
-                opacity:.06
-
-            })
-
-        );
-
-        fog.position.set(
-
-            (Math.random()-.5)*700,
-
-            (Math.random()-.5)*400,
-
-            -900-Math.random()*800
-
-        );
-
-        scene.add(fog);
-
-        this.fog.push(fog);
-
-    }
-
-};
-
-    EnvironmentManager.updateFog=function(progress){
-
-    this.fog.forEach(f=>{
-
-        f.position.x-=0.25;
-
-        f.position.y+=0.04;
-
-        if(progress<0.45){
-
-            f.material.opacity=.07;
-
-        }else{
-
-            const fade=
-
-                1-
-                THREE.MathUtils.clamp(
-                    (progress-.45)/.10,
-                    0,
-                    1
-                );
-
-            f.material.opacity=.07*fade;
-
-        }
-
-    });
-
-};
-
+   
 EnvironmentManager.createMeteorField = function(){
 
     this.meteorTimer = 0;
@@ -600,10 +524,21 @@ EnvironmentManager.updateMeteorField = function(dt,progress){
     this.meteorTimer += dt;
 
     // Trigger a shower every 20–40 seconds
-    if(
-        !this.meteorActive &&
-        this.meteorTimer > 20 + Math.random()*20
-    ){
+  const sector = getSector();
+
+const meteorSector =
+
+    sector % 3 === 0;
+
+if(
+
+    meteorSector &&
+
+    !this.meteorActive &&
+
+    this.meteorTimer > 8 + Math.random()*6
+
+){
 
         this.meteorActive = true;
         this.meteorTimer = 0;
