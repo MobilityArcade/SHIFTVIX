@@ -1739,12 +1739,26 @@ function animate(){
                 1.00
             );
 
-            landmark.group.position.x =
-            THREE.MathUtils.lerp(
-            landmark.route.startX,
-            landmark.route.endX,
-            drift
-            );
+            // Which side is the planet on?
+const side =
+    landmark.route.startX > 0 ? 1 : -1;
+
+// As the planet grows, push its center farther away
+// so the player flies past the edge instead of the middle.
+const growthOffset =
+    (scale - 1) * 260;
+
+// Normal flyby motion
+const baseX =
+    THREE.MathUtils.lerp(
+        landmark.route.startX,
+        landmark.route.endX,
+        drift
+    );
+
+// Final position
+landmark.group.position.x =
+    baseX + (side * growthOffset);
 
             landmark.group.position.y = THREE.MathUtils.lerp(
                 landmark.route.startY,
