@@ -485,44 +485,25 @@ const EnvironmentManager = {
 
 };
 
-    EnvironmentManager.createFog = function(){
+    EnvironmentManager.createFog=function(){
 
-    const COLORS = [
+    for(let i=0;i<6;i++){
 
-        0xffffff,
-        0x88ccff,
-        0xaa66ff,
-        0xff66cc,
-        0xffcc88
+        const fog=new THREE.Mesh(
 
-    ];
-
-    for(let i=0;i<48;i++){
-
-        const size =
-            80 +
-            Math.random()*260;
-
-        const fog = new THREE.Mesh(
-
-            new THREE.PlaneGeometry(
-                size,
-                size
+            new THREE.SphereGeometry(
+                140,
+                32,
+                32
             ),
 
             new THREE.MeshBasicMaterial({
 
-                color:COLORS[
-                    Math.floor(
-                        Math.random()*COLORS.length
-                    )
-                ],
+                color:0xffffff,
 
                 transparent:true,
-                opacity:0.03,
-                side:THREE.DoubleSide,
-                depthWrite:false,
-                blending:THREE.AdditiveBlending
+
+                opacity:.06
 
             })
 
@@ -530,37 +511,13 @@ const EnvironmentManager = {
 
         fog.position.set(
 
-            (Math.random()-.5)*1800,
+            (Math.random()-.5)*700,
 
-            (Math.random()-.5)*900,
+            (Math.random()-.5)*400,
 
-            -200-Math.random()*2600
+            -900-Math.random()*800
 
         );
-
-        fog.rotation.z =
-            Math.random()*Math.PI;
-
-        fog.userData={
-
-            driftX:
-                (Math.random()-.5)*0.22,
-
-            driftY:
-                (Math.random()-.5)*0.10,
-
-            spin:
-                (Math.random()-.5)*0.0007,
-
-            pulse:
-                Math.random()*Math.PI,
-
-            baseOpacity:
-                0.02+
-                Math.random()*0.03
-
-        };
-
 
         scene.add(fog);
 
@@ -568,78 +525,32 @@ const EnvironmentManager = {
 
     }
 
-}
+};
 
-   EnvironmentManager.updateFog=function(progress){
-
-    const fade =
-
-        1 -
-
-        THREE.MathUtils.clamp(
-
-            (progress-.50)/.20,
-
-            0,
-
-            1
-
-        );
+    EnvironmentManager.updateFog=function(progress){
 
     this.fog.forEach(f=>{
 
-        f.position.z += 2.4;
+        f.position.x-=0.25;
 
-        f.position.x +=
-            f.userData.driftX;
+        f.position.y+=0.04;
 
-        f.position.y +=
-            f.userData.driftY;
+        if(progress<0.45){
 
-        f.rotation.z +=
-            f.userData.spin;
+            f.material.opacity=.07;
 
-        const breathe =
+        }else{
 
-            1 +
+            const fade=
 
-            Math.sin(
+                1-
+                THREE.MathUtils.clamp(
+                    (progress-.45)/.10,
+                    0,
+                    1
+                );
 
-                performance.now()*0.00025 +
-
-                f.userData.pulse
-
-            )*0.06;
-
-        f.scale.set(
-
-            breathe,
-
-            breathe,
-
-            1
-
-        );
-
-        f.material.opacity =
-
-            f.userData.baseOpacity *
-
-            fade;
-
-        if(f.position.z>120){
-
-            f.position.z=
-
-                -2600;
-
-            f.position.x=
-
-                (Math.random()-.5)*1800;
-
-            f.position.y=
-
-                (Math.random()-.5)*900;
+            f.material.opacity=.07*fade;
 
         }
 
