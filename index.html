@@ -1709,14 +1709,14 @@ function animate(){
 
             const flyby = THREE.MathUtils.smoothstep(
                 journeyProgress,
-                0.18,
-                0.58
+                0.12,
+                0.72
             );
 
             const depart = THREE.MathUtils.smoothstep(
                 journeyProgress,
-                0.50,
-                0.82
+                0.65,
+                0.95
             );
 
             const fade = THREE.MathUtils.clamp(
@@ -1733,10 +1733,17 @@ function animate(){
 
             landmark.group.scale.setScalar(scale);
 
-            landmark.group.position.x = THREE.MathUtils.lerp(
-                landmark.route.startX,
-                landmark.route.endX,
-                depart
+            const drift = THREE.MathUtils.smoothstep(
+                journeyProgress,
+                0.55,
+                1.00
+            );
+
+            landmark.group.position.x =
+            THREE.MathUtils.lerp(
+            landmark.route.startX,
+            landmark.route.endX,
+            drift
             );
 
             landmark.group.position.y = THREE.MathUtils.lerp(
@@ -1745,9 +1752,10 @@ function animate(){
                 depart
             );
 
-            landmark.group.position.z = THREE.MathUtils.lerp(
+            landmark.group.position.z =
+            THREE.MathUtils.lerp(
                 -2400,
-                -650,
+                -350,
                 flyby
             );
 
@@ -1770,7 +1778,7 @@ function animate(){
                 }
             });
 
-            if(journeyProgress >= 0.70){
+            if(journeyProgress >= 0.98){
                 scene.remove(landmark.group);
                 landmark = null;
             }
