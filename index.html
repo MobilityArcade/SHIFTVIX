@@ -220,53 +220,52 @@ const landmarkPresets = [
 // SHIFTVIX 3.0 Landmark Flyby Routes
 // =====================================
 
-const flybyRoutes=[
+const flybyRoutes = [
 
-// RIGHT
+    // RIGHT SIDE
+    {
+        startX:1600,
+        startY:450,
+        endX:-2800,
+        endY:150
+    },
 
-{
-startX:2200,
-startY:650,
-endX:3400,
-endY:900
-},
+    {
+        startX:1600,
+        startY:0,
+        endX:-2800,
+        endY:0
+    },
 
-{
-startX:2200,
-startY:0,
-endX:3400,
-endY:0
-},
+    {
+        startX:1600,
+        startY:-450,
+        endX:-2800,
+        endY:-150
+    },
 
-{
-startX:2200,
-startY:-650,
-endX:3400,
-endY:-900
-},
+    // LEFT SIDE
 
-// LEFT
+    {
+        startX:-1600,
+        startY:450,
+        endX:2800,
+        endY:150
+    },
 
-{
-startX:-2200,
-startY:650,
-endX:-3400,
-endY:900
-},
+    {
+        startX:-1600,
+        startY:0,
+        endX:2800,
+        endY:0
+    },
 
-{
-startX:-2200,
-startY:0,
-endX:-3400,
-endY:0
-},
-
-{
-startX:-2200,
-startY:-650,
-endX:-3400,
-endY:-900
-}
+    {
+        startX:-1600,
+        startY:-450,
+        endX:2800,
+        endY:-150
+    }
 
 ];
     
@@ -297,6 +296,8 @@ function buildSectorLandmark(){
 
     };
 
+    landmark.maxScale = 5.5 + Math.random()*3;
+
     landmark.spinSpeed =
     (Math.random()-.5)*0.04;
 
@@ -320,7 +321,7 @@ landmark.tilt =
         new THREE.Mesh(
 
             new THREE.SphereGeometry(
-                1700,
+                1100,
                   96,
                   96
             ),
@@ -339,7 +340,7 @@ landmark.tilt =
 
     planet.position.set(
 
-        1500,
+        0,
 
         0,
 
@@ -440,59 +441,6 @@ group.position.set(
     scene.add(group);
 
 }
-
-//==================================================
-// JOURNEY MANAGER
-// SHIFTVIX 4.1
-//==================================================
-
-const JourneyManager={
-
-    progress:0,
-
-    phase:"approach",
-
-    update(dt){
-
-        const total=getSectorLength(getSector());
-
-        const travelled=getSectorDistance();
-
-        this.progress=travelled/total;
-
-        if(this.progress<0.20){
-
-            this.phase="arrival";
-
-        }
-
-        else if(this.progress<0.45){
-
-            this.phase="approach";
-
-        }
-
-        else if(this.progress<0.70){
-
-            this.phase="flyby";
-
-        }
-
-        else if(this.progress<0.90){
-
-            this.phase="departure";
-
-        }
-
-        else{
-
-            this.phase="warp";
-
-        }
-
-    }
-
-};    
 
 // ======================================
 // SHIFTVIX 3.1 Environment Manager
@@ -1688,83 +1636,72 @@ function animate(){
             1
         );
 
-        JourneyManager.update(dt);
-
         EnvironmentManager.update(
-        dt,
-        JourneyManager.progress
-);
+            dt,
+            journeyProgress
+        );
 
         // =====================================
         // SHIFTVIX 4.0 HERO LANDMARK JOURNEY
         // =====================================
         if(landmark){
 
-            const fade =
-THREE.MathUtils.clamp(
+            const approach = THREE.MathUtils.smoothstep(
+                journeyProgress,
+                0.00,
+                0.25
+            );
 
-(journeyProgress-.82)/.18,
+            const flyby = THREE.MathUtils.smoothstep(
+                journeyProgress,
+                0.18,
+                0.58
+            );
 
-0,
+            const depart = THREE.MathUtils.smoothstep(
+                journeyProgress,
+                0.50,
+                0.82
+            );
 
-1
+            const fade = THREE.MathUtils.clamp(
+                (journeyProgress - 0.55) / 0.12,
+                0,
+                1
+            );
 
-);
+            const scale = THREE.MathUtils.lerp(
+                1.0,
+                landmark.maxScale,
+                flyby
+            );
 
-           // Planet is already huge.
-// Never animate its size.
-landmark.group.scale.setScalar(1);
+            landmark.group.scale.setScalar(scale);
 
-// ======================================
-// CINEMATIC CURVED FLYBY
-// ======================================
-const drift =
-THREE.MathUtils.smoothstep(
+            landmark.group.position.x = THREE.MathUtils.lerp(
+                landmark.route.startX,
+                landmark.route.endX,
+                depart
+            );
 
-    journeyProgress,
+            landmark.group.position.y = THREE.MathUtils.lerp(
+                landmark.route.startY,
+                landmark.route.endY,
+                depart
+            );
 
-    0.00,
+            landmark.group.position.z = THREE.MathUtils.lerp(
+                -2400,
+                -650,
+                flyby
+            );
 
-    0.80
+            landmark.group.rotation.y +=
+                dt * landmark.spinSpeed;
 
-);
-
-// Planet slowly leaves the scene.
-
-landmark.group.position.x=
-THREE.MathUtils.lerp(
-
-    landmark.route.startX,
-
-    landmark.route.endX,
-
-    drift
-
-);
-
-landmark.group.position.y=
-THREE.MathUtils.lerp(
-
-    landmark.route.startY,
-
-    landmark.route.endY,
-
-    drift
-
-);
-
-// Planet slowly falls behind
-
-landmark.group.position.z=
-THREE.MathUtils.lerp(
-
-    -1400,
-
-    -2600,
-
-    drift
-
-);
+            landmark.group.rotation.z =
+                landmark.tilt +
+                Math.sin(distance * 0.00025) * 0.05;
 
             landmark.group.traverse(obj=>{
                 if(obj.material && obj.material.transparent){
@@ -1778,7 +1715,7 @@ THREE.MathUtils.lerp(
                 }
             });
 
-            if(journeyProgress >= 0.98){
+            if(journeyProgress >= 0.70){
                 scene.remove(landmark.group);
                 landmark = null;
             }
