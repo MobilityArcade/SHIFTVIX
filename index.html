@@ -220,52 +220,53 @@ const landmarkPresets = [
 // SHIFTVIX 3.0 Landmark Flyby Routes
 // =====================================
 
-const flybyRoutes = [
+const flybyRoutes=[
 
-    // RIGHT SIDE
-    {
-        startX:1600,
-        startY:450,
-        endX:-2800,
-        endY:150
-    },
+// RIGHT
 
-    {
-        startX:1600,
-        startY:0,
-        endX:-2800,
-        endY:0
-    },
+{
+startX:2200,
+startY:650,
+endX:3400,
+endY:900
+},
 
-    {
-        startX:1600,
-        startY:-450,
-        endX:-2800,
-        endY:-150
-    },
+{
+startX:2200,
+startY:0,
+endX:3400,
+endY:0
+},
 
-    // LEFT SIDE
+{
+startX:2200,
+startY:-650,
+endX:3400,
+endY:-900
+},
 
-    {
-        startX:-1600,
-        startY:450,
-        endX:2800,
-        endY:150
-    },
+// LEFT
 
-    {
-        startX:-1600,
-        startY:0,
-        endX:2800,
-        endY:0
-    },
+{
+startX:-2200,
+startY:650,
+endX:-3400,
+endY:900
+},
 
-    {
-        startX:-1600,
-        startY:-450,
-        endX:2800,
-        endY:-150
-    }
+{
+startX:-2200,
+startY:0,
+endX:-3400,
+endY:0
+},
+
+{
+startX:-2200,
+startY:-650,
+endX:-3400,
+endY:-900
+}
 
 ];
     
@@ -296,8 +297,6 @@ function buildSectorLandmark(){
 
     };
 
-    landmark.maxScale = 5.5 + Math.random()*3;
-
     landmark.spinSpeed =
     (Math.random()-.5)*0.04;
 
@@ -321,7 +320,7 @@ landmark.tilt =
         new THREE.Mesh(
 
             new THREE.SphereGeometry(
-                1100,
+                1700,
                   96,
                   96
             ),
@@ -340,7 +339,7 @@ landmark.tilt =
 
     planet.position.set(
 
-        700,
+        1500,
 
         0,
 
@@ -1719,19 +1718,20 @@ function animate(){
                 0.95
             );
 
-            const fade = THREE.MathUtils.clamp(
-                (journeyProgress - 0.55) / 0.12,
-                0,
-                1
-            );
+            const fade =
+THREE.MathUtils.clamp(
 
-            const scale = THREE.MathUtils.lerp(
-                1.0,
-                landmark.maxScale,
-                flyby
-            );
+(journeyProgress-.82)/.18,
 
-            landmark.group.scale.setScalar(scale);
+0,
+
+1
+
+);
+
+           // Planet is already huge.
+// Never animate its size.
+landmark.group.scale.setScalar(1);
 
             const drift = THREE.MathUtils.smoothstep(
                 journeyProgress,
@@ -1742,72 +1742,53 @@ function animate(){
 // ======================================
 // CINEMATIC CURVED FLYBY
 // ======================================
+const drift =
+THREE.MathUtils.smoothstep(
 
-const curve = Math.sin(flyby * Math.PI);
+    journeyProgress,
 
-const side =
-    landmark.route.startX > 0 ? 1 : -1;
+    0.00,
 
-// Main sideways movement
-const baseX =
+    0.80
+
+);
+
+// Planet slowly leaves the scene.
+
+landmark.group.position.x=
 THREE.MathUtils.lerp(
 
     landmark.route.startX,
 
     landmark.route.endX,
 
-    depart
+    drift
 
 );
 
-// Push the planet farther away as it grows
-const edgeOffset =
-curve *
-900 *
-side;
-
-// Curved downward arc
-const arcY =
-Math.sin(
-flyby * Math.PI
-) *
-180;
-
-// Camera pass distance
-const arcZ =
-THREE.MathUtils.lerp(
-
-    -2600,
-
-    -150,
-
-    flyby
-
-);
-
-landmark.group.position.x =
-baseX + edgeOffset;
-
-landmark.group.position.y =
+landmark.group.position.y=
 THREE.MathUtils.lerp(
 
     landmark.route.startY,
 
     landmark.route.endY,
 
-    depart
+    drift
 
-) + arcY;
+);
 
-landmark.group.position.z =
-arcZ;
+// Planet slowly falls behind
 
-            landmark.group.rotation.y +=
-                dt * landmark.spinSpeed;
+landmark.group.position.z=
+THREE.MathUtils.lerp(
 
-            landmark.group.rotation.z =
-                landmark.tilt +
-                Math.sin(distance * 0.00025) * 0.05;
+    -1400,
+
+    -2600,
+
+    drift
+
+);
 
             landmark.group.traverse(obj=>{
                 if(obj.material && obj.material.transparent){
