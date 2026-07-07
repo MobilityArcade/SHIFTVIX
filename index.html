@@ -1618,10 +1618,13 @@ const title = document.getElementById("gameTitle");
 const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
 function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){const previousSector=getSector();
-const sectorProgress = getSectorDistance();
-const journeyProgress =
-    sectorProgress /
-    getSectorLength(getSector());
+const sectorDistance = getSectorDistance();
+
+const sectorLength = getSectorLength(getSector());
+
+const journeyProgress = sectorDistance / sectorLength;
+
+const remainingDistance = sectorLength - sectorDistance;
 
 EnvironmentManager.update(
     dt,
@@ -1731,7 +1734,7 @@ landmark.group.rotation.z =
 
 }
 
-speed=SPEED_START+Math.min(150,sectorProgress*.03);
+speed =SPEED_START +Math.min(150,sectorDistance * .03);
 distance+=speed*dt*.08;
 journeyDistance=Math.max(journeyDistance,getSectorStartDistance(getSector()));
 const nextSector=getSector();
@@ -1741,15 +1744,16 @@ if(nextSector>previousSector){
 if(performance.now()-lastSavedAt>2500){
     saveJourney();
     lastSavedAt=performance.now();
-}spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));const cycleDistance = getSectorDistance();warpAmount = Math.min(
-    cycleDistance / getSectorLength(getSector()),
+}spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));warpAmount =
+Math.min(
+    journeyProgress,
     1
 );
 
 const stage =
 Math.min(
     6,
-    Math.floor(cycleDistance / 430)
+    Math.floor(journeyProgress * 7)
 );
 
 const fogLevels = [
