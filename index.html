@@ -1617,465 +1617,577 @@ startMusic();
 const title = document.getElementById("gameTitle");
 const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
-function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){
-const remainingDistance = sectorLength - sectorDistance;
+function animate(){
 
-EnvironmentManager.update(
-    dt,
-    journeyProgress
-);
+    requestAnimationFrame(animate);
+    updateGamepad();
 
-if (landmark) {
+    const dt = Math.min(clock.getDelta(), .05);
 
-    const sectorLength = getSectorLength(getSector());
-    const sectorDistance = getSectorDistance();
+    if(gameStarted && !gameOver && !paused){
 
-    const journeyProgress =
-        THREE.MathUtils.clamp(
+        const previousSector = getSector();
+
+        let sectorDistance = getSectorDistance();
+        let sectorLength = getSectorLength(getSector());
+        let journeyProgress = THREE.MathUtils.clamp(
             sectorDistance / sectorLength,
             0,
             1
         );
 
-    //---------------------------------
-    // PHASES
-    //---------------------------------
-
-    const approach =
-        THREE.MathUtils.smoothstep(
-            journeyProgress,
-            0.00,
-            0.25
+        EnvironmentManager.update(
+            dt,
+            journeyProgress
         );
 
-    const flyby =
-        THREE.MathUtils.smoothstep(
-            journeyProgress,
-            0.25,
-            0.75
+        // =====================================
+        // SHIFTVIX 4.0 HERO LANDMARK JOURNEY
+        // =====================================
+        if(landmark){
+
+            const approach = THREE.MathUtils.smoothstep(
+                journeyProgress,
+                0.00,
+                0.25
+            );
+
+            const flyby = THREE.MathUtils.smoothstep(
+                journeyProgress,
+                0.18,
+                0.58
+            );
+
+            const depart = THREE.MathUtils.smoothstep(
+                journeyProgress,
+                0.50,
+                0.82
+            );
+
+            const fade = THREE.MathUtils.clamp(
+                (journeyProgress - 0.55) / 0.12,
+                0,
+                1
+            );
+
+            const scale = THREE.MathUtils.lerp(
+                1.0,
+                landmark.maxScale,
+                flyby
+            );
+
+            landmark.group.scale.setScalar(scale);
+
+            landmark.group.position.x = THREE.MathUtils.lerp(
+                landmark.route.startX,
+                landmark.route.endX,
+                depart
+            );
+
+            landmark.group.position.y = THREE.MathUtils.lerp(
+                landmark.route.startY,
+                landmark.route.endY,
+                depart
+            );
+
+            landmark.group.position.z = THREE.MathUtils.lerp(
+                -2400,
+                -650,
+                flyby
+            );
+
+            landmark.group.rotation.y +=
+                dt * landmark.spinSpeed;
+
+            landmark.group.rotation.z =
+                landmark.tilt +
+                Math.sin(distance * 0.00025) * 0.05;
+
+            landmark.group.traverse(obj=>{
+                if(obj.material && obj.material.transparent){
+                    if(obj.userData.baseOpacity === undefined){
+                        obj.userData.baseOpacity = obj.material.opacity;
+                    }
+
+                    obj.material.opacity =
+                        obj.userData.baseOpacity *
+                        (1 - fade);
+                }
+            });
+
+            if(journeyProgress >= 0.70){
+                scene.remove(landmark.group);
+                landmark = null;
+            }
+
+        }
+
+        speed =
+            SPEED_START +
+            Math.min(
+                150,
+                sectorDistance * .03
+            );
+
+        distance += speed * dt * .08;
+
+        journeyDistance = Math.max(
+            journeyDistance,
+            getSectorStartDistance(getSector())
         );
 
-    const depart =
-        THREE.MathUtils.smoothstep(
-            journeyProgress,
-            0.75,
-            1.00
-        );
+        const nextSector = getSector();
 
-    //---------------------------------
-    // SCALE
-    //---------------------------------
+        if(nextSector > previousSector){
+            enterSector(nextSector);
+        }
 
-    const scale =
-        THREE.MathUtils.lerp(
-            1.0,
-            landmark.maxScale,
-            flyby
-        );
-
-    landmark.group.scale.setScalar(scale);
-
-    //---------------------------------
-    // POSITION
-    //---------------------------------
-
-    landmark.group.position.x =
-        THREE.MathUtils.lerp(
-            landmark.route.startX,
-            landmark.route.endX,
-            depart
-        );
-
-    landmark.group.position.y =
-        THREE.MathUtils.lerp(
-            landmark.route.startY,
-            landmark.route.endY,
-            depart
-        );
-
-    landmark.group.position.z =
-        THREE.MathUtils.lerp(
-            -2400,
-            -650,
-            flyby
-        );
-
-    //---------------------------------
-    // ROTATION
-    //---------------------------------
-
-    landmark.group.rotation.y +=
-        dt * landmark.spinSpeed;
-
-    landmark.group.rotation.z =
-        landmark.tilt +
-        Math.sin(distance * 0.00025) * 0.05;
-
-    //---------------------------------
-    // FADE OUT
-    //---------------------------------
-
-    const fade =
-        THREE.MathUtils.clamp(
-            (journeyProgress - 0.85) / 0.15,
+        // Recalculate after distance and sector changes.
+        sectorDistance = getSectorDistance();
+        sectorLength = getSectorLength(getSector());
+        journeyProgress = THREE.MathUtils.clamp(
+            sectorDistance / sectorLength,
             0,
             1
         );
 
-    landmark.group.traverse(obj => {
+        if(performance.now() - lastSavedAt > 2500){
+            saveJourney();
+            lastSavedAt = performance.now();
+        }
 
-        if(obj.material){
+        spawnTimer -= dt;
 
-            obj.material.opacity =
-                obj.material.opacity *
-                (1 - fade);
+        if(spawnTimer <= 0){
+            spawnTimer = .54 + Math.random() * .26;
+            spawnWave();
+        }
+
+        if(runStarted){
+            breakTimer += dt;
+
+            if(breakTimer > BREAK_GRACE){
+                takeStrike();
+            }
+        }
+
+        camera.position.x +=
+            (targetX - camera.position.x) *
+            (1 - Math.pow(.0009, dt));
+
+        camera.position.y +=
+            (targetY - camera.position.y) *
+            (1 - Math.pow(.0009, dt));
+
+        warpAmount = Math.min(
+            journeyProgress,
+            1
+        );
+
+        const stage = Math.min(
+            6,
+            Math.floor(journeyProgress * 7)
+        );
+
+        const fogLevels = [
+            0.0011,
+            0.0013,
+            0.0016,
+            0.0019,
+            0.0023,
+            0.0028,
+            0.0033,
+            0.0040
+        ];
+
+        scene.fog.density =
+            fogLevels[stage] +
+            warpAmount * 0.0008;
+
+        if(sectorDistance > sectorLength * 0.92){
+
+            const t = Math.min(
+                1,
+                (sectorDistance - sectorLength * 0.92) /
+                (sectorLength * 0.08)
+            );
+
+            scene.fog.density += t * 0.0025;
 
         }
 
-    });
+        const atmosphereColors = [
+            0x000000,
+            0x061221,
+            0x15092d,
+            0x2b0038,
+            0x442100,
+            0x5b1800,
+            0x330000,
+            0xffffff
+        ];
 
-    //---------------------------------
-    // REMOVE
-    //---------------------------------
+        scene.fog.color.setHex(
+            atmosphereColors[stage]
+        );
 
-    if(journeyProgress >= 1){
+        camera.lookAt(
+            camera.position.x * 0.995,
+            camera.position.y * 0.995,
+            -500
+        );
 
-        scene.remove(landmark.group);
-        landmark = null;
+        warpPulse = Math.max(
+            0,
+            warpPulse - dt * 1.25
+        );
+
+        let targetFov =
+            70 +
+            warpAmount * 11 +
+            warpPulse * 12 +
+            Math.sin(distance * 0.004) *
+            warpAmount *
+            0.6;
+
+        camera.fov = targetFov;
+        camera.updateProjectionMatrix();
+
+        beacons.forEach(b=>{
+
+            if(b.userData.state === "active"){
+
+                b.position.z += speed * dt;
+                b.lookAt(camera.position);
+
+                const dz = Math.abs(
+                    b.position.z - camera.position.z
+                );
+
+                const dxy = Math.hypot(
+                    b.position.x - camera.position.x,
+                    b.position.y - camera.position.y
+                );
+
+                if(dz < 42 && dxy < COLLECT_RADIUS){
+                    collectBeacon(b);
+                }
+
+                if(b.position.z > NEAR_Z + 60){
+                    b.userData.state = "missed";
+                }
+
+            }
+
+            if(
+                b.userData.state === "collected" ||
+                b.userData.state === "missed"
+            ){
+
+                b.userData.fade -= dt * 2.8;
+
+                const f = Math.max(
+                    0,
+                    b.userData.fade
+                );
+
+                b.userData.core.material.transparent = true;
+                b.userData.core.material.opacity = f;
+
+                b.userData.glow.material.opacity =
+                    f *
+                    (
+                        0.09 +
+                        warpAmount * 0.18
+                    );
+
+                b.scale.setScalar(
+                    Math.max(.001, f)
+                );
+
+            }
+
+        });
+
+        for(let i = beacons.length - 1; i >= 0; i--){
+
+            const b = beacons[i];
+
+            if(
+                (
+                    b.userData.state === "collected" ||
+                    b.userData.state === "missed"
+                ) &&
+                b.userData.fade <= 0
+            ){
+                scene.remove(b);
+                beacons.splice(i, 1);
+            }
+
+        }
+
+        stars.forEach(s=>{
+
+            const pos = s.geometry.attributes.position;
+            const speedMultiplier = 1 + warpAmount * 7;
+            const stretch = 1 + warpAmount * 5;
+
+            for(let i = 0; i < pos.count; i++){
+
+                const x = pos.getX(i);
+                const y = pos.getY(i);
+
+                const edge = Math.min(
+                    1,
+                    Math.hypot(x,y) / 220
+                );
+
+                const edgeBoost =
+                    1 +
+                    edge *
+                    warpAmount *
+                    3.0;
+
+                let z =
+                    pos.getZ(i) +
+                    speed *
+                    dt *
+                    speedMultiplier *
+                    edgeBoost;
+
+                if(z > 90){
+                    z =
+                        -1150 -
+                        Math.random() * 250;
+                }
+
+                pos.setXYZ(
+                    i,
+                    x,
+                    y,
+                    z
+                );
+
+            }
+
+            pos.needsUpdate = true;
+
+            const colors = s.geometry.attributes.color;
+
+            const palettes = [
+
+                [
+                    new THREE.Color(0xffffff),
+                    new THREE.Color(0x777777),
+                    new THREE.Color(0x55ccff),
+                    new THREE.Color(0xff66cc),
+                    new THREE.Color(0x5d3dff),
+                    new THREE.Color(0xff8800)
+                ],
+
+                [
+                    new THREE.Color(0xffffff),
+                    new THREE.Color(0x99ddff),
+                    new THREE.Color(0x55ccff),
+                    new THREE.Color(0xaa66ff),
+                    new THREE.Color(0xff66cc),
+                    new THREE.Color(0x777777)
+                ],
+
+                [
+                    new THREE.Color(0xffffff),
+                    new THREE.Color(0xaa66ff),
+                    new THREE.Color(0x55ccff),
+                    new THREE.Color(0xff66cc),
+                    new THREE.Color(0x8844ff),
+                    new THREE.Color(0x777777)
+                ],
+
+                [
+                    new THREE.Color(0xffaa33),
+                    new THREE.Color(0xff8800),
+                    new THREE.Color(0xffffff),
+                    new THREE.Color(0xaa66ff),
+                    new THREE.Color(0xff66cc),
+                    new THREE.Color(0x55ccff)
+                ],
+
+                [
+                    new THREE.Color(0xff4444),
+                    new THREE.Color(0xff8844),
+                    new THREE.Color(0xffcc66),
+                    new THREE.Color(0xffffff),
+                    new THREE.Color(0xaa66ff),
+                    new THREE.Color(0x777777)
+                ],
+
+                [
+                    new THREE.Color(0xffee66),
+                    new THREE.Color(0xffffff),
+                    new THREE.Color(0xffcc66),
+                    new THREE.Color(0x55ccff),
+                    new THREE.Color(0xaa66ff),
+                    new THREE.Color(0xff8844)
+                ],
+
+                [
+                    new THREE.Color(0xffffff),
+                    new THREE.Color(0xffffff),
+                    new THREE.Color(0xffeeaa),
+                    new THREE.Color(0x99ddff),
+                    new THREE.Color(0xaa66ff),
+                    new THREE.Color(0xffcc66)
+                ]
+
+            ];
+
+            const colorStage = Math.min(
+                palettes.length - 1,
+                Math.floor(journeyProgress * palettes.length)
+            );
+
+            const palette = palettes[colorStage];
+
+            for(let i = 0; i < colors.count; i++){
+
+                const target =
+                    palette[i % palette.length];
+
+                colors.setXYZ(
+                    i,
+                    THREE.MathUtils.lerp(
+                        colors.getX(i),
+                        target.r,
+                        0.01
+                    ),
+                    THREE.MathUtils.lerp(
+                        colors.getY(i),
+                        target.g,
+                        0.01
+                    ),
+                    THREE.MathUtils.lerp(
+                        colors.getZ(i),
+                        target.b,
+                        0.01
+                    )
+                );
+
+            }
+
+            colors.needsUpdate = true;
+
+            const warpSize =
+                1.3 +
+                warpAmount * 5;
+
+            const warpOpacity =
+                0.60 +
+                warpAmount * 0.22;
+
+            s.material.size = warpSize * stretch;
+
+            s.material.opacity = Math.min(
+                1,
+                warpOpacity + warpPulse * .28
+            );
+
+            camera.rotation.z =
+                Math.sin(distance * 0.0015) *
+                warpAmount *
+                0.004;
+
+        });
+
+        updateHUD();
 
     }
 
-}
+    if(gameStarted && !gameOver){
 
-}
+        introScale +=
+            (1 - introScale) *
+            dt *
+            0.6;
 
-const previousSector=getSector();
-const sectorDistance = getSectorDistance();
-const sectorLength = getSectorLength(getSector());
-const journeyProgress = sectorDistance / sectorLength;
-                   
-speed =SPEED_START +Math.min(150,sectorDistance * .03);
-distance+=speed*dt*.08;
-journeyDistance=Math.max(journeyDistance,getSectorStartDistance(getSector()));
-const nextSector=getSector();
-if(nextSector>previousSector){
-    enterSector(nextSector);
-}
-if(performance.now()-lastSavedAt>2500){
-    saveJourney();
-    lastSavedAt=performance.now();
-}spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));warpAmount =
-Math.min(
-    journeyProgress,
-    1
-);
+        beacons.forEach(b=>{
+            if(b.userData.state === "active"){
+                b.scale.lerp(
+                    new THREE.Vector3(
+                        introScale,
+                        introScale,
+                        introScale
+                    ),
+                    0.08
+                );
+            }
+        });
 
-const stage =
-Math.min(
-    6,
-    Math.floor(journeyProgress * 7)
-);
+        introCameraZ +=
+            (TARGET_CAMERA_Z - introCameraZ) *
+            dt *
+            0.18;
 
-const fogLevels = [
-0.0011,
-0.0013,
-0.0016,
-0.0019,
-0.0023,
-0.0028,
-0.0033,
-0.0040
-];
+        camera.position.z = introCameraZ;
 
-scene.fog.density =
-fogLevels[stage]
-+
-warpAmount*0.0008;
+        camera.position.x +=
+            (Math.random() - 0.5) *
+            warpAmount *
+            0.12;
 
-if(sectorDistance > sectorLength * 0.92){
+        camera.position.y +=
+            (Math.random() - 0.5) *
+            warpAmount *
+            0.12;
 
-    const t =
-        Math.min(
-            1,
-            (sectorDistance - sectorLength * 0.92) / (sectorLength * 0.08)
+        camera.position.z =
+            introCameraZ -
+            Math.pow(warpAmount, 1.6) *
+            5;
+
+        const introDelay = 24;
+        const introLength = 55;
+
+        const introDistance = Math.max(
+            0,
+            distance - runBaseDistance
         );
 
-    scene.fog.density +=
-        t*0.0025;
+        const rawIntro =
+            Math.max(
+                0,
+                introDistance - introDelay
+            ) / introLength;
 
-}
-const atmosphereColors = [
-0x000000,
-0x061221,
-0x15092d,
-0x2b0038,
-0x442100,
-0x5b1800,
-0x330000,
-0xffffff
-];
-
-scene.fog.color.setHex(
-atmosphereColors[stage]
-);
-
-camera.lookAt(
-
-camera.position.x * 0.995,
-
-camera.position.y * 0.995,
-
--500
-
-);warpPulse=Math.max(0,warpPulse-dt*1.25);
-let targetFov =
-70
-+
-warpAmount*11
-+
-warpPulse*12
-+
-Math.sin(distance*0.004)
-*
-warpAmount
-*
-0.6;
-
-
-camera.fov = targetFov;
-camera.updateProjectionMatrix();beacons.forEach(b=>{if(b.userData.state==="active"){b.position.z+=speed*dt;b.lookAt(camera.position);const dz=Math.abs(b.position.z-camera.position.z),dxy=Math.hypot(b.position.x-camera.position.x,b.position.y-camera.position.y);if(dz<42&&dxy<COLLECT_RADIUS)collectBeacon(b);if(b.position.z>NEAR_Z+60)b.userData.state="missed";}if(b.userData.state==="collected"||b.userData.state==="missed"){b.userData.fade-=dt*2.8;const f=Math.max(0,b.userData.fade);b.userData.core.material.transparent=true;b.userData.core.material.opacity=f;b.userData.glow.material.opacity =
-f * (
-0.09 +
-warpAmount * 0.18
-);b.scale.setScalar(Math.max(.001,f));}});for(let i=beacons.length-1;i>=0;i--){const b=beacons[i];if((b.userData.state==="collected"||b.userData.state==="missed")&&b.userData.fade<=0){scene.remove(b);beacons.splice(i,1);}};stars.forEach(s=>{const pos = s.geometry.attributes.position;const speedMultiplier =1 + warpAmount * 7;const stretch =1 + warpAmount * 5;for(let i=0;i<pos.count;i++){
-
-    const x = pos.getX(i);
-    const y = pos.getY(i);
-
-    // Distance from the center of the playfield
-    const edge =
-        Math.min(
-            1,
-            Math.hypot(x,y)/220
+        const introProgress = Math.min(
+            rawIntro,
+            1
         );
 
-    // Outer stars travel faster than center stars
-    const edgeBoost =
-        1 +
-        edge *
-        warpAmount *
-        3.0;
+        const fade = 1 - introProgress;
 
-    let z =
-        pos.getZ(i)
-        +
-        speed *
-        dt *
-        speedMultiplier *
-        edgeBoost;
+        title.style.transform =
+            "translate(-50%,-50%)";
 
-    if(z>90){
+        shift.style.opacity = fade;
+        vix.style.opacity = fade;
 
-        z =
-            -1150 -
-            Math.random()*250;
+        shift.style.transform =
+            `translateY(${-introProgress * 320}px)`;
+
+        vix.style.transform =
+            `translateY(${introProgress * 320}px)`;
+
+        if(!introSectorBannerShown && introDistance >= 45){
+            introSectorBannerShown = true;
+            showSectorBanner(getSector());
+        }
+
+        title.style.filter = "none";
 
     }
 
-    pos.setXYZ(
-    i,
-    x,
-    y,
-    z
-);
-}pos.needsUpdate=true;const colors = s.geometry.attributes.color;
+    renderer.render(scene,camera);
 
-const palettes = [
-
-    [
-        new THREE.Color(0xffffff),
-        new THREE.Color(0x777777),
-        new THREE.Color(0x55ccff),
-        new THREE.Color(0xff66cc),
-        new THREE.Color(0x5d3dff),
-        new THREE.Color(0xff8800)
-    ],
-
-    [
-        new THREE.Color(0xffffff),
-        new THREE.Color(0x99ddff),
-        new THREE.Color(0x55ccff),
-        new THREE.Color(0xaa66ff),
-        new THREE.Color(0xff66cc),
-        new THREE.Color(0x777777)
-    ],
-
-    [
-        new THREE.Color(0xffffff),
-        new THREE.Color(0xaa66ff),
-        new THREE.Color(0x55ccff),
-        new THREE.Color(0xff66cc),
-        new THREE.Color(0x8844ff),
-        new THREE.Color(0x777777)
-    ],
-
-    [
-        new THREE.Color(0xffaa33),
-        new THREE.Color(0xff8800),
-        new THREE.Color(0xffffff),
-        new THREE.Color(0xaa66ff),
-        new THREE.Color(0xff66cc),
-        new THREE.Color(0x55ccff)
-    ],
-
-    [
-        new THREE.Color(0xff4444),
-        new THREE.Color(0xff8844),
-        new THREE.Color(0xffcc66),
-        new THREE.Color(0xffffff),
-        new THREE.Color(0xaa66ff),
-        new THREE.Color(0x777777)
-    ],
-
-    [
-        new THREE.Color(0xffee66),
-        new THREE.Color(0xffffff),
-        new THREE.Color(0xffcc66),
-        new THREE.Color(0x55ccff),
-        new THREE.Color(0xaa66ff),
-        new THREE.Color(0xff8844)
-    ],
-
-    [
-        new THREE.Color(0xffffff),
-        new THREE.Color(0xffffff),
-        new THREE.Color(0xffeeaa),
-        new THREE.Color(0x99ddff),
-        new THREE.Color(0xaa66ff),
-        new THREE.Color(0xffcc66)
-    ]
-
-];
-
-const colorStage =
-Math.min(
-    palettes.length-1,
-    Math.floor(journeyProgress * palettes.length)
-);
-
-const palette = palettes[colorStage];
-
-for(let i=0;i<colors.count;i++){
-
-    const target =
-        palette[i % palette.length];
-
-    colors.setXYZ(
-
-        i,
-
-        THREE.MathUtils.lerp(
-            colors.getX(i),
-            target.r,
-            0.01
-        ),
-
-        THREE.MathUtils.lerp(
-            colors.getY(i),
-            target.g,
-            0.01
-        ),
-
-        THREE.MathUtils.lerp(
-            colors.getZ(i),
-            target.b,
-            0.01
-        )
-
-    );
-
-}
-
-colors.needsUpdate = true;
-// Stretch stars into streaks
-
-// Warp Drive 2.1
-
-const warpSize =
-1.3 +
-warpAmount * 5;
-
-const warpOpacity =
-0.60 +
-warpAmount * 0.22;
-
-s.material.size = warpSize * stretch;
-
-s.material.opacity = Math.min(1, warpOpacity + warpPulse*.28);camera.rotation.z =
-Math.sin(distance * 0.0015)
-*
-warpAmount
-*
-0.004;});updateHUD();}if(gameStarted&&!gameOver){
-introScale += (1-introScale)*dt*0.6;beacons.forEach(b=>{if(b.userData.state==="active") b.scale.lerp(new THREE.Vector3(introScale,introScale,introScale),0.08);});
-introCameraZ += (TARGET_CAMERA_Z-introCameraZ)*dt*0.18;
-camera.position.z=introCameraZ;camera.position.x +=
-(Math.random()-0.5)
-*
-warpAmount
-*
-0.12;
-
-camera.position.y +=
-(Math.random()-0.5)
-*
-warpAmount
-*
-0.12;
-
-camera.position.z =
-introCameraZ
--
-Math.pow(warpAmount,1.6)
-*
-5;
-
-const title = document.getElementById("gameTitle");
-
-const introDelay = 24;   // logo holds still first
-const introLength = 55;  // then separates
-
-const introDistance = Math.max(0, distance - runBaseDistance);
-const rawIntro =
-    Math.max(0, introDistance - introDelay) / introLength;
-
-const introProgress =
-    Math.min(rawIntro, 1);
-
-const fade = 1 - introProgress;
-
-title.style.transform =
-    "translate(-50%,-50%)";
-
-shift.style.opacity = fade;
-vix.style.opacity = fade;
-
-shift.style.transform =
-    `translateY(${-introProgress * 320}px)`;
-
-vix.style.transform =
-    `translateY(${introProgress * 320}px)`;
-
-if(!introSectorBannerShown && introDistance>=45){
-introSectorBannerShown=true;
-showSectorBanner(getSector());
-}
-
-const glow = fade * 10;
-
-title.style.filter = "none";
-  
-renderer.render(scene,camera);
 }
 
 // ---------------------------
