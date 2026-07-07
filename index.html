@@ -340,7 +340,7 @@ landmark.tilt =
 
     planet.position.set(
 
-        0,
+        700,
 
         0,
 
@@ -1739,24 +1739,6 @@ function animate(){
                 1.00
             );
 
-            // Which side is the planet on?
-const side =
-    landmark.route.startX > 0 ? 1 : -1;
-
-// As the planet grows, push its center farther away
-// so the player flies past the edge instead of the middle.
-const growthOffset =
-    (scale - 1) * 450;
-
-// Normal flyby motion
-const baseX =
-    THREE.MathUtils.lerp(
-        landmark.route.startX,
-        landmark.route.endX,
-        drift
-    );
-
-// Final position
 // ======================================
 // CINEMATIC CURVED FLYBY
 // ======================================
