@@ -892,46 +892,36 @@ track("run_ended",{
         document.getElementById("roundComplete");
 
     card.innerHTML = `
-    <div class="resultsCard">
+<div class="resultsCard">
 
-        <div class="big">RUN COMPLETE</div>
+    <div class="big">RUN COMPLETE</div>
 
-        <div class="statLine">
-            <span>DISTANCE</span>
-            <span>${Math.floor(distance)}m</span>
-        </div>
-
-        <div class="statLine">
-            <span>BEST</span>
-            <span>${Math.floor(bestDistance)}m ${isNewBestDistance ? "⭐" : ""}</span>
-        </div>
-
-        <div class="statLine">
-            <span>SOURCES</span>
-            <span>${foundCount}</span>
-        </div>
-
-        <div class="statLine">
-            <span>BEST</span>
-            <span>${finalBestSources} ${isNewBestSources ? "⭐" : ""}</span>
-        </div>
-
-        <div class="statLine">
-            <span>SCORE</span>
-            <span>${score}</span>
-        </div>
-
-        <div class="statLine">
-            <span>BEST</span>
-            <span>${bestScore} ${isNewBestScore ? "⭐" : ""}</span>
-        </div>
-
-        <div class="tapContinue">
-            TAP TO RESTART
-        </div>
-
+    <div class="statLine">
+        <span>DISTANCE</span>
+        <span>${Math.floor(distance)}m</span>
     </div>
-    `;
+
+    <div class="statLine">
+        <span>LEVEL</span>
+        <span>${level}</span>
+    </div>
+
+    <div class="statLine">
+        <span>BEST DISTANCE</span>
+        <span>${Math.floor(bestDistance)}m ${isNewBestDistance ? "⭐" : ""}</span>
+    </div>
+
+    <div class="statLine">
+        <span>BEST LEVEL</span>
+        <span>${bestLevel}</span>
+    </div>
+
+    <div class="tapContinue">
+        TAP TO RESTART
+    </div>
+
+</div>
+`;
 
     card.style.display = "grid";
     card.onclick = resetRun;
