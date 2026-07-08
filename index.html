@@ -52,32 +52,29 @@ canvas{display:block}
 #shift{display:block;color:transparent;font-size:clamp(96px,13vw,132px);font-weight:900;letter-spacing:4px;-webkit-text-stroke:4px #ffd36a;}
 #vix{display:block;margin-top:-0001px;color:transparent;-webkit-text-fill-color:transparent;-webkit-text-stroke:4px #ffd36a;font-size:clamp(112px,16vw,160px);font-weight:900;letter-spacing:4px;}
 @media (max-width:768px){#shift{font-size:clamp(76px,11vw,108px);}#vix{font-size:clamp(88px,13vw,128px);margin-top:14px;}}
-#hud{
-    position:absolute;
-    top:82px;
-    left:50%;
-    transform:translateX(-50%);
-    text-align:center;
-    z-index:20;
-    pointer-events:none;
+#hud{position:absolute;top:108px;left:50%;transform:translateX(-50%);display:flex;gap:110px;z-index:20;pointer-events:none;}
+    .hudBlock{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
 }
 
-#distanceLabel{
+.hudLabel{
     font-size:15px;
     font-weight:800;
-    letter-spacing:3px;
+    letter-spacing:1.5px;
     color:#ffffff;
-    text-shadow:0 0 12px rgba(255,255,255,.7);
+    text-shadow:
+        0 0 8px rgba(255,255,255,.45);
 }
 
-#distance{
+.hudValue{
     margin-top:4px;
-    font-size:42px;
+    font-size:24px;
     font-weight:900;
     color:#ffffff;
     text-shadow:
-        0 0 18px rgba(255,255,255,.85),
-        0 0 40px rgba(255,255,255,.35);
+        0 0 10px rgba(255,255,255,.5);
 }
 #world{color:#ffd36a;text-shadow:0 0 10px rgba(255,211,106,.65)}
 #strikes{position:absolute;top:52px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:10px;}
@@ -101,24 +98,16 @@ canvas{display:block}
 .tapContinue{margin-top:18px;font-size:12px;letter-spacing:4px;opacity:.78}
 .scorePopup{position:absolute;left:50%;top:43%;transform:translate(-50%,-50%);z-index:60;pointer-events:none;font-size:26px;font-weight:900;letter-spacing:2px;color:#ffd36a;text-shadow:0 0 12px rgba(255,211,106,.95),0 0 38px rgba(255,120,0,.6);animation:scoreRise .9s ease-out forwards}
 @keyframes scoreRise{0%{opacity:0;transform:translate(-50%,-10%) scale(.8)}18%{opacity:1}100%{opacity:0;transform:translate(-50%,-145%) scale(1.08)}}
-
-#sectorBanner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);z-index:50;pointer-events:none;font-size:clamp(44px,7vw,72px);font-weight:900;letter-spacing:12px;color:#ffd36a;background:rgba(0,0,0,.62);padding:28px 60px;border-radius:26px;border:1px solid rgba(255,211,106,.25);text-shadow:0 0 18px rgba(255,211,106,.9),0 0 55px rgba(255,211,106,.45);box-shadow:0 0 35px rgba(0,0,0,.55);opacity:0;transition:opacity .22s ease,transform .45s ease;}
-#sectorBanner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
-#warpFlash{position:absolute;inset:0;z-index:45;pointer-events:none;background:radial-gradient(circle,rgba(255,255,255,.9),rgba(255,211,106,.26),rgba(0,0,0,0) 70%);opacity:0;transition:opacity .28s ease}
-#warpFlash.show{opacity:.82}
-.expeditionButtons{display:flex;gap:12px;justify-content:center;margin-top:18px;flex-wrap:wrap}
-.expeditionBtn{border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(255,255,255,.08);color:#fff;padding:11px 14px;font-size:11px;font-weight:900;letter-spacing:2px;cursor:pointer}
-.expeditionBtn.primary{color:#ffd36a;border-color:rgba(255,211,106,.55);box-shadow:0 0 24px rgba(255,211,106,.12)}
 #pauseText{position:absolute;left:50%;top:calc(50% + 52px);transform:translateX(-50%);z-index:16;font-size:12px;font-weight:900;letter-spacing:4px;color:#ffd36a;text-shadow:0 0 12px rgba(255,211,106,.9);display:none;pointer-events:none}
 </style>
 </head>
 <body>
 <div id="gameTitle"><span id="shift">SHIFT</span><span id="vix">VIX</span></div>
 <div id="strikes"><div class="strikeDot" id="s0"></div><div class="strikeDot" id="s1"></div><div class="strikeDot" id="s2"></div></div>
-<div id="hud"><div id="distanceLabel">DISTANCE</div><div id="distance">2000m</div></div>
+<div id="hud"><div class="hudBlock"><div class="hudLabel">DISTANCE</div><div class="hudValue"> <span id="distance">0</span>m</div></div><div class="hudBlock"><div class="hudLabel">BEST</div><div class="hudValue"><span id="bestDistance">0</span>m</div></div></div>
 <div style="display:none"><span id="world">Distance Run</span>
 <span id="found">0</span><span id="score">0</span><span id="bestScore">0</span><span id="combo">1x</span><div id="signal"></div></div></div>
-<div id="center"></div><div id="pauseText">PAUSED</div><div id="laneLabel">CENTER</div><div id="sectorBanner">SECTOR 1</div><div id="warpFlash"></div><div id="roundComplete"></div>
+<div id="center"></div><div id="pauseText">PAUSED</div><div id="laneLabel">CENTER</div><div id="roundComplete"></div>
 
 <script type="module">
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
@@ -126,552 +115,7 @@ const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x000000,0.0011);
 const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.1,5000);camera.position.set(0,0,48);camera.lookAt(0,0,-500);
 const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);document.body.appendChild(renderer.domElement);
 const LANE_X=[-40,0,40], LANE_Y=[30,0,-30], FAR_Z=-920, NEAR_Z=72, SPEED_START=170, COLLECT_RADIUS=18, TRAIN_GAP=20, BREAK_GRACE=.72;
-function getSectorLength(sectorNumber){
-    if(sectorNumber <= 10){
-        return 1900 + sectorNumber * 100;
-    }
-
-    const seed = Math.sin(sectorNumber * 999) * 10000;
-    const random = seed - Math.floor(seed);
-
-    return 2000 + Math.floor(random * 1001);
-}
-
-function getSectorStartDistance(sectorNumber){
-    let total = 0;
-
-    for(let i=1;i<sectorNumber;i++){
-        total += getSectorLength(i);
-    }
-
-    return total;
-}
-
-
-// =========================================
-// SHIFTVIX 2.2 SECTOR ENVIRONMENTS
-// =========================================
-const sectorThemes = [
-    { planet:0x4da6ff, ring:0xffffff },
-    { planet:0xaa55ff, ring:0xff88ff },
-    { planet:0xffaa33, ring:0xffdd88 },
-    { planet:0x55ffcc, ring:0xffffff },
-    { planet:0xff6699, ring:0xffffff },
-    { planet:0xff4444, ring:0xffaa66 },
-    { planet:0x99ddff, ring:0xffffff }
-];
-
-// ============================
-// SHIFTVIX 3.0 Landmark System
-// ============================
-
-let landmark = null;
-
-const landmarkPresets = [
-
-{
-    type:"gas",
-    color:0x5ca9ff,
-    rings:false,
-    moons:1,
-    fog:true,
-    meteors:false
-},
-
-{
-    type:"saturn",
-    color:0xd6c08d,
-    rings:true,
-    moons:2,
-    fog:false,
-    meteors:true
-},
-
-{
-    type:"twins",
-    color:0x8c6bff,
-    rings:false,
-    moons:0,
-    fog:true,
-    meteors:false
-},
-
-{
-    type:"asteroids",
-    color:0x999999,
-    rings:false,
-    moons:0,
-    fog:false,
-    meteors:true
-},
-
-{
-    type:"nebula",
-    color:0xff66dd,
-    rings:false,
-    moons:0,
-    fog:true,
-    meteors:false
-}
-
-];
-
-// =====================================
-// SHIFTVIX 3.0 Landmark Flyby Routes
-// =====================================
-
-const flybyRoutes = [
-
-    // RIGHT SIDE
-    {
-        startX:1600,
-        startY:450,
-        endX:-2800,
-        endY:150
-    },
-
-    {
-        startX:1600,
-        startY:0,
-        endX:-2800,
-        endY:0
-    },
-
-    {
-        startX:1600,
-        startY:-450,
-        endX:-2800,
-        endY:-150
-    },
-
-    // LEFT SIDE
-
-    {
-        startX:-1600,
-        startY:450,
-        endX:2800,
-        endY:150
-    },
-
-    {
-        startX:-1600,
-        startY:0,
-        endX:2800,
-        endY:0
-    },
-
-    {
-        startX:-1600,
-        startY:-450,
-        endX:2800,
-        endY:-150
-    }
-
-];
-    
-function buildSectorLandmark(){
-
-    if(landmark){
-
-        scene.remove(landmark.group);
-
-    }
-
-    const preset =
-        landmarkPresets[
-            (getSector()-1) %
-            landmarkPresets.length
-        ];
-
-    const group =
-        new THREE.Group();
-
-    landmark={
-
-        group,
-
-        preset,
-
-        objects:[]
-
-    };
-
-    landmark.maxScale = 5.5 + Math.random()*3;
-
-    landmark.spinSpeed =
-    (Math.random()-.5)*0.04;
-
-landmark.tilt =
-    Math.random()*Math.PI*2;
-
-
-    landmark.route =
-    flybyRoutes[
-        Math.floor(
-            Math.random() *
-            flybyRoutes.length
-        )
-    ];
-
-    // ------------------
-    // MAIN PLANET
-    // ------------------
-
-    const planet =
-        new THREE.Mesh(
-
-            new THREE.SphereGeometry(
-                1100,
-                  96,
-                  96
-            ),
-
-            new THREE.MeshBasicMaterial({
-
-                color:preset.color,
-
-                transparent:true,
-
-                opacity:.42
-
-            })
-
-        );
-
-    planet.position.set(
-
-        0,
-
-        0,
-
-        0
-
-    );
-
-    group.add(planet);
-
-    landmark.planet=planet;
-
-group.position.set(
-
-    900,
-
-    120,
-
-    -1700
-
-);
-    
-        if(preset.rings){
-
-        for(let i=0;i<5;i++){
-
-            const ring =
-                new THREE.Mesh(
-
-                    new THREE.RingGeometry(
-
-                        850+i*90,
-
-                        1100+i*120,
-
-                        96
-
-                    ),
-
-                    new THREE.MeshBasicMaterial({
-
-                        color:0xffffff,
-
-                        side:THREE.DoubleSide,
-
-                        transparent:true,
-
-                        opacity:.05+i*.03
-
-                    })
-
-                );
-
-            ring.rotation.x=1.2;
-
-            planet.add(ring);
-
-        }
-
-    }
-
-    for(let i=0;i<preset.moons;i++){
-
-        const moon=
-            new THREE.Mesh(
-
-                new THREE.SphereGeometry(
-                    45,
-                    32,
-                    32
-                ),
-
-                new THREE.MeshBasicMaterial({
-
-                    color:0xffffff,
-
-                    transparent:true,
-
-                    opacity:.55
-
-                })
-
-            );
-
-        moon.position.set(
-
-            1100+i*250,
-
-            -100+i*80,
-
-            -100
-
-        );
-
-        planet.add(moon);
-
-    }
-
-    scene.add(group);
-
-}
-
-// ======================================
-// SHIFTVIX 3.1 Environment Manager
-// ======================================
-
-const EnvironmentManager = {
-
-    fog: [],
-    meteors: [],
-    lightning: [],
-    solarWind: [],
-
-    initialized:false,
-
-    update(dt, progress){
-
-        if(!this.initialized){
-            this.createMeteorField();
-            this.createSolarWind();
-            this.initialized=true;
-        }
-
-        this.updateMeteorField(dt,progress);
-        this.updateSolarWind(dt,progress);
-
-    },
-
-    reset(){
-
-        this.meteors.forEach(m=>scene.remove(m));
-        this.solarWind.forEach(s=>scene.remove(s));
-
-        this.meteors=[];
-        this.solarWind=[];
-        this.initialized=false;
-
-    }
-
-};
-
-   
-EnvironmentManager.createMeteorField = function(){
-
-    this.meteorTimer = 0;
-    this.meteorActive = false;
-
-    for(let i=0;i<70;i++){
-
-        const meteor = new THREE.Mesh(
-
-            new THREE.BoxGeometry(
-                2,
-                2,
-                40
-            ),
-
-            new THREE.MeshBasicMaterial({
-
-                color:0xffddaa,
-
-                transparent:true,
-
-                opacity:0
-
-            })
-
-        );
-
-        meteor.visible = false;
-
-        scene.add(meteor);
-
-        this.meteors.push(meteor);
-
-    }
-
-};
-
-EnvironmentManager.updateMeteorField = function(dt,progress){
-
-    this.meteorTimer += dt;
-
-    // Trigger a shower every 20–40 seconds
-  const sector = getSector();
-
-const meteorSector =
-
-    sector % 3 === 0;
-
-if(
-
-    meteorSector &&
-
-    !this.meteorActive &&
-
-    this.meteorTimer > 8 + Math.random()*6
-
-){
-
-        this.meteorActive = true;
-        this.meteorTimer = 0;
-
-        this.meteors.forEach(m=>{
-
-            m.visible = true;
-
-            m.material.opacity = .85;
-
-            m.position.set(
-
-                (Math.random()-.5)*1400,
-
-                300 + Math.random()*500,
-
-                -1200 - Math.random()*1200
-
-            );
-
-            m.rotation.z =
-                -Math.PI/4;
-
-        });
-
-    }
-
-    // Shower lasts about 3 seconds
-    if(this.meteorActive){
-
-        this.meteors.forEach(m=>{
-
-            m.position.x -= 26;
-
-            m.position.y -= 14;
-
-            m.position.z += 18;
-
-            m.material.opacity *= .985;
-
-        });
-
-        if(this.meteorTimer > 3){
-
-            this.meteorActive = false;
-            this.meteorTimer = 0;
-
-            this.meteors.forEach(m=>{
-
-                m.visible = false;
-
-            });
-
-        }
-
-    }
-
-};
-
-    EnvironmentManager.createSolarWind=function(){
-
-    for(let i=0;i<5;i++){
-
-        const ribbon=new THREE.Mesh(
-
-            new THREE.PlaneGeometry(
-                450,
-                35
-            ),
-
-            new THREE.MeshBasicMaterial({
-
-                color:0x66ccff,
-
-                transparent:true,
-
-                opacity:.05,
-
-                side:THREE.DoubleSide
-
-            })
-
-        );
-
-        ribbon.position.set(
-
-            (Math.random()-.5)*600,
-
-            (Math.random()-.5)*350,
-
-            -700-Math.random()*400
-
-        );
-
-        ribbon.rotation.z=Math.random();
-
-        scene.add(ribbon);
-
-        this.solarWind.push(ribbon);
-
-    }
-
-};
-
-    EnvironmentManager.updateSolarWind=function(dt,progress){
-
-    this.solarWind.forEach((r,i)=>{
-
-        r.rotation.z+=dt*.08;
-
-        r.position.x+=Math.sin(performance.now()*.0002+i)*.3;
-
-        if(progress>.50){
-
-            r.material.opacity*=.985;
-
-        }
-
-    });
-
-};
-    
-let journeyDistance = Number(localStorage.getItem("shiftvixJourneyDistance") || 0);
-// V2.1: saved journeys always resume at the beginning of the unlocked sector,
-// not at the exact crash distance inside that sector.
-let highestSector = Number(localStorage.getItem("shiftvixHighestSector") || 1);
-journeyDistance = getSectorStartDistance(highestSector);
-let laneX=1,laneY=1,targetX=0,targetY=0,score=0,bestScore=Number(localStorage.getItem("sourceLaneBestScore")||0),bestDistance=Number(localStorage.getItem("sourceLaneBestDistance")||0),foundCount=0,combo=1,lastFoundAt=0,distance=journeyDistance,speed=SPEED_START,spawnTimer=0,trainId=0,strikes=0,runStarted=false,gameStarted=false,gameOver=false,breakTimer=0,audioCtx=null;
-let currentSector = getSector();
-let runBaseDistance = distance;
-let lastSavedAt = 0;
-let warpPulse = 0;
-let introSectorBannerShown = false;
+let laneX=1,laneY=1,targetX=0,targetY=0,score=0,bestScore=Number(localStorage.getItem("sourceLaneBestScore")||0),bestDistance=Number(localStorage.getItem("sourceLaneBestDistance")||0),foundCount=0,combo=1,lastFoundAt=0,distance=0,speed=SPEED_START,spawnTimer=0,trainId=0,strikes=0,runStarted=false,gameStarted=false,gameOver=false,breakTimer=0,audioCtx=null;
 let paused=false;
 let milestonesReached = {};
 let sessionRuns = 0;
@@ -686,102 +130,6 @@ const TIERS=[{name:"WHITE",color:0xffffff,value:10,size:3.8,freq:880},{name:"BLU
 function initAudio(){if(audioCtx){if(audioCtx.state!=="running")audioCtx.resume();return;}audioCtx=new (window.AudioContext||window.webkitAudioContext)();}
 function playCoin(tier){if(!audioCtx)return;const now=audioCtx.currentTime,osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type="square";osc.frequency.setValueAtTime(tier.freq,now);osc.frequency.exponentialRampToValueAtTime(tier.freq*1.55,now+.055);gain.gain.setValueAtTime(.0001,now);gain.gain.linearRampToValueAtTime(.018,now+.008);gain.gain.exponentialRampToValueAtTime(.0001,now+.105);osc.connect(gain).connect(audioCtx.destination);osc.start(now);osc.stop(now+.13);if(tier.value>=100){const osc2=audioCtx.createOscillator(),gain2=audioCtx.createGain();osc2.type="sine";osc2.frequency.setValueAtTime(tier.freq*2,now+.035);gain2.gain.setValueAtTime(.0001,now+.035);gain2.gain.linearRampToValueAtTime(.018,now+.045);gain2.gain.exponentialRampToValueAtTime(.0001,now+.16);osc2.connect(gain2).connect(audioCtx.destination);osc2.start(now+.035);osc2.stop(now+.18);}}
 function playStrike(){if(!audioCtx)return;const now=audioCtx.currentTime,osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type="sawtooth";osc.frequency.setValueAtTime(180,now);osc.frequency.exponentialRampToValueAtTime(70,now+.22);gain.gain.setValueAtTime(.0001,now);gain.gain.linearRampToValueAtTime(.05,now+.025);gain.gain.exponentialRampToValueAtTime(.0001,now+.28);osc.connect(gain).connect(audioCtx.destination);osc.start(now);osc.stop(now+.3);}
-function getSector(){
-    let total = 0;
-    let sector = 1;
-
-    while(distance >= total + getSectorLength(sector)){
-        total += getSectorLength(sector);
-        sector++;
-    }
-
-    return sector;
-}
-
-function getSectorDistance(){
-    return Math.floor(distance - getSectorStartDistance(getSector()));
-}
-
-function getSectorRemaining(){
-    return Math.max(
-        0,
-        getSectorLength(getSector()) - getSectorDistance()
-    );
-}
-
-function saveJourney(){
-    currentSector = getSector();
-    highestSector = Math.max(highestSector, currentSector);
-
-    // V2.1: checkpoint save. If you die in Sector 3, Continue starts at
-    // the beginning of Sector 3, not at the crash point.
-    journeyDistance = Math.max(
-        journeyDistance,
-        getSectorStartDistance(highestSector)
-    );
-
-    localStorage.setItem("shiftvixJourneyDistance", String(journeyDistance));
-    localStorage.setItem("shiftvixHighestSector", String(highestSector));
-}
-
-function playWarpSound(){
-    if(!audioCtx) return;
-    const now = audioCtx.currentTime;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(90, now);
-    osc.frequency.exponentialRampToValueAtTime(420, now + .42);
-    osc.frequency.exponentialRampToValueAtTime(70, now + .82);
-    gain.gain.setValueAtTime(.0001, now);
-    gain.gain.linearRampToValueAtTime(.075, now + .06);
-    gain.gain.exponentialRampToValueAtTime(.0001, now + .95);
-    osc.connect(gain).connect(audioCtx.destination);
-    osc.start(now);
-    osc.stop(now + 1.0);
-}
-
-function showSectorBanner(sectorNumber, showFlash = true){
-    const banner = document.getElementById("sectorBanner");
-    const flash = document.getElementById("warpFlash");
-    if(!banner || !flash) return;
-    banner.textContent = "SECTOR " + sectorNumber;
-    banner.style.opacity = "";
-    if(showFlash){
-
-    flash.classList.add("show");
-
-    setTimeout(()=>flash.classList.remove("show"),320);
-
-}
-    setTimeout(()=>banner.classList.remove("show"),5500);
-}
-
-function enterSector(sectorNumber){
-    currentSector = sectorNumber;
-    highestSector = Math.max(highestSector, sectorNumber);
-    warpPulse = 1;
-    saveJourney();
-    playWarpSound();
-    EnvironmentManager.reset();
-    buildSectorLandmark();
-    showSectorBanner(sectorNumber);
-    track("sector_reached",{
-        sector:sectorNumber,
-        total_distance:Math.floor(distance)
-    });
-}
-
-function newExpedition(){
-    localStorage.setItem("shiftvixJourneyDistance","0");
-    localStorage.setItem("shiftvixHighestSector","1");
-    journeyDistance = 0;
-    highestSector = 1;
-    distance = 0;
-    currentSector = 1;
-    resetRun(true);
-}
-
 // =========================
 // SHIFTVIX MUSIC ENGINE
 // =========================
@@ -1258,15 +606,7 @@ function startMusic(){
     begin();
   }
 }
-function makeStarField(){const count=850,positions=new Float32Array(count*3),colors=new Float32Array(count*3),palette=[0xffffff,0x777777,0x55ccff,0xff66cc,0x5d3dff,0xff8800].map(c=>new THREE.Color(c));for(let i=0;i<count;i++){positions[i*3]=(Math.random()*2-1)*260;positions[i*3+1]=(Math.random()*2-1)*180;positions[i*3+2]=-50-Math.random()*1200;const c=palette[Math.floor(Math.random()*palette.length)].clone().multiplyScalar(.35+Math.random()*.7);colors[i*3]=c.r;colors[i*3+1]=c.g;colors[i*3+2]=c.b;}const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.BufferAttribute(positions,3));geo.setAttribute("color",new THREE.BufferAttribute(colors,3));const mat=new THREE.PointsMaterial({size:1.3,sizeAttenuation:true,transparent:true,opacity:.72,vertexColors:true});const pts=new THREE.Points(geo,mat);scene.add(pts);stars.push({
-
-    points: pts,
-
-    timer: Math.random() * 1000,
-
-    sparkle: Math.random()
-
-});}
+function makeStarField(){const count=850,positions=new Float32Array(count*3),colors=new Float32Array(count*3),palette=[0xffffff,0x777777,0x55ccff,0xff66cc,0x5d3dff,0xff8800].map(c=>new THREE.Color(c));for(let i=0;i<count;i++){positions[i*3]=(Math.random()*2-1)*260;positions[i*3+1]=(Math.random()*2-1)*180;positions[i*3+2]=-50-Math.random()*1200;const c=palette[Math.floor(Math.random()*palette.length)].clone().multiplyScalar(.35+Math.random()*.7);colors[i*3]=c.r;colors[i*3+1]=c.g;colors[i*3+2]=c.b;}const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.BufferAttribute(positions,3));geo.setAttribute("color",new THREE.BufferAttribute(colors,3));const mat=new THREE.PointsMaterial({size:1.3,sizeAttenuation:true,transparent:true,opacity:.72,vertexColors:true});const pts=new THREE.Points(geo,mat);scene.add(pts);stars.push(pts);}
 function makeLaneGuides(){LANE_X.forEach(x=>{LANE_Y.forEach(y=>{const geo=new THREE.BufferGeometry(),positions=[];for(let i=0;i<52;i++)positions.push(x,y,-80-i*25);geo.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));const mat=new THREE.PointsMaterial({color:0xff66cc,size:.85,transparent:true,opacity:.0,sizeAttenuation:true,depthWrite:false});const pts=new THREE.Points(geo,mat);scene.add(pts);laneGuides.push(pts);});});}
 function chooseTier(){const r=Math.random();if(r<.35)return TIERS[0];if(r<.60)return TIERS[1];if(r<.78)return TIERS[2];if(r<.90)return TIERS[3];if(r<.98)return TIERS[4];return TIERS[5];}
 function makeBeacon(tier,x,y,z,train){const group=new THREE.Group();const core=new THREE.Mesh(new THREE.SphereGeometry(tier.size,18,18),new THREE.MeshBasicMaterial({color:tier.color}));const glow=new THREE.Mesh(new THREE.SphereGeometry(tier.size*1.9,16,16),new THREE.MeshBasicMaterial({color:tier.color,transparent:true,opacity:.09,blending:THREE.AdditiveBlending,depthWrite:false}));group.add(glow);group.add(core);group.position.set(x,y,z);group.userData={core,glow,tier,value:tier.value,state:"active",fade:1,train};group.scale.setScalar(introScale);scene.add(group);beacons.push(group);}
@@ -1346,9 +686,6 @@ function startGame(){
 
     runStartTime = performance.now();
 
-    runBaseDistance = distance;
-    introSectorBannerShown = false;
-
     spawnWave();
 
     startMusic();
@@ -1368,18 +705,10 @@ function collectBeacon(b){if(b.userData.state!=="active")return;b.userData.state
     track("first_source_collected");
 
 }if(score>bestScore){bestScore=score;localStorage.setItem("sourceLaneBestScore",String(bestScore));}playCoin(b.userData.tier);showScorePopup("+"+gained);updateHUD();if(navigator.vibrate)navigator.vibrate(4);}
-function updateHUD(){
-    document.getElementById("distance").textContent =
-        getSectorRemaining() + "m";
-
-    document.getElementById("found").textContent = foundCount;
-    document.getElementById("score").textContent = score;
-    document.getElementById("bestScore").textContent = bestScore;
-    document.getElementById("combo").textContent = combo + "x";
-}function endRun(){
+function updateHUD(){document.getElementById("distance").textContent=Math.floor(distance);document.getElementById("found").textContent=foundCount;document.getElementById("score").textContent=score;document.getElementById("bestDistance").textContent=Math.floor(bestDistance);document.getElementById("bestScore").textContent=bestScore;document.getElementById("combo").textContent=combo+"x";}
+function endRun(){
 
     gameOver = true;
-    saveJourney();
 const runSeconds =
     (performance.now() - runStartTime) / 1000;
 
@@ -1445,26 +774,16 @@ track("run_ended",{
     card.innerHTML = `
     <div class="resultsCard">
 
-        <div class="big">EXPEDITION PAUSED</div>
+        <div class="big">RUN COMPLETE</div>
 
         <div class="statLine">
-            <span>SECTOR</span>
-            <span>${getSector()}</span>
-        </div>
-
-        <div class="statLine">
-            <span>SECTOR DISTANCE</span>
-            <span>${getSectorDistance()}m</span>
-        </div>
-
-        <div class="statLine">
-            <span>TOTAL DISTANCE</span>
+            <span>DISTANCE</span>
             <span>${Math.floor(distance)}m</span>
         </div>
 
         <div class="statLine">
-            <span>HIGHEST SECTOR</span>
-            <span>${highestSector}</span>
+            <span>BEST</span>
+            <span>${Math.floor(bestDistance)}m ${isNewBestDistance ? "⭐" : ""}</span>
         </div>
 
         <div class="statLine">
@@ -1473,104 +792,48 @@ track("run_ended",{
         </div>
 
         <div class="statLine">
+            <span>BEST</span>
+            <span>${finalBestSources} ${isNewBestSources ? "⭐" : ""}</span>
+        </div>
+
+        <div class="statLine">
             <span>SCORE</span>
             <span>${score}</span>
         </div>
 
-        <div class="expeditionButtons">
-            <button class="expeditionBtn primary" id="continueJourneyBtn">CONTINUE JOURNEY</button>
-            <button class="expeditionBtn" id="newExpeditionBtn">NEW EXPEDITION</button>
+        <div class="statLine">
+            <span>BEST</span>
+            <span>${bestScore} ${isNewBestScore ? "⭐" : ""}</span>
+        </div>
+
+        <div class="tapContinue">
+            TAP TO RESTART
         </div>
 
     </div>
     `;
 
     card.style.display = "grid";
-    card.onclick = ()=>resetRun(false);
-    setTimeout(()=>{
-        const continueBtn=document.getElementById("continueJourneyBtn");
-        const newBtn=document.getElementById("newExpeditionBtn");
-        if(continueBtn) continueBtn.onclick=(e)=>{e.stopPropagation();resetRun(false);};
-        if(newBtn) newBtn.onclick=(e)=>{e.stopPropagation();newExpedition();};
-    },0);
+    card.onclick = resetRun;
 
 }
-function resetRun(startFresh=false){
+function resetRun(){
 
     paused = false;
-    introSectorBannerShown = false;
 
     const title = document.getElementById("gameTitle");
-    const sectorBanner = document.getElementById("sectorBanner");
-    const warpFlash = document.getElementById("warpFlash");
 
     title.style.opacity = 1;
 
-    shift.style.opacity = 1;
-    vix.style.opacity = 1;
+  shift.style.opacity = 1;
+vix.style.opacity = 1;
 
-    shift.style.transform = "translateY(0)";
-    vix.style.transform = "translateY(0)";
+shift.style.transform = "translateY(0)";
+vix.style.transform = "translateY(0)";
 
-    title.style.transform = "translate(-50%,-50%)";
+title.style.transform = "translate(-50%,-50%)";
 
-    if(sectorBanner){
-        sectorBanner.classList.remove("show");
-        sectorBanner.style.opacity = 0;
-    }
-
-    if(warpFlash){
-        warpFlash.classList.remove("show");
-    }
-
-    const pauseText=document.getElementById("pauseText");
-    if(pauseText)pauseText.style.display="none";
-
-    const center=document.getElementById("center");
-    center.style.borderColor="rgba(255,255,255,.95)";
-    center.style.boxShadow="0 0 10px rgba(255,255,255,.55)";
-
-    document.getElementById("roundComplete").style.display="none";
-
-    beacons.forEach(b=>scene.remove(b));
-    beacons.length=0;
-
-    score=0;
-    foundCount=0;
-    combo=1;
-
-    if(startFresh){
-        distance=0;
-        journeyDistance=0;
-        highestSector=1;
-        saveJourney();
-    }else{
-        // V2.1: Continue from the beginning of your highest unlocked sector.
-        distance=journeyDistance;
-    }
-
-    currentSector=getSector();
-    runBaseDistance=distance;
-    strikes = 0;
-    milestonesReached = {};
-    runStarted=false;
-    gameOver=false;
-    gameStarted=true;
-    breakTimer=0;
-    speed=SPEED_START;
-    laneX=1;
-    laneY=1;
-    targetX=0;
-    targetY=0;
-
-    updateStrikes();
-    updateHUD();
-
-    // Do NOT show the sector banner immediately. Let SHIFT/VIX split first,
-    // then the sector title appears cleanly in the center.
-    spawnWave();
-    startMusic();
-}
+const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");center.style.borderColor="rgba(255,255,255,.95)";center.style.boxShadow="0 0 10px rgba(255,255,255,.55)";document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;distance=0;strikes = 0;milestonesReached = {};runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;updateStrikes();updateHUD();spawnWave();startMusic();}
 function togglePause(){
   if(gameOver)return;
   paused=!paused;
@@ -1608,685 +871,398 @@ startMusic();
 const title = document.getElementById("gameTitle");
 const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
-function animate(){
+function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;const milestones = [
 
-    requestAnimationFrame(animate);
-    updateGamepad();
+100,
 
-    const dt = Math.min(clock.getDelta(), .05);
+250,
 
-    if(gameStarted && !gameOver && !paused){
+500,
 
-        const previousSector = getSector();
+1000,
 
-        let sectorDistance = getSectorDistance();
-        let sectorLength = getSectorLength(getSector());
-        let journeyProgress = THREE.MathUtils.clamp(
-            sectorDistance / sectorLength,
-            0,
-            1
-        );
+2500,
 
-        EnvironmentManager.update(
-            dt,
-            journeyProgress
-        );
+5000,
 
-        // =====================================
-        // SHIFTVIX 4.0 HERO LANDMARK JOURNEY
-        // =====================================
-        if(landmark){
+7500,
 
-            const approach = THREE.MathUtils.smoothstep(
-                journeyProgress,
-                0.00,
-                0.25
-            );
+10000
 
-            const flyby = THREE.MathUtils.smoothstep(
-                journeyProgress,
-                0.18,
-                0.58
-            );
+];
 
-            const depart = THREE.MathUtils.smoothstep(
-                journeyProgress,
-                0.50,
-                0.82
-            );
+for(const m of milestones){
 
-            const fade = THREE.MathUtils.clamp(
-                (journeyProgress - 0.55) / 0.12,
-                0,
-                1
-            );
+    if(distance >= m && !milestonesReached[m]){
 
-            const scale = THREE.MathUtils.lerp(
-                1.0,
-                landmark.maxScale,
-                flyby
-            );
+        milestonesReached[m]=true;
 
-            landmark.group.scale.setScalar(scale);
+        track("distance_milestone",{
 
-            landmark.group.position.x = THREE.MathUtils.lerp(
-                landmark.route.startX,
-                landmark.route.endX,
-                depart
-            );
-
-            landmark.group.position.y = THREE.MathUtils.lerp(
-                landmark.route.startY,
-                landmark.route.endY,
-                depart
-            );
-
-            landmark.group.position.z = THREE.MathUtils.lerp(
-                -2400,
-                -650,
-                flyby
-            );
-
-            landmark.group.rotation.y +=
-                dt * landmark.spinSpeed;
-
-            landmark.group.rotation.z =
-                landmark.tilt +
-                Math.sin(distance * 0.00025) * 0.05;
-
-            landmark.group.traverse(obj=>{
-                if(obj.material && obj.material.transparent){
-                    if(obj.userData.baseOpacity === undefined){
-                        obj.userData.baseOpacity = obj.material.opacity;
-                    }
-
-                    obj.material.opacity =
-                        obj.userData.baseOpacity *
-                        (1 - fade);
-                }
-            });
-
-            if(journeyProgress >= 0.70){
-                scene.remove(landmark.group);
-                landmark = null;
-            }
-
-        }
-
-        speed =
-            SPEED_START +
-            Math.min(
-                150,
-                sectorDistance * .03
-            );
-
-        distance += speed * dt * .08;
-
-        journeyDistance = Math.max(
-            journeyDistance,
-            getSectorStartDistance(getSector())
-        );
-
-        const nextSector = getSector();
-
-        if(nextSector > previousSector){
-            enterSector(nextSector);
-        }
-
-        // Recalculate after distance and sector changes.
-        sectorDistance = getSectorDistance();
-        sectorLength = getSectorLength(getSector());
-        journeyProgress = THREE.MathUtils.clamp(
-            sectorDistance / sectorLength,
-            0,
-            1
-        );
-
-        if(performance.now() - lastSavedAt > 2500){
-            saveJourney();
-            lastSavedAt = performance.now();
-        }
-
-        spawnTimer -= dt;
-
-        if(spawnTimer <= 0){
-            spawnTimer = .54 + Math.random() * .26;
-            spawnWave();
-        }
-
-        if(runStarted){
-            breakTimer += dt;
-
-            if(breakTimer > BREAK_GRACE){
-                takeStrike();
-            }
-        }
-
-        camera.position.x +=
-            (targetX - camera.position.x) *
-            (1 - Math.pow(.0009, dt));
-
-        camera.position.y +=
-            (targetY - camera.position.y) *
-            (1 - Math.pow(.0009, dt));
-
-        warpAmount = Math.min(
-            journeyProgress,
-            1
-        );
-
-        const stage = Math.min(
-            6,
-            Math.floor(journeyProgress * 7)
-        );
-
-        const fogLevels = [
-            0.0011,
-            0.0013,
-            0.0016,
-            0.0019,
-            0.0023,
-            0.0028,
-            0.0033,
-            0.0040
-        ];
-
-        scene.fog.density =
-            fogLevels[stage] +
-            warpAmount * 0.0008;
-
-        if(sectorDistance > sectorLength * 0.92){
-
-            const t = Math.min(
-                1,
-                (sectorDistance - sectorLength * 0.92) /
-                (sectorLength * 0.08)
-            );
-
-            scene.fog.density += t * 0.0025;
-
-        }
-
-        const atmosphereColors = [
-            0x000000,
-            0x061221,
-            0x15092d,
-            0x2b0038,
-            0x442100,
-            0x5b1800,
-            0x330000,
-            0xffffff
-        ];
-
-        scene.fog.color.setHex(
-            atmosphereColors[stage]
-        );
-
-        camera.lookAt(
-            camera.position.x * 0.995,
-            camera.position.y * 0.995,
-            -500
-        );
-
-        warpPulse = Math.max(
-            0,
-            warpPulse - dt * 1.25
-        );
-
-        let targetFov =
-            70 +
-            warpAmount * 11 +
-            warpPulse * 12 +
-            Math.sin(distance * 0.004) *
-            warpAmount *
-            0.6;
-
-        camera.fov = targetFov;
-        camera.updateProjectionMatrix();
-
-        beacons.forEach(b=>{
-
-            if(b.userData.state === "active"){
-
-                b.position.z += speed * dt;
-                b.lookAt(camera.position);
-
-                const dz = Math.abs(
-                    b.position.z - camera.position.z
-                );
-
-                const dxy = Math.hypot(
-                    b.position.x - camera.position.x,
-                    b.position.y - camera.position.y
-                );
-
-                if(dz < 42 && dxy < COLLECT_RADIUS){
-                    collectBeacon(b);
-                }
-
-                if(b.position.z > NEAR_Z + 60){
-                    b.userData.state = "missed";
-                }
-
-            }
-
-            if(
-                b.userData.state === "collected" ||
-                b.userData.state === "missed"
-            ){
-
-                b.userData.fade -= dt * 2.8;
-
-                const f = Math.max(
-                    0,
-                    b.userData.fade
-                );
-
-                b.userData.core.material.transparent = true;
-                b.userData.core.material.opacity = f;
-
-                b.userData.glow.material.opacity =
-                    f *
-                    (
-                        0.09 +
-                        warpAmount * 0.18
-                    );
-
-                b.scale.setScalar(
-                    Math.max(.001, f)
-                );
-
-            }
+            distance:m
 
         });
 
-        for(let i = beacons.length - 1; i >= 0; i--){
+    }
 
-            const b = beacons[i];
+}spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));const cycleDistance = distance % 5000;warpAmount = Math.min(cycleDistance / 5000, 1);
 
-            if(
-                (
-                    b.userData.state === "collected" ||
-                    b.userData.state === "missed"
-                ) &&
-                b.userData.fade <= 0
-            ){
-                scene.remove(b);
-                beacons.splice(i, 1);
-            }
+const stage =
+Math.min(
+    6,
+    Math.floor(cycleDistance / 700)
+);
 
-        }
+const fogLevels = [
+0.0011,
+0.0013,
+0.0016,
+0.0019,
+0.0023,
+0.0028,
+0.0033,
+0.0040
+];
 
-        stars.forEach(starField=>{
+scene.fog.density =
+fogLevels[stage]
++
+warpAmount*0.0008;
 
-    const s = starField.points;
+if(distance>4600){
 
-    const pos = s.geometry.attributes.position;
-            const speedMultiplier = 1 + warpAmount * 7;
-            const stretch = 1 + warpAmount * 5;
+    const t =
+        Math.min(
+            1,
+            (distance-4600)/400
+        );
 
-            for(let i = 0; i < pos.count; i++){
+    scene.fog.density +=
+        t*0.0025;
 
-                const x = pos.getX(i);
-                const y = pos.getY(i);
+}
+const atmosphereColors = [
+0x000000,
+0x061221,
+0x15092d,
+0x2b0038,
+0x442100,
+0x5b1800,
+0x330000,
+0xffffff
+];
 
-                const edge = Math.min(
-                    1,
-                    Math.hypot(x,y) / 220
-                );
+scene.fog.color.setHex(
+atmosphereColors[stage]
+);
 
-                const edgeBoost =
-                    1 +
-                    edge *
-                    warpAmount *
-                    3.0;
+camera.lookAt(
 
-                let z =
-                    pos.getZ(i) +
-                    speed *
-                    dt *
-                    speedMultiplier *
-                    edgeBoost;
+camera.position.x * 0.995,
 
-                if(z > 90){
-                    z =
-                        -1150 -
-                        Math.random() * 250;
-                }
+camera.position.y * 0.995,
 
-                pos.setXYZ(
-                    i,
-                    x,
-                    y,
-                    z
-                );
+-500
 
-            }
+);let targetFov =
+70
++
+warpAmount*11
++
+Math.sin(distance*0.004)
+*
+warpAmount
+*
+0.6;
 
-            pos.needsUpdate = true;
 
-            const colors = s.geometry.attributes.color;
+camera.fov = targetFov;
+camera.updateProjectionMatrix();beacons.forEach(b=>{if(b.userData.state==="active"){b.position.z+=speed*dt;b.lookAt(camera.position);const dz=Math.abs(b.position.z-camera.position.z),dxy=Math.hypot(b.position.x-camera.position.x,b.position.y-camera.position.y);if(dz<42&&dxy<COLLECT_RADIUS)collectBeacon(b);if(b.position.z>NEAR_Z+60)b.userData.state="missed";}if(b.userData.state==="collected"||b.userData.state==="missed"){b.userData.fade-=dt*2.8;const f=Math.max(0,b.userData.fade);b.userData.core.material.transparent=true;b.userData.core.material.opacity=f;b.userData.glow.material.opacity =
+f * (
+0.09 +
+warpAmount * 0.18
+);b.scale.setScalar(Math.max(.001,f));}});for(let i=beacons.length-1;i>=0;i--){const b=beacons[i];if((b.userData.state==="collected"||b.userData.state==="missed")&&b.userData.fade<=0){scene.remove(b);beacons.splice(i,1);}};stars.forEach(s=>{const pos = s.geometry.attributes.position;const speedMultiplier =1 + warpAmount * 7;const stretch =1 + warpAmount * 5;for(let i=0;i<pos.count;i++){
 
-            const palettes = [
+    const x = pos.getX(i);
+    const y = pos.getY(i);
 
-                [
-                    new THREE.Color(0xffffff),
-                    new THREE.Color(0x777777),
-                    new THREE.Color(0x55ccff),
-                    new THREE.Color(0xff66cc),
-                    new THREE.Color(0x5d3dff),
-                    new THREE.Color(0xff8800)
-                ],
+    // Distance from the center of the playfield
+    const edge =
+        Math.min(
+            1,
+            Math.hypot(x,y)/220
+        );
 
-                [
-                    new THREE.Color(0xffffff),
-                    new THREE.Color(0x99ddff),
-                    new THREE.Color(0x55ccff),
-                    new THREE.Color(0xaa66ff),
-                    new THREE.Color(0xff66cc),
-                    new THREE.Color(0x777777)
-                ],
+    // Outer stars travel faster than center stars
+    const edgeBoost =
+        1 +
+        edge *
+        warpAmount *
+        3.0;
 
-                [
-                    new THREE.Color(0xffffff),
-                    new THREE.Color(0xaa66ff),
-                    new THREE.Color(0x55ccff),
-                    new THREE.Color(0xff66cc),
-                    new THREE.Color(0x8844ff),
-                    new THREE.Color(0x777777)
-                ],
+    let z =
+        pos.getZ(i)
+        +
+        speed *
+        dt *
+        speedMultiplier *
+        edgeBoost;
 
-                [
-                    new THREE.Color(0xffaa33),
-                    new THREE.Color(0xff8800),
-                    new THREE.Color(0xffffff),
-                    new THREE.Color(0xaa66ff),
-                    new THREE.Color(0xff66cc),
-                    new THREE.Color(0x55ccff)
-                ],
+    if(z>90){
 
-                [
-                    new THREE.Color(0xff4444),
-                    new THREE.Color(0xff8844),
-                    new THREE.Color(0xffcc66),
-                    new THREE.Color(0xffffff),
-                    new THREE.Color(0xaa66ff),
-                    new THREE.Color(0x777777)
-                ],
+        z =
+            -1150 -
+            Math.random()*250;
 
-                [
-                    new THREE.Color(0xffee66),
-                    new THREE.Color(0xffffff),
-                    new THREE.Color(0xffcc66),
-                    new THREE.Color(0x55ccff),
-                    new THREE.Color(0xaa66ff),
-                    new THREE.Color(0xff8844)
-                ],
+    }
 
-                [
-                    new THREE.Color(0xffffff),
-                    new THREE.Color(0xffffff),
-                    new THREE.Color(0xffeeaa),
-                    new THREE.Color(0x99ddff),
-                    new THREE.Color(0xaa66ff),
-                    new THREE.Color(0xffcc66)
-                ]
+    pos.setXYZ(
+    i,
+    x,
+    y,
+    z
+);
+}pos.needsUpdate=true;const colors = s.geometry.attributes.color;
 
-            ];
+const palettes = [
 
-            const colorStage = Math.min(
-                palettes.length - 1,
-                Math.floor(journeyProgress * palettes.length)
-            );
+    [
+        new THREE.Color(0xffffff),
+        new THREE.Color(0x777777),
+        new THREE.Color(0x55ccff),
+        new THREE.Color(0xff66cc),
+        new THREE.Color(0x5d3dff),
+        new THREE.Color(0xff8800)
+    ],
 
-            const palette = palettes[colorStage];
+    [
+        new THREE.Color(0xffffff),
+        new THREE.Color(0x99ddff),
+        new THREE.Color(0x55ccff),
+        new THREE.Color(0xaa66ff),
+        new THREE.Color(0xff66cc),
+        new THREE.Color(0x777777)
+    ],
 
-            for(let i = 0; i < colors.count; i++){
+    [
+        new THREE.Color(0xffffff),
+        new THREE.Color(0xaa66ff),
+        new THREE.Color(0x55ccff),
+        new THREE.Color(0xff66cc),
+        new THREE.Color(0x8844ff),
+        new THREE.Color(0x777777)
+    ],
 
-                const target =
-                    palette[i % palette.length];
+    [
+        new THREE.Color(0xffaa33),
+        new THREE.Color(0xff8800),
+        new THREE.Color(0xffffff),
+        new THREE.Color(0xaa66ff),
+        new THREE.Color(0xff66cc),
+        new THREE.Color(0x55ccff)
+    ],
 
-                colors.setXYZ(
-                    i,
-                    THREE.MathUtils.lerp(
-                        colors.getX(i),
-                        target.r,
-                        0.01
-                    ),
-                    THREE.MathUtils.lerp(
-                        colors.getY(i),
-                        target.g,
-                        0.01
-                    ),
-                    THREE.MathUtils.lerp(
-                        colors.getZ(i),
-                        target.b,
-                        0.01
-                    )
-                );
+    [
+        new THREE.Color(0xff4444),
+        new THREE.Color(0xff8844),
+        new THREE.Color(0xffcc66),
+        new THREE.Color(0xffffff),
+        new THREE.Color(0xaa66ff),
+        new THREE.Color(0x777777)
+    ],
 
-            }
+    [
+        new THREE.Color(0xffee66),
+        new THREE.Color(0xffffff),
+        new THREE.Color(0xffcc66),
+        new THREE.Color(0x55ccff),
+        new THREE.Color(0xaa66ff),
+        new THREE.Color(0xff8844)
+    ],
 
-            colors.needsUpdate = true;
+    [
+        new THREE.Color(0xffffff),
+        new THREE.Color(0xffffff),
+        new THREE.Color(0xffeeaa),
+        new THREE.Color(0x99ddff),
+        new THREE.Color(0xaa66ff),
+        new THREE.Color(0xffcc66)
+    ]
 
-            const warpSize =
-                1.3 +
-                warpAmount * 5;
+];
 
-            const warpOpacity =
-                0.60 +
-                warpAmount * 0.22;
+const stage =
+Math.min(
+    palettes.length-1,
+    Math.floor(distance/500)
+);
 
-            s.material.size = warpSize * stretch;
+const palette = palettes[stage];
 
-            s.material.opacity = Math.min(
-                1,
-                warpOpacity + warpPulse * .28
-            );
+for(let i=0;i<colors.count;i++){
 
-            // =====================================
-// Deep Twinkling Stars
-// =====================================
+    const target =
+        palette[i % palette.length];
 
-starField.timer += dt;
+    colors.setXYZ(
 
-const twinkle =
+        i,
 
-    0.90 +
+        THREE.MathUtils.lerp(
+            colors.getX(i),
+            target.r,
+            0.01
+        ),
 
-    Math.sin(
+        THREE.MathUtils.lerp(
+            colors.getY(i),
+            target.g,
+            0.01
+        ),
 
-        starField.timer * 0.9 +
+        THREE.MathUtils.lerp(
+            colors.getZ(i),
+            target.b,
+            0.01
+        )
 
-        starField.sparkle * 8
-
-    ) * 0.10;
-
-s.material.opacity *= twinkle;
-
-s.material.size =
-    warpSize *
-    stretch *
-    (
-        0.97 +
-        twinkle * 0.08
     );
-
-            camera.rotation.z =
-                Math.sin(distance * 0.0015) *
-                warpAmount *
-                0.004;
-
-        });
-
-        updateHUD();
-
-    }
-
-    if(gameStarted && !gameOver){
-
-        introScale +=
-            (1 - introScale) *
-            dt *
-            0.6;
-
-        beacons.forEach(b=>{
-            if(b.userData.state === "active"){
-                b.scale.lerp(
-                    new THREE.Vector3(
-                        introScale,
-                        introScale,
-                        introScale
-                    ),
-                    0.08
-                );
-            }
-        });
-
-        introCameraZ +=
-            (TARGET_CAMERA_Z - introCameraZ) *
-            dt *
-            0.18;
-
-        camera.position.z = introCameraZ;
-
-        camera.position.x +=
-            (Math.random() - 0.5) *
-            warpAmount *
-            0.12;
-
-        camera.position.y +=
-            (Math.random() - 0.5) *
-            warpAmount *
-            0.12;
-
-        camera.position.z =
-            introCameraZ -
-            Math.pow(warpAmount, 1.6) *
-            5;
-
-        const introDelay = 24;
-        const introLength = 55;
-
-        const introDistance = Math.max(
-            0,
-            distance - runBaseDistance
-        );
-
-        const rawIntro =
-            Math.max(
-                0,
-                introDistance - introDelay
-            ) / introLength;
-
-        const introProgress = Math.min(
-            rawIntro,
-            1
-        );
-
-        const fade = 1 - introProgress;
-
-        title.style.transform =
-            "translate(-50%,-50%)";
-
-        shift.style.opacity = fade;
-        vix.style.opacity = fade;
-
-        shift.style.transform =
-            `translateY(${-introProgress * 320}px)`;
-
-        vix.style.transform =
-            `translateY(${introProgress * 320}px)`;
-
-        if(!introSectorBannerShown && introDistance >= 45){
-            introSectorBannerShown = true;
-            showSectorBanner(getSector(), false);
-        }
-
-        title.style.filter = "none";
-
-    }
-
-    renderer.render(scene,camera);
 
 }
 
+colors.needsUpdate = true;
+// Stretch stars into streaks
+
+// Warp Drive 2.1
+
+const warpSize =
+1.3 +
+warpAmount * 5;
+
+const warpOpacity =
+0.60 +
+warpAmount * 0.22;
+
+s.material.size = warpSize * stretch;
+
+s.material.opacity = warpOpacity;camera.rotation.z =
+Math.sin(distance * 0.0015)
+*
+warpAmount
+*
+0.004;});updateHUD();}if(gameStarted&&!gameOver){
+introScale += (1-introScale)*dt*0.6;beacons.forEach(b=>{if(b.userData.state==="active") b.scale.lerp(new THREE.Vector3(introScale,introScale,introScale),0.08);});
+introCameraZ += (TARGET_CAMERA_Z-introCameraZ)*dt*0.18;
+camera.position.z=introCameraZ;camera.position.x +=
+(Math.random()-0.5)
+*
+warpAmount
+*
+0.12;
+
+camera.position.y +=
+(Math.random()-0.5)
+*
+warpAmount
+*
+0.12;
+
+camera.position.z =
+introCameraZ
+-
+Math.pow(warpAmount,1.6)
+*
+5;
+
+const title = document.getElementById("gameTitle");
+
+const introDelay = 24;   // logo holds still first
+const introLength = 55;  // then separates
+
+const rawIntro =
+    Math.max(0, distance - introDelay) / introLength;
+
+const introProgress =
+    Math.min(rawIntro, 1);
+
+const fade = 1 - introProgress;
+
+title.style.transform =
+    "translate(-50%,-50%)";
+
+shift.style.opacity = fade;
+vix.style.opacity = fade;
+
+shift.style.transform =
+    `translateY(${-introProgress * 320}px)`;
+
+vix.style.transform =
+    `translateY(${introProgress * 320}px)`;
+
+const glow = fade * 10;
+
+title.style.filter = "none";
+  
+renderer.render(scene,camera);
+}
+
+}
 // ---------------------------
-// GAMEPAD SUPPORT — 8 WAY SNAP
+// GAMEPAD SUPPORT
 // ---------------------------
 
 let lastPadMove = 0;
-let lastPadDir = "0,0";
 
 function updateGamepad(){
 
-    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    const pads = navigator.getGamepads
+        ? navigator.getGamepads()
+        : [];
+
     const pad = pads[0];
 
     if(!pad) return;
 
     const now = performance.now();
 
-    const deadZone = 0.150;
-    const repeatDelay = 270;
+    // Prevent repeated movement every frame
+    if(now - lastPadMove < 200) return;
+
+    const deadZone = 0.70;
+
+    const x = pad.axes[0];
+    const y = pad.axes[1];
 
     let dx = 0;
     let dy = 0;
 
-    // Analog stick
-    const x = pad.axes[0] || 0;
-    const y = pad.axes[1] || 0;
+    if(x > deadZone) dx = 1;
+    if(x < -deadZone) dx = -1;
 
-    if(Math.abs(x) > deadZone || Math.abs(y) > deadZone){
+    if(y > deadZone) dy = 1;
+    if(y < -deadZone) dy = -1;
 
-        const angle = Math.atan2(y, x);
-        const snap = Math.round(angle / (Math.PI / 4)) * (Math.PI / 4);
+    if(pad.buttons[12]?.pressed) dy = -1; // Up
+    if(pad.buttons[13]?.pressed) dy = 1;  // Down
+    if(pad.buttons[14]?.pressed) dx = -1; // Left
+    if(pad.buttons[15]?.pressed) dx = 1;  // Right
 
-        dx = Math.round(Math.cos(snap));
-        dy = Math.round(Math.sin(snap));
-
-    } else {
-
-        // D-pad
-        const up    = pad.buttons[12]?.pressed;
-        const down  = pad.buttons[13]?.pressed;
-        const left  = pad.buttons[14]?.pressed;
-        const right = pad.buttons[15]?.pressed;
-
-        dx = (right ? 1 : 0) + (left ? -1 : 0);
-        dy = (down  ? 1 : 0) + (up   ? -1 : 0);
-    }
-
-    const dir = dx + "," + dy;
-
-    // Reset when controller returns to center
-    if(dx === 0 && dy === 0){
-        lastPadDir = "0,0";
-        return;
-    }
-
-    // First press is instant
-    if(dir !== lastPadDir){
+    if(dx || dy){
 
         moveLane(dx,dy);
-        lastPadMove = now;
-        lastPadDir = dir;
-        return;
 
-    }
-
-    // Holding repeats slower
-    if(now - lastPadMove > repeatDelay){
-
-        moveLane(dx,dy);
         lastPadMove = now;
 
     }
 
     // Pause button
+
     if(pad.buttons[9]?.pressed){
+
         togglePause();
+
     }
+
 }
 const centerButton=document.getElementById("center");
 centerButton.addEventListener("pointerdown",e=>{
@@ -2295,8 +1271,6 @@ centerButton.addEventListener("pointerdown",e=>{
   togglePause();
 },{passive:false});
 window.addEventListener("beforeunload",()=>{
-
-    saveJourney();
 
     track("session_finished",{
 
@@ -2307,8 +1281,7 @@ window.addEventListener("beforeunload",()=>{
 });
 window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 document.addEventListener("visibilitychange",()=>{if(!document.hidden && gameStarted && !musicStarted){startMusic();}});
-makeStarField();makeLaneGuides();
-buildSectorLandmark();updateStrikes();updateHUD();startGame();animate();
+makeStarField();makeLaneGuides();updateStrikes();updateHUD();startGame();animate();
 </script>
 </body>
 </html>
