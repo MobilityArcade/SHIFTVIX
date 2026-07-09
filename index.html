@@ -695,37 +695,21 @@ function spawnWave(){
 
     let trains;
 
-    if(level < 3){
-
-    trains = 3;
-
-}
-else if(level < 6){
-
-    trains = Math.random() < 0.80 ? 4 : 3;
-
-}
-else if(level < 10){
-
-    trains = Math.random() < 0.90 ? 4 : 3;
-
-}
-else{
-
-    trains = Math.random() < 0.60 ? 5 : 4;
-
-}
+    if(level < 4){
+        trains = 2;
+    }
+    else if(level < 8){
+        trains = Math.random() < 0.55 ? 3 : 2;
+    }
+    else if(level < 12){
+        trains = Math.random() < 0.65 ? 3 : 2;
+    }
+    else{
+        trains = Math.random() < 0.25 ? 4 : 3;
+    }
 
     for(let i=0;i<trains;i++){
-
-        setTimeout(
-
-            spawnTrain,
-
-            i * 60
-
-        );
-
+        setTimeout(spawnTrain, i * 90);
     }
 
 }
@@ -1133,17 +1117,17 @@ if(spawnTimer <= 0){
 
     // Spawn trains faster as distance increases
     const spawnRate = Math.max(
-    0.18,
-    0.42 - distance / 30000
+    0.30,
+    0.54 - distance / 30000
 );
 
 spawnTimer =
     spawnRate +
-    Math.random() * 0.08;
+    Math.random() * 0.14;
 
     spawnWave();
 
-}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));warpAmount =1 - Math.exp(-distance/25000);
+}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));warpAmount = Math.min(distance / 5000, 1);
 scene.fog.density =
 0.0011 +
 Math.min(distance/15000,1)
