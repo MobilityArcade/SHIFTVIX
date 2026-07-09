@@ -180,23 +180,10 @@ let laneX=1,laneY=1,targetX=0,targetY=0,score=0,bestScore=Number(localStorage.ge
 let paused = false;
 
 let level = 1;
-
 let bestLevel =
 Number(localStorage.getItem("shiftvixBestLevel") || 1);
 
 let lastLevel = 1;
-const levelMilestones = [
-    2,
-    3,
-    5,
-    10,
-    15,
-    20,
-    30,
-    40,
-    50
-];
-
 let milestonesReached = {};
 let sessionRuns = 0;
 let runStartTime = 0;
@@ -691,13 +678,7 @@ function makeLaneGuides(){LANE_X.forEach(x=>{LANE_Y.forEach(y=>{const geo=new TH
 function chooseTier(){const r=Math.random();if(r<.35)return TIERS[0];if(r<.60)return TIERS[1];if(r<.78)return TIERS[2];if(r<.90)return TIERS[3];if(r<.98)return TIERS[4];return TIERS[5];}
 function makeBeacon(tier,x,y,z,train){const group=new THREE.Group();const core=new THREE.Mesh(new THREE.SphereGeometry(tier.size,18,18),new THREE.MeshBasicMaterial({color:tier.color}));const glow=new THREE.Mesh(new THREE.SphereGeometry(tier.size*1.9,16,16),new THREE.MeshBasicMaterial({color:tier.color,transparent:true,opacity:.09,blending:THREE.AdditiveBlending,depthWrite:false}));group.add(glow);group.add(core);group.position.set(x,y,z);group.userData={core,glow,tier,value:tier.value,state:"active",fade:1,train};group.scale.setScalar(introScale);scene.add(group);beacons.push(group);}
 function spawnTrain(){trainId++;const xIndex=Math.floor(Math.random()*3),yIndex=Math.floor(Math.random()*3),x=LANE_X[xIndex],y=LANE_Y[yIndex],tier=chooseTier();let length;if(tier.value>=200)length=3+Math.floor(Math.random()*4);else if(tier.value>=100)length=5+Math.floor(Math.random()*6);else if(tier.value>=50)length=8+Math.floor(Math.random()*8);else length=12+Math.floor(Math.random()*14);for(let i=0;i<length;i++)makeBeacon(tier,x,y,FAR_Z-i*TRAIN_GAP,trainId);document.getElementById("signal").textContent=runStarted?"Signal: stay connected":"Signal: touch first string";}
-function spawnWave(){
-    const trains = Math.random() < .78 ? 2 : 3;
-
-    for(let i = 0; i < trains; i++){
-        setTimeout(spawnTrain, i * 120);
-    }
-}
+function spawnWave(){const trains=Math.random()<.78?2:3;for(let i=0;i<trains;i++)setTimeout(spawnTrain,i*120);}
 function moveLane(dx,dy){if(!gameStarted||gameOver)return;laneX=Math.max(0,Math.min(2,laneX+dx));laneY=Math.max(0,Math.min(2,laneY+dy));targetX=LANE_X[laneX];targetY=LANE_Y[laneY];const namesY=["UP","CENTER","DOWN"],namesX=["LEFT","CENTER","RIGHT"];document.getElementById("laneLabel").textContent=namesY[laneY]+" "+namesX[laneX];if(navigator.vibrate)navigator.vibrate(10);}
 let downX=0,downY=0;
 
@@ -867,9 +848,11 @@ const runSeconds =
 
 track("run_ended",{
 
-    level: level,
-
     distance: Math.floor(distance),
+
+    score: score,
+
+    sources: foundCount,
 
     duration: Math.round(runSeconds)
 
@@ -889,21 +872,20 @@ track("run_ended",{
         );
     }
 
-    if(level > bestLevel){
+    if(level>bestLevel){
 
-    bestLevel = level;
-
-    track("new_best_level",{
-        level: bestLevel,
-        distance: Math.floor(distance)
-    });
+    bestLevel=level;
 
     localStorage.setItem(
+
         "shiftvixBestLevel",
+
         bestLevel
+
     );
 
 }
+
     const isNewBestScore = score > bestScore;
     if(isNewBestScore){
         bestScore = score;
@@ -977,8 +959,6 @@ function resetRun(){
 
     paused = false;
 
-    milestonesReached = {};
-
     const title = document.getElementById("gameTitle");
 
     title.style.opacity = 1;
@@ -1031,38 +1011,16 @@ startMusic();
 const title = document.getElementById("gameTitle");
 const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
-function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){speed =
-SPEED_START +
-Math.pow(distance,0.48) * 3.8;distance+=speed*dt*.08;level =
+function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;level =
 Math.floor(distance / 500)+1;
 
-if(level > lastLevel){
+if(level>lastLevel){
 
-    lastLevel = level;
+    lastLevel=level;
 
     animateLevelNumber();
 
-    track("level_reached",{
-        level: level,
-        distance: Math.floor(distance)
-    });
-
-    for(const l of levelMilestones){
-
-        if(level >= l && !milestonesReached["level"+l]){
-
-            milestonesReached["level"+l] = true;
-
-            track("level_milestone",{
-                level: l
-            });
-
-        }
-
-    }
-
-}
-const milestones = [
+}const milestones = [
 
 100,
 
@@ -1096,28 +1054,56 @@ for(const m of milestones){
 
     }
 
-}spawnTimer -= dt;
+}spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));const cycleDistance = distance % 3000;warpAmount = Math.min(cycleDistance / 3000, 1);
 
-if(spawnTimer <= 0){
-
-    // Spawn trains faster as distance increases
-    const spawnRate = Math.max(
-    0.30,
-    0.54 - distance / 30000
+const stage =
+Math.min(
+    6,
+    Math.floor(cycleDistance / 700)
 );
 
-spawnTimer =
-    spawnRate +
-    Math.random() * 0.14;
+const fogLevels = [
+0.0011,
+0.0013,
+0.0016,
+0.0019,
+0.0023,
+0.0028,
+0.0033,
+0.0040
+];
 
-    spawnWave();
-
-}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));warpAmount = Math.min(distance / 5000, 1);
 scene.fog.density =
-0.0011 +
-Math.min(distance/15000,1)
-*
-0.005;
+fogLevels[stage]
++
+warpAmount*0.0008;
+
+if(distance>4600){
+
+    const t =
+        Math.min(
+            1,
+            (distance-4600)/400
+        );
+
+    scene.fog.density +=
+        t*0.0025;
+
+}
+const atmosphereColors = [
+0x000000,
+0x061221,
+0x15092d,
+0x2b0038,
+0x442100,
+0x5b1800,
+0x330000,
+0xffffff
+];
+
+scene.fog.color.setHex(
+atmosphereColors[stage]
+);
 
 camera.lookAt(
 
