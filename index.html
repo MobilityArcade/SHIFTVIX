@@ -634,20 +634,18 @@ function spawnMeteor(){
 
     const mat = new THREE.MeshBasicMaterial({
 
-        color:[
-0xffffff,
-0x99ddff,
-0xffcc66,
-0xff8844
-][
-Math.floor(Math.random()*4)
-]
+    color: [
+        0xffffff,
+        0x99ddff,
+        0xffcc66,
+        0xff8844
+    ][Math.floor(Math.random() * 4)],
 
-        transparent:true,
+    transparent: true,
 
-        opacity:0.95
+    opacity: 0.95
 
-    });
+});
 
     const meteor =
         new THREE.Mesh(geo,mat);
@@ -678,16 +676,15 @@ new THREE.SphereGeometry(
 
 new THREE.MeshBasicMaterial({
 
-color:meteor.material.color,
+    color: meteor.material.color,
 
-transparent:true,
+    transparent: true,
 
-opacity:0.10,
+    opacity: 0.10,
 
-blending:
-THREE.AdditiveBlending,
+    blending: THREE.AdditiveBlending,
 
-depthWrite:false
+    depthWrite: false
 
 })
 
