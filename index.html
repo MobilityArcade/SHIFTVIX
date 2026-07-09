@@ -692,26 +692,11 @@ function chooseTier(){const r=Math.random();if(r<.35)return TIERS[0];if(r<.60)re
 function makeBeacon(tier,x,y,z,train){const group=new THREE.Group();const core=new THREE.Mesh(new THREE.SphereGeometry(tier.size,18,18),new THREE.MeshBasicMaterial({color:tier.color}));const glow=new THREE.Mesh(new THREE.SphereGeometry(tier.size*1.9,16,16),new THREE.MeshBasicMaterial({color:tier.color,transparent:true,opacity:.09,blending:THREE.AdditiveBlending,depthWrite:false}));group.add(glow);group.add(core);group.position.set(x,y,z);group.userData={core,glow,tier,value:tier.value,state:"active",fade:1,train};group.scale.setScalar(introScale);scene.add(group);beacons.push(group);}
 function spawnTrain(){trainId++;const xIndex=Math.floor(Math.random()*3),yIndex=Math.floor(Math.random()*3),x=LANE_X[xIndex],y=LANE_Y[yIndex],tier=chooseTier();let length;if(tier.value>=200)length=3+Math.floor(Math.random()*4);else if(tier.value>=100)length=5+Math.floor(Math.random()*6);else if(tier.value>=50)length=8+Math.floor(Math.random()*8);else length=12+Math.floor(Math.random()*14);for(let i=0;i<length;i++)makeBeacon(tier,x,y,FAR_Z-i*TRAIN_GAP,trainId);document.getElementById("signal").textContent=runStarted?"Signal: stay connected":"Signal: touch first string";}
 function spawnWave(){
+    const trains = Math.random() < .78 ? 2 : 3;
 
-    let trains;
-
-    if(level < 4){
-        trains = 2;
+    for(let i = 0; i < trains; i++){
+        setTimeout(spawnTrain, i * 120);
     }
-    else if(level < 8){
-        trains = Math.random() < 0.55 ? 3 : 2;
-    }
-    else if(level < 12){
-        trains = Math.random() < 0.65 ? 3 : 2;
-    }
-    else{
-        trains = Math.random() < 0.25 ? 4 : 3;
-    }
-
-    for(let i=0;i<trains;i++){
-        setTimeout(spawnTrain, i * 90);
-    }
-
 }
 function moveLane(dx,dy){if(!gameStarted||gameOver)return;laneX=Math.max(0,Math.min(2,laneX+dx));laneY=Math.max(0,Math.min(2,laneY+dy));targetX=LANE_X[laneX];targetY=LANE_Y[laneY];const namesY=["UP","CENTER","DOWN"],namesX=["LEFT","CENTER","RIGHT"];document.getElementById("laneLabel").textContent=namesY[laneY]+" "+namesX[laneX];if(navigator.vibrate)navigator.vibrate(10);}
 let downX=0,downY=0;
