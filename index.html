@@ -691,7 +691,44 @@ function makeLaneGuides(){LANE_X.forEach(x=>{LANE_Y.forEach(y=>{const geo=new TH
 function chooseTier(){const r=Math.random();if(r<.35)return TIERS[0];if(r<.60)return TIERS[1];if(r<.78)return TIERS[2];if(r<.90)return TIERS[3];if(r<.98)return TIERS[4];return TIERS[5];}
 function makeBeacon(tier,x,y,z,train){const group=new THREE.Group();const core=new THREE.Mesh(new THREE.SphereGeometry(tier.size,18,18),new THREE.MeshBasicMaterial({color:tier.color}));const glow=new THREE.Mesh(new THREE.SphereGeometry(tier.size*1.9,16,16),new THREE.MeshBasicMaterial({color:tier.color,transparent:true,opacity:.09,blending:THREE.AdditiveBlending,depthWrite:false}));group.add(glow);group.add(core);group.position.set(x,y,z);group.userData={core,glow,tier,value:tier.value,state:"active",fade:1,train};group.scale.setScalar(introScale);scene.add(group);beacons.push(group);}
 function spawnTrain(){trainId++;const xIndex=Math.floor(Math.random()*3),yIndex=Math.floor(Math.random()*3),x=LANE_X[xIndex],y=LANE_Y[yIndex],tier=chooseTier();let length;if(tier.value>=200)length=3+Math.floor(Math.random()*4);else if(tier.value>=100)length=5+Math.floor(Math.random()*6);else if(tier.value>=50)length=8+Math.floor(Math.random()*8);else length=12+Math.floor(Math.random()*14);for(let i=0;i<length;i++)makeBeacon(tier,x,y,FAR_Z-i*TRAIN_GAP,trainId);document.getElementById("signal").textContent=runStarted?"Signal: stay connected":"Signal: touch first string";}
-function spawnWave(){const trains=Math.random()<.78?2:3;for(let i=0;i<trains;i++)setTimeout(spawnTrain,i*120);}
+function spawnWave(){
+
+    let trains;
+
+    if(level < 3){
+
+    trains = 3;
+
+}
+else if(level < 6){
+
+    trains = Math.random() < 0.80 ? 4 : 3;
+
+}
+else if(level < 10){
+
+    trains = Math.random() < 0.90 ? 4 : 3;
+
+}
+else{
+
+    trains = Math.random() < 0.60 ? 5 : 4;
+
+}
+
+    for(let i=0;i<trains;i++){
+
+        setTimeout(
+
+            spawnTrain,
+
+            i * 60
+
+        );
+
+    }
+
+}
 function moveLane(dx,dy){if(!gameStarted||gameOver)return;laneX=Math.max(0,Math.min(2,laneX+dx));laneY=Math.max(0,Math.min(2,laneY+dy));targetX=LANE_X[laneX];targetY=LANE_Y[laneY];const namesY=["UP","CENTER","DOWN"],namesX=["LEFT","CENTER","RIGHT"];document.getElementById("laneLabel").textContent=namesY[laneY]+" "+namesX[laneX];if(navigator.vibrate)navigator.vibrate(10);}
 let downX=0,downY=0;
 
@@ -1090,7 +1127,23 @@ for(const m of milestones){
 
     }
 
-}spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));warpAmount =1 - Math.exp(-distance/25000);
+}spawnTimer -= dt;
+
+if(spawnTimer <= 0){
+
+    // Spawn trains faster as distance increases
+    const spawnRate = Math.max(
+    0.18,
+    0.42 - distance / 30000
+);
+
+spawnTimer =
+    spawnRate +
+    Math.random() * 0.08;
+
+    spawnWave();
+
+}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));warpAmount =1 - Math.exp(-distance/25000);
 scene.fog.density =
 0.0011 +
 Math.min(distance/15000,1)
