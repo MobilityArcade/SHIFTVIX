@@ -848,12 +848,10 @@ const runSeconds =
 
 track("run_ended",{
 
+    level: level,
     distance: Math.floor(distance),
-
     score: score,
-
     sources: foundCount,
-
     duration: Math.round(runSeconds)
 
 });
@@ -874,14 +872,16 @@ track("run_ended",{
 
     if(level>bestLevel){
 
-    bestLevel=level;
+    bestLevel = level;
+
+    track("new_best_level",{
+        level: bestLevel,
+        distance: Math.floor(distance)
+    });
 
     localStorage.setItem(
-
         "shiftvixBestLevel",
-
         bestLevel
-
     );
 
 }
