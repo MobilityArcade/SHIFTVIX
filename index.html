@@ -1027,7 +1027,7 @@ const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
 function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){speed =
 SPEED_START +
-Math.sqrt(distance) * 4;distance+=speed*dt*.08;level =
+Math.pow(distance,0.48) * 3.8;distance+=speed*dt*.08;level =
 Math.floor(distance / 500)+1;
 
 if(level > lastLevel){
@@ -1090,8 +1090,7 @@ for(const m of milestones){
 
     }
 
-}spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));const cycleDistance = distance;warpAmount =Math.min(distance / 12000,1);
-
+}spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));warpAmount =1 - Math.exp(-distance/25000);
 scene.fog.density =
 0.0011 +
 Math.min(distance/15000,1)
