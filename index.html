@@ -137,7 +137,12 @@ const TARGET_CAMERA_Z=72;
 // ---------- WARP ----------
 let warpAmount = 0;
 let introScale=1.2;
-const clock=new THREE.Clock(), beacons=[], stars=[], laneGuides=[];
+const clock = new THREE.Clock();
+
+const beacons = [];
+const stars = [];
+const laneGuides = [];
+const meteors = [];
 const TIERS=[{name:"WHITE",color:0xffffff,value:10,size:3.8,freq:880},{name:"BLUE",color:0x55ccff,value:25,size:4.3,freq:1046},{name:"GREEN",color:0x66ff66,value:50,size:4.8,freq:1174},{name:"PURPLE",color:0xcc66ff,value:75,size:5.1,freq:1240},{name:"ORANGE",color:0xff8800,value:100,size:5.4,freq:1318},{name:"RED",color:0xff4444,value:200,size:6.1,freq:1568}];
 function initAudio(){if(audioCtx){if(audioCtx.state!=="running")audioCtx.resume();return;}audioCtx=new (window.AudioContext||window.webkitAudioContext)();}
 function playCoin(tier){if(!audioCtx)return;const now=audioCtx.currentTime,osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type="square";osc.frequency.setValueAtTime(tier.freq,now);osc.frequency.exponentialRampToValueAtTime(tier.freq*1.55,now+.055);gain.gain.setValueAtTime(.0001,now);gain.gain.linearRampToValueAtTime(.018,now+.008);gain.gain.exponentialRampToValueAtTime(.0001,now+.105);osc.connect(gain).connect(audioCtx.destination);osc.start(now);osc.stop(now+.13);if(tier.value>=100){const osc2=audioCtx.createOscillator(),gain2=audioCtx.createGain();osc2.type="sine";osc2.frequency.setValueAtTime(tier.freq*2,now+.035);gain2.gain.setValueAtTime(.0001,now+.035);gain2.gain.linearRampToValueAtTime(.018,now+.045);gain2.gain.exponentialRampToValueAtTime(.0001,now+.16);osc2.connect(gain2).connect(audioCtx.destination);osc2.start(now+.035);osc2.stop(now+.18);}}
@@ -619,7 +624,93 @@ function startMusic(){
   }
 }
 function makeStarField(){const count=850,positions=new Float32Array(count*3),colors=new Float32Array(count*3),palette=[0xffffff,0x777777,0x55ccff,0xff66cc,0x5d3dff,0xff8800].map(c=>new THREE.Color(c));for(let i=0;i<count;i++){positions[i*3]=(Math.random()*2-1)*260;positions[i*3+1]=(Math.random()*2-1)*180;positions[i*3+2]=-50-Math.random()*1200;const c=palette[Math.floor(Math.random()*palette.length)].clone().multiplyScalar(.35+Math.random()*.7);colors[i*3]=c.r;colors[i*3+1]=c.g;colors[i*3+2]=c.b;}const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.BufferAttribute(positions,3));geo.setAttribute("color",new THREE.BufferAttribute(colors,3));const mat=new THREE.PointsMaterial({size:1.3,sizeAttenuation:true,transparent:true,opacity:.72,vertexColors:true});const pts=new THREE.Points(geo,mat);scene.add(pts);stars.push(pts);}
-function makeLaneGuides(){LANE_X.forEach(x=>{LANE_Y.forEach(y=>{const geo=new THREE.BufferGeometry(),positions=[];for(let i=0;i<52;i++)positions.push(x,y,-80-i*25);geo.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));const mat=new THREE.PointsMaterial({color:0xff66cc,size:.85,transparent:true,opacity:.0,sizeAttenuation:true,depthWrite:false});const pts=new THREE.Points(geo,mat);scene.add(pts);laneGuides.push(pts);});});}
+function spawnMeteor(){
+
+    const geo = new THREE.SphereGeometry(
+        0.8 + Math.random()*0.8,
+        8,
+        8
+    );
+
+    const mat = new THREE.MeshBasicMaterial({
+
+        color:[
+0xffffff,
+0x99ddff,
+0xffcc66,
+0xff8844
+][
+Math.floor(Math.random()*4)
+]
+
+        transparent:true,
+
+        opacity:0.95
+
+    });
+
+    const meteor =
+        new THREE.Mesh(geo,mat);
+
+    meteor.position.set(
+
+        (Math.random()-0.5)*45,
+
+        (Math.random()-0.5)*35,
+
+        FAR_Z - Math.random()*350
+
+    );
+
+    const glow =
+
+new THREE.Mesh(
+
+new THREE.SphereGeometry(
+
+2.2,
+
+8,
+
+8
+
+),
+
+new THREE.MeshBasicMaterial({
+
+color:meteor.material.color,
+
+transparent:true,
+
+opacity:0.10,
+
+blending:
+THREE.AdditiveBlending,
+
+depthWrite:false
+
+})
+
+);
+
+meteor.add(glow);
+
+    meteor.userData={
+
+        speed:
+        speed*
+        (
+            2.6+
+            Math.random()*1.8
+        )
+
+    };
+
+    scene.add(meteor);
+
+    meteors.push(meteor);
+
+}function makeLaneGuides(){LANE_X.forEach(x=>{LANE_Y.forEach(y=>{const geo=new THREE.BufferGeometry(),positions=[];for(let i=0;i<52;i++)positions.push(x,y,-80-i*25);geo.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));const mat=new THREE.PointsMaterial({color:0xff66cc,size:.85,transparent:true,opacity:.0,sizeAttenuation:true,depthWrite:false});const pts=new THREE.Points(geo,mat);scene.add(pts);laneGuides.push(pts);});});}
 function chooseTier(){const r=Math.random();if(r<.35)return TIERS[0];if(r<.60)return TIERS[1];if(r<.78)return TIERS[2];if(r<.90)return TIERS[3];if(r<.98)return TIERS[4];return TIERS[5];}
 function makeBeacon(tier,x,y,z,train){const group=new THREE.Group();const core=new THREE.Mesh(new THREE.SphereGeometry(tier.size,18,18),new THREE.MeshBasicMaterial({color:tier.color}));const glow=new THREE.Mesh(new THREE.SphereGeometry(tier.size*1.9,16,16),new THREE.MeshBasicMaterial({color:tier.color,transparent:true,opacity:.09,blending:THREE.AdditiveBlending,depthWrite:false}));group.add(glow);group.add(core);group.position.set(x,y,z);group.userData={core,glow,tier,value:tier.value,state:"active",fade:1,train};group.scale.setScalar(introScale);scene.add(group);beacons.push(group);}
 function spawnTrain(){trainId++;const xIndex=Math.floor(Math.random()*3),yIndex=Math.floor(Math.random()*3),x=LANE_X[xIndex],y=LANE_Y[yIndex],tier=chooseTier();let length;if(tier.value>=200)length=3+Math.floor(Math.random()*4);else if(tier.value>=100)length=5+Math.floor(Math.random()*6);else if(tier.value>=50)length=8+Math.floor(Math.random()*8);else length=12+Math.floor(Math.random()*14);for(let i=0;i<length;i++)makeBeacon(tier,x,y,FAR_Z-i*TRAIN_GAP,trainId);document.getElementById("signal").textContent=runStarted?"Signal: stay connected":"Signal: touch first string";}
@@ -1026,7 +1117,40 @@ for(const m of milestones){
 
     }
 
-}spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));const cycleDistance = distance % 5000;warpAmount = Math.min(cycleDistance / 5000, 1);
+}
+
+// Meteor probability
+
+if(Math.random()<0.014){
+
+    spawnMeteor();
+
+}
+
+if(Math.random()<0.0015){
+
+    for(
+
+        let i=0;
+
+        i<15;
+
+        i++
+
+    ){
+
+        setTimeout(
+
+            spawnMeteor,
+
+            i*35
+
+        );
+
+    }
+
+}
+spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));const cycleDistance = distance % 5000;warpAmount = Math.min(cycleDistance / 5000, 1);
 
 const stage =
 Math.min(
@@ -1098,7 +1222,34 @@ warpAmount
 
 
 camera.fov = targetFov;
-camera.updateProjectionMatrix();beacons.forEach(b=>{if(b.userData.state==="active"){b.position.z+=speed*dt;b.lookAt(camera.position);const dz=Math.abs(b.position.z-camera.position.z),dxy=Math.hypot(b.position.x-camera.position.x,b.position.y-camera.position.y);if(dz<42&&dxy<COLLECT_RADIUS)collectBeacon(b);if(b.position.z>NEAR_Z+60)b.userData.state="missed";}if(b.userData.state==="collected"||b.userData.state==="missed"){b.userData.fade-=dt*2.8;const f=Math.max(0,b.userData.fade);b.userData.core.material.transparent=true;b.userData.core.material.opacity=f;b.userData.glow.material.opacity =
+camera.updateProjectionMatrix();for(
+
+let i=meteors.length-1;
+
+i>=0;
+
+i--
+
+){
+
+    const m=meteors[i];
+
+    m.position.z +=
+
+        m.userData.speed*dt;
+
+    // slight expansion
+    m.scale.multiplyScalar(1.015);
+
+    if(m.position.z>90){
+
+        scene.remove(m);
+
+        meteors.splice(i,1);
+
+    }
+
+}beacons.forEach(b=>{if(b.userData.state==="active"){b.position.z+=speed*dt;b.lookAt(camera.position);const dz=Math.abs(b.position.z-camera.position.z),dxy=Math.hypot(b.position.x-camera.position.x,b.position.y-camera.position.y);if(dz<42&&dxy<COLLECT_RADIUS)collectBeacon(b);if(b.position.z>NEAR_Z+60)b.userData.state="missed";}if(b.userData.state==="collected"||b.userData.state==="missed"){b.userData.fade-=dt*2.8;const f=Math.max(0,b.userData.fade);b.userData.core.material.transparent=true;b.userData.core.material.opacity=f;b.userData.glow.material.opacity =
 f * (
 0.09 +
 warpAmount * 0.18
