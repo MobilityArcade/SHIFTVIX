@@ -1092,45 +1092,11 @@ for(const m of milestones){
 
 }spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));const cycleDistance = distance;warpAmount =Math.min(distance / 12000,1);
 
-const intensity = Math.min(distance / 10000,1);
-
 scene.fog.density =
 0.0011 +
 Math.min(distance/15000,1)
 *
 0.005;
-
-scene.fog.density =
-fogLevels[stage]
-+
-warpAmount*0.0008;
-
-if(distance>4600){
-
-    const t =
-        Math.min(
-            1,
-            (distance-4600)/400
-        );
-
-    scene.fog.density +=
-        t*0.0025;
-
-}
-const atmosphereColors = [
-0x000000,
-0x061221,
-0x15092d,
-0x2b0038,
-0x442100,
-0x5b1800,
-0x330000,
-0xffffff
-];
-
-scene.fog.color.setHex(
-atmosphereColors[stage]
-);
 
 camera.lookAt(
 
