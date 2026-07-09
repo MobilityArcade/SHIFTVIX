@@ -180,10 +180,24 @@ let laneX=1,laneY=1,targetX=0,targetY=0,score=0,bestScore=Number(localStorage.ge
 let paused = false;
 
 let level = 1;
+
 let bestLevel =
 Number(localStorage.getItem("shiftvixBestLevel") || 1);
 
 let lastLevel = 1;
+const levelMilestones = [
+    2,
+    3,
+    5,
+    10,
+    15,
+    20,
+    30,
+    40,
+    50
+];
+
+let milestonesReached = {};
 let milestonesReached = {};
 let sessionRuns = 0;
 let runStartTime = 0;
@@ -848,11 +862,9 @@ const runSeconds =
 
 track("run_ended",{
 
+    level: level,
+
     distance: Math.floor(distance),
-
-    score: score,
-
-    sources: foundCount,
 
     duration: Math.round(runSeconds)
 
@@ -872,20 +884,21 @@ track("run_ended",{
         );
     }
 
-    if(level>bestLevel){
+    if(level > bestLevel){
 
-    bestLevel=level;
+    bestLevel = level;
+
+    track("new_best_level",{
+        level: bestLevel,
+        distance: Math.floor(distance)
+    });
 
     localStorage.setItem(
-
         "shiftvixBestLevel",
-
         bestLevel
-
     );
 
 }
-
     const isNewBestScore = score > bestScore;
     if(isNewBestScore){
         bestScore = score;
@@ -959,6 +972,8 @@ function resetRun(){
 
     paused = false;
 
+    milestonesReached = {};
+
     const title = document.getElementById("gameTitle");
 
     title.style.opacity = 1;
@@ -1014,13 +1029,33 @@ const vix = document.getElementById("vix");
 function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;level =
 Math.floor(distance / 500)+1;
 
-if(level>lastLevel){
+if(level > lastLevel){
 
-    lastLevel=level;
+    lastLevel = level;
 
     animateLevelNumber();
 
-}const milestones = [
+    track("level_reached",{
+        level: level,
+        distance: Math.floor(distance)
+    });
+
+    for(const l of levelMilestones){
+
+        if(level >= l && !milestonesReached["level"+l]){
+
+            milestonesReached["level"+l] = true;
+
+            track("level_milestone",{
+                level: l
+            });
+
+        }
+
+    }
+
+}
+const milestones = [
 
 100,
 
