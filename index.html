@@ -134,6 +134,40 @@ canvas{display:block}
 #strikes{position:absolute;top:52px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:10px;}
 .strikeDot{width:15px;height:15px;border-radius:50%;background:#ff3333;box-shadow:0 0 10px rgba(255,40,40,.85),0 0 22px rgba(255,40,40,.45);border:1px solid rgba(255,255,255,.75)}
 .strikeDot.used{background:rgba(255,255,255,.08);box-shadow:none;border:1px solid rgba(255,255,255,.28)}
+@keyframes lifeLostPulse{
+
+    0%{
+        transform:scale(1);
+        opacity:1;
+        background:#ff3333;
+        box-shadow:
+            0 0 10px rgba(255,40,40,.85),
+            0 0 22px rgba(255,40,40,.45);
+    }
+
+    35%{
+        transform:scale(3);
+        opacity:1;
+        background:#ff3333;
+        box-shadow:
+            0 0 25px #ff3333,
+            0 0 55px rgba(255,40,40,.9),
+            0 0 90px rgba(255,40,40,.55);
+    }
+
+    100%{
+        transform:scale(4);
+        opacity:0;
+        background:#ff3333;
+        box-shadow:
+            0 0 35px rgba(255,40,40,.2);
+    }
+
+}
+
+.strikeDot.lifeLostPulse{
+    animation:lifeLostPulse .55s ease-out forwards;
+}
 #center{position:absolute;left:50%;top:50%;width:20px;height:20px;border-radius:50%;transform:translate(-50%,-50%);background:transparent;border:2px solid rgba(255,255,255,.95);box-shadow:0 0 10px rgba(255,255,255,.55);z-index:13;pointer-events:auto;cursor:pointer}
 #center::after{content:"";position:absolute;left:50%;top:50%;width:42px;height:42px;border-radius:50%;transform:translate(-50%,-50%);border:1px solid rgba(255,255,255,.45);box-shadow:none;animation:pulse 1.05s ease-in-out infinite alternate}
 @keyframes pulse{from{transform:translate(-50%,-50%) scale(.92);opacity:.65}to{transform:translate(-50%,-50%) scale(1.25);opacity:1}}
@@ -818,15 +852,70 @@ function animateLevelNumber(){
     }
 
 }
+function animateLostLife(index){
+
+    const dot =
+        document.getElementById("s" + index);
+
+    if(!dot) return;
+
+    dot.classList.remove("used");
+    dot.classList.remove("lifeLostPulse");
+
+    void dot.offsetWidth;
+
+    dot.classList.add("lifeLostPulse");
+
+    setTimeout(()=>{
+
+        dot.classList.remove("lifeLostPulse");
+        dot.classList.add("used");
+
+    },550);
+
+}    
 function updateStrikes(){for(let i=0;i<3;i++)document.getElementById("s"+i).classList.toggle("used",i<strikes);}
-function takeStrike(){if(!runStarted||gameOver)return;strikes++;track("strike",{
+function takeStrike(){
 
-    strike_number:strikes,
+    if(!runStarted || gameOver) return;
 
-    distance:Math.floor(distance)
+    strikes++;
 
-});breakTimer=0;combo=1;playStrike();if(navigator.vibrate)navigator.vibrate([30,40,30]);updateStrikes();document.getElementById("signal").textContent="Signal: break "+strikes+"/3";if(strikes>=3)endRun();}
-function collectBeacon(b){if(b.userData.state!=="active")return;b.userData.state="collected";b.userData.fade=1;if(!runStarted){runStarted=true;breakTimer=0;document.getElementById("signal").textContent="Signal: run started";}const now=performance.now();combo=(now-lastFoundAt<1000)?Math.min(combo+1,5):1;lastFoundAt=now;breakTimer=0;const gained=b.userData.value*combo;score+=gained;foundCount++;if(foundCount===1){
+    track("strike",{
+        strike_number: strikes,
+        distance: Math.floor(distance)
+    });
+
+    breakTimer = 0;
+    combo = 1;
+
+    playStrike();
+
+    if(navigator.vibrate){
+        navigator.vibrate([30,40,30]);
+    }
+
+    // Animate only the first two lost lives.
+    // The third strike immediately opens the results screen.
+    if(strikes < 3){
+
+        animateLostLife(strikes - 1);
+
+    }
+    else{
+
+        updateStrikes();
+
+    }
+
+    document.getElementById("signal").textContent =
+        "Signal: break " + strikes + "/3";
+
+    if(strikes >= 3){
+        endRun();
+    }
+
+}function collectBeacon(b){if(b.userData.state!=="active")return;b.userData.state="collected";b.userData.fade=1;if(!runStarted){runStarted=true;breakTimer=0;document.getElementById("signal").textContent="Signal: run started";}const now=performance.now();combo=(now-lastFoundAt<1000)?Math.min(combo+1,5):1;lastFoundAt=now;breakTimer=0;const gained=b.userData.value*combo;score+=gained;foundCount++;if(foundCount===1){
 
     track("first_source_collected");
 
