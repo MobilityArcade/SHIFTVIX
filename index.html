@@ -783,7 +783,9 @@ function startGame(){
 
     sessionRuns++;
 
-    track("game_started");
+    track("game_started",{
+    starting_level:1
+    });
 
     runStartTime = performance.now();
 
@@ -882,9 +884,11 @@ function takeStrike(){
     strikes++;
 
     track("strike",{
-        strike_number: strikes,
-        distance: Math.floor(distance)
-    });
+    strike_number: strikes,
+    level: level,
+    distance: Math.floor(distance),
+    score: score
+});
 
     breakTimer = 0;
     combo = 1;
@@ -932,19 +936,31 @@ function updateHUD(){
 function endRun(){
 
     gameOver = true;
-const runSeconds =
-    (performance.now() - runStartTime) / 1000;
 
-track("run_ended",{
+    const runSeconds =
+        (performance.now() - runStartTime) / 1000;
 
-    level: level,
-    distance: Math.floor(distance),
-    score: score,
-    sources: foundCount,
-    duration: Math.round(runSeconds)
+    // NEW EVENT
+    track("death_level",{
+        level: level,
+        distance: Math.floor(distance),
+        strikes: strikes,
+        score: score
+    });
 
-});
+    // Existing event
+    track("run_ended",{
 
+        level: level,
+        distance: Math.floor(distance),
+        score: score,
+        sources: foundCount,
+        duration: Math.round(runSeconds)
+
+    });
+
+    ...
+}
     const isNewBestDistance = distance > bestDistance;
     if(isNewBestDistance){
         bestDistance = distance;
@@ -1100,16 +1116,25 @@ startMusic();
 const title = document.getElementById("gameTitle");
 const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
-function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;level =
-Math.floor(distance / 500)+1;
+function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;
+level = Math.floor(distance / 500) + 1;
 
-if(level>lastLevel){
+if (level > lastLevel) {
 
-    lastLevel=level;
+    lastLevel = level;
+
+    // Send level reached to Google Analytics
+    track("level_reached", {
+        level: level,
+        distance: Math.floor(distance),
+        strikes: strikes,
+        score: score
+    });
 
     animateLevelNumber();
 
-}const milestones = [
+}
+const milestones = [
 
 100,
 
