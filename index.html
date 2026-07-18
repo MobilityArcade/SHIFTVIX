@@ -221,6 +221,13 @@ let lastLevel = 1;
 let milestonesReached = {};
 let sessionRuns = 0;
 let runStartTime = 0;
+
+// Stores the completed run time for restart analytics
+let lastRunDuration = 0;
+
+// Remembers whether this browser has ever started SHIFTVIX before
+let hasPlayedBefore =
+    localStorage.getItem("shiftvixHasPlayed") === "true";
 let introCameraZ=48;
 const TARGET_CAMERA_Z=72;
 // ---------- WARP ----------
@@ -783,8 +790,24 @@ function startGame(){
 
     sessionRuns++;
 
+    // Fires only once on this browser/device
+    if(!hasPlayedBefore){
+
+        track("first_run",{
+            starting_level: 1
+        });
+
+        localStorage.setItem(
+            "shiftvixHasPlayed",
+            "true"
+        );
+
+        hasPlayedBefore = true;
+    }
+
+    // Fires every time a new game session begins
     track("game_started",{
-    starting_level:1
+        starting_level: 1
     });
 
     runStartTime = performance.now();
@@ -940,25 +963,34 @@ function endRun(){
     const runSeconds =
         (performance.now() - runStartTime) / 1000;
 
-    // NEW EVENT
-    track("death_level", {
-    level: level,
-    distance: Math.floor(distance),
-    score: score,
-    strikes: strikes,
-    duration: Math.round(runSeconds),
-    sources: foundCount
-});
+    lastRunDuration = Math.round(runSeconds);
 
-    // Existing event
-    track("run_ended",{
-
+    // Exact level where all three lives were lost
+    track("death_level",{
         level: level,
         distance: Math.floor(distance),
+        strikes: strikes,
+        score: score,
+        duration: lastRunDuration,
+        sources: foundCount
+    });
+
+    // Dedicated survival-time event
+    track("run_duration",{
+        seconds: lastRunDuration,
+        level: level,
+        distance: Math.floor(distance),
+        score: score
+    });
+
+    // Existing full run summary
+    track("run_ended",{
+        level: level,
+        distance: Math.floor(distance),
+        strikes: strikes,
         score: score,
         sources: foundCount,
-        duration: Math.round(runSeconds)
-
+        duration: lastRunDuration
     });
     
     const isNewBestDistance = distance > bestDistance;
@@ -1061,6 +1093,16 @@ function endRun(){
 
 }
 function resetRun(){
+
+    // This function is reached when the player taps
+    // the results screen after losing all three lives.
+    track("restart_after_death",{
+        previous_level: level,
+        previous_distance: Math.floor(distance),
+        previous_score: score,
+        previous_duration: lastRunDuration,
+        previous_sources: foundCount
+    });
 
     paused = false;
 
