@@ -941,12 +941,14 @@ function endRun(){
         (performance.now() - runStartTime) / 1000;
 
     // NEW EVENT
-    track("death_level",{
-        level: level,
-        distance: Math.floor(distance),
-        strikes: strikes,
-        score: score
-    });
+    track("death_level", {
+    level: level,
+    distance: Math.floor(distance),
+    score: score,
+    strikes: strikes,
+    duration: Math.round(runSeconds),
+    sources: foundCount
+});
 
     // Existing event
     track("run_ended",{
