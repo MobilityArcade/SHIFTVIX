@@ -26,6 +26,13 @@ if (params.get("developer") === "true") {
 }
 
 function track(eventName, data = {}) {
+
+    // Completely ignore analytics from your developer browser
+    if (isDeveloper) {
+        console.log("[Developer analytics blocked]", eventName, data);
+        return;
+    }
+
     if (typeof gtag === "function") {
         gtag("event", eventName, data);
     }
