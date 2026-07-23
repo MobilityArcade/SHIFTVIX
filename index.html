@@ -194,24 +194,6 @@ canvas{display:block}
 .scorePopup{position:absolute;left:50%;top:43%;transform:translate(-50%,-50%);z-index:60;pointer-events:none;font-size:26px;font-weight:900;letter-spacing:2px;color:#ffd36a;text-shadow:0 0 12px rgba(255,211,106,.95),0 0 38px rgba(255,120,0,.6);animation:scoreRise .9s ease-out forwards}
 @keyframes scoreRise{0%{opacity:0;transform:translate(-50%,-10%) scale(.8)}18%{opacity:1}100%{opacity:0;transform:translate(-50%,-145%) scale(1.08)}}
 #pauseText{position:absolute;left:50%;top:calc(50% + 52px);transform:translateX(-50%);z-index:16;font-size:12px;font-weight:900;letter-spacing:4px;color:#ffd36a;text-shadow:0 0 12px rgba(255,211,106,.9);display:none;pointer-events:none}
-
-/* =========================
-   SHIFTVIX 2.0 — FLOW SYSTEM
-   ========================= */
-#flowHud{position:absolute;top:168px;left:50%;transform:translateX(-50%);z-index:21;pointer-events:none;text-align:center;min-width:190px}
-#flowLabel{font-size:11px;font-weight:900;letter-spacing:3px;color:rgba(255,255,255,.72)}
-#flowValue{margin-top:2px;font-size:28px;font-weight:1000;color:#7df9ff;text-shadow:0 0 12px rgba(125,249,255,.95),0 0 35px rgba(80,180,255,.55);transition:transform .18s,color .18s,text-shadow .18s}
-#flowValue.flowBurst{transform:scale(1.75);color:#ffd36a;text-shadow:0 0 20px #ffd36a,0 0 55px #ff8800}
-#challengeHud{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:22;width:min(520px,88vw);pointer-events:none;text-align:center;color:rgba(255,255,255,.9);font-size:11px;font-weight:800;letter-spacing:1.4px;text-shadow:0 0 10px #000}
-#challengeBar{margin:7px auto 0;width:min(330px,74vw);height:5px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden;border:1px solid rgba(255,255,255,.12)}
-#challengeFill{height:100%;width:0%;background:linear-gradient(90deg,#55ccff,#ff66cc,#ffd36a);box-shadow:0 0 15px rgba(255,102,204,.9);transition:width .2s}
-#modeBanner{position:absolute;left:50%;top:31%;transform:translate(-50%,-50%);z-index:65;pointer-events:none;font-size:16px;font-weight:1000;letter-spacing:3px;opacity:0;color:#ffd36a;text-shadow:0 0 14px #ffd36a,0 0 42px #ff8800;white-space:nowrap}
-#modeBanner.show{animation:modeFlash 1.25s ease-out forwards}
-@keyframes modeFlash{0%{opacity:0;transform:translate(-50%,-25%) scale(.8)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-85%) scale(1)}}
-.resultsCard{position:relative;z-index:56}
-.flowSummary{margin:16px 0 4px;padding:12px;border-radius:16px;background:rgba(125,249,255,.06);border:1px solid rgba(125,249,255,.18);font-size:12px;line-height:1.6;letter-spacing:1.3px}
-.riskLegend{font-size:10px;opacity:.72;margin-top:8px;letter-spacing:1.5px}
-
 </style>
 </head>
 <body>
@@ -228,9 +210,6 @@ canvas{display:block}
 <div style="display:none"><span id="world">Distance Run</span>
 <span id="found">0</span><span id="score">0</span><span id="bestScore">0</span><span id="combo">1x</span><div id="signal"></div></div></div>
 <div id="center"></div><div id="pauseText">PAUSED</div><div id="laneLabel">CENTER</div><div id="roundComplete"></div>
-<div id="flowHud"><div id="flowLabel">FLOW STREAK</div><div id="flowValue">x1</div></div>
-<div id="challengeHud"><div id="challengeText">TODAY'S FLOW: LOADING…</div><div id="challengeBar"><div id="challengeFill"></div></div></div>
-<div id="modeBanner"></div>
 
 <script type="module">
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
@@ -238,19 +217,8 @@ const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x000000,0.0011);
 const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.1,5000);camera.position.set(0,0,48);camera.lookAt(0,0,-500);
 const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);document.body.appendChild(renderer.domElement);
 const LANE_X=[-40,0,40], LANE_Y=[30,0,-30], FAR_Z=-920, NEAR_Z=72, SPEED_START=170, COLLECT_RADIUS=18, TRAIN_GAP=20, BREAK_GRACE=.72;
-const HERO_SECONDS = 15;
-const FLOW_THRESHOLDS = [0,6,14,26,42];
-const FLOW_MULTIPLIERS = [1,2,4,8,16];
 let laneX=1,laneY=1,targetX=0,targetY=0,score=0,bestScore=Number(localStorage.getItem("sourceLaneBestScore")||0),bestDistance=Number(localStorage.getItem("sourceLaneBestDistance")||0),foundCount=0,combo=1,lastFoundAt=0,distance=0,speed=SPEED_START,spawnTimer=0,trainId=0,strikes=0,runStarted=false,gameStarted=false,gameOver=false,breakTimer=0,audioCtx=null;
 let paused = false;
-let flowStreak = 0;
-let flowMultiplier = 1;
-let bestFlowMultiplier = 1;
-let pathHistory = [];
-let challengeComplete = false;
-let heroMode = true;
-let heroBannerShown = false;
-let lastRiskBannerAt = 0;
 
 let level = 1;
 let bestLevel =
@@ -753,108 +721,13 @@ function startMusic(){
     begin();
   }
 }
-
-const challengePool = [
-  {id:"distance",label:"REACH 2,500m",target:2500,value:()=>distance},
-  {id:"sources",label:"COLLECT 45 ENERGY NODES",target:45,value:()=>foundCount},
-  {id:"flow",label:"REACH FLOW x8",target:8,value:()=>bestFlowMultiplier},
-  {id:"level",label:"REACH LEVEL 6",target:6,value:()=>level}
-];
-const challengeSeed = Number(new Date().toISOString().slice(0,10).replaceAll("-",""));
-const activeChallenge = challengePool[challengeSeed % challengePool.length];
-
-function currentFlowMultiplier(){
-  let index = 0;
-  for(let i=0;i<FLOW_THRESHOLDS.length;i++) if(flowStreak >= FLOW_THRESHOLDS[i]) index = i;
-  return FLOW_MULTIPLIERS[Math.min(index,FLOW_MULTIPLIERS.length-1)];
-}
-function updateFlowHUD(burst=false){
-  const el=document.getElementById("flowValue");
-  if(!el)return;
-  el.textContent="x"+flowMultiplier;
-  if(burst){el.classList.remove("flowBurst");void el.offsetWidth;el.classList.add("flowBurst");setTimeout(()=>el.classList.remove("flowBurst"),260);}
-}
-function addFlowPoint(kind="collect"){
-  pathHistory.push({
-    x:laneX,
-    y:laneY,
-    d:Math.floor(distance),
-    m:flowMultiplier,
-    kind
-  });
-  if(pathHistory.length>650)pathHistory.shift();
-}
-function resetFlow(reason="break"){
-  if(flowStreak>0)addFlowPoint(reason);
-  flowStreak=0;
-  flowMultiplier=1;
-  updateFlowHUD(true);
-}
-let pendingModeBanner = null;
-function introIsClear(){
-  return distance >= 72;
-}
-function showModeBanner(text){
-  const el=document.getElementById("modeBanner");
-  if(!el)return;
-  if(!introIsClear()){
-    pendingModeBanner = text;
-    return;
-  }
-  pendingModeBanner = null;
-  el.textContent=text;
-  el.classList.remove("show");
-  void el.offsetWidth;
-  el.classList.add("show");
-}
-function releasePendingModeBanner(){
-  if(pendingModeBanner && introIsClear()) showModeBanner(pendingModeBanner);
-}
-function updateChallenge(){
-  const value=Math.min(activeChallenge.target,activeChallenge.value());
-  const pct=Math.max(0,Math.min(100,(value/activeChallenge.target)*100));
-  document.getElementById("challengeText").textContent=
-    (challengeComplete?"FLOW COMPLETE — ":"TODAY'S FLOW — ")+activeChallenge.label+"  "+Math.floor(value)+"/"+activeChallenge.target;
-  document.getElementById("challengeFill").style.width=pct+"%";
-  if(!challengeComplete && value>=activeChallenge.target){
-    challengeComplete=true;
-    showModeBanner("FLOW COMPLETE");
-    track("challenge_completed",{challenge:activeChallenge.id,level,distance:Math.floor(distance),score});
-  }
-}
 function makeStarField(){const count=850,positions=new Float32Array(count*3),colors=new Float32Array(count*3),palette=[0xffffff,0x777777,0x55ccff,0xff66cc,0x5d3dff,0xff8800].map(c=>new THREE.Color(c));for(let i=0;i<count;i++){positions[i*3]=(Math.random()*2-1)*260;positions[i*3+1]=(Math.random()*2-1)*180;positions[i*3+2]=-50-Math.random()*1200;const c=palette[Math.floor(Math.random()*palette.length)].clone().multiplyScalar(.35+Math.random()*.7);colors[i*3]=c.r;colors[i*3+1]=c.g;colors[i*3+2]=c.b;}const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.BufferAttribute(positions,3));geo.setAttribute("color",new THREE.BufferAttribute(colors,3));const mat=new THREE.PointsMaterial({size:1.3,sizeAttenuation:true,transparent:true,opacity:.72,vertexColors:true});const pts=new THREE.Points(geo,mat);scene.add(pts);stars.push(pts);}
 function makeLaneGuides(){LANE_X.forEach(x=>{LANE_Y.forEach(y=>{const geo=new THREE.BufferGeometry(),positions=[];for(let i=0;i<52;i++)positions.push(x,y,-80-i*25);geo.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));const mat=new THREE.PointsMaterial({color:0xff66cc,size:.85,transparent:true,opacity:.0,sizeAttenuation:true,depthWrite:false});const pts=new THREE.Points(geo,mat);scene.add(pts);laneGuides.push(pts);});});}
 function chooseTier(){const r=Math.random();if(r<.35)return TIERS[0];if(r<.60)return TIERS[1];if(r<.78)return TIERS[2];if(r<.90)return TIERS[3];if(r<.98)return TIERS[4];return TIERS[5];}
-function makeBeacon(tier,x,y,z,train,risk){
- const group=new THREE.Group();
- const displayColor=risk.color||tier.color;
- const core=new THREE.Mesh(new THREE.SphereGeometry(tier.size*risk.sizeMult,18,18),new THREE.MeshBasicMaterial({color:displayColor}));
- const glow=new THREE.Mesh(new THREE.SphereGeometry(tier.size*1.9*risk.sizeMult,16,16),new THREE.MeshBasicMaterial({color:displayColor,transparent:true,opacity:risk.glow,blending:THREE.AdditiveBlending,depthWrite:false}));
- group.add(glow);group.add(core);group.position.set(x,y,z);
- group.userData={core,glow,tier,value:Math.round(tier.value*risk.valueMult),state:"active",fade:1,train,risk,speedMult:risk.speedMult};
- group.scale.setScalar(introScale);scene.add(group);beacons.push(group);
-}
-function spawnTrain(){
- trainId++;
- const xIndex=Math.floor(Math.random()*3),yIndex=Math.floor(Math.random()*3),x=LANE_X[xIndex],y=LANE_Y[yIndex],tier=chooseTier();
- const roll=Math.random();
- let risk;
- if(heroMode || roll<.76)risk={name:"SAFE",valueMult:1,speedMult:1,sizeMult:1,glow:.09,color:null};
- else if(roll<.96)risk={name:"DANGER",valueMult:2,speedMult:1.18,sizeMult:1.08,glow:.18,color:0xff4455};
- else risk={name:"LEGENDARY",valueMult:5,speedMult:1.34,sizeMult:1.24,glow:.34,color:0xffd36a};
- let length;
- if(risk.name==="LEGENDARY")length=4+Math.floor(Math.random()*4);
- else if(tier.value>=200)length=3+Math.floor(Math.random()*4);
- else if(tier.value>=100)length=5+Math.floor(Math.random()*6);
- else if(tier.value>=50)length=8+Math.floor(Math.random()*8);
- else length=12+Math.floor(Math.random()*14);
- for(let i=0;i<length;i++)makeBeacon(tier,x,y,FAR_Z-i*TRAIN_GAP,trainId,risk);
- const now=performance.now();
- if(risk.name!=="SAFE" && now-lastRiskBannerAt>1800){showModeBanner(risk.name+" FLOW  "+(risk.valueMult)+"x VALUE");lastRiskBannerAt=now;}
- document.getElementById("signal").textContent=runStarted?"Signal: stay connected":"Signal: touch first string";
-}
-function spawnWave(){const trains=heroMode?2:(Math.random()<.78?2:3);for(let i=0;i<trains;i++)setTimeout(spawnTrain,i*120);}
-function moveLane(dx,dy){if(!gameStarted||gameOver)return;laneX=Math.max(0,Math.min(2,laneX+dx));laneY=Math.max(0,Math.min(2,laneY+dy));targetX=LANE_X[laneX];targetY=LANE_Y[laneY];addFlowPoint("move");const namesY=["UP","CENTER","DOWN"],namesX=["LEFT","CENTER","RIGHT"];document.getElementById("laneLabel").textContent=namesY[laneY]+" "+namesX[laneX];if(navigator.vibrate)navigator.vibrate(10);}
+function makeBeacon(tier,x,y,z,train){const group=new THREE.Group();const core=new THREE.Mesh(new THREE.SphereGeometry(tier.size,18,18),new THREE.MeshBasicMaterial({color:tier.color}));const glow=new THREE.Mesh(new THREE.SphereGeometry(tier.size*1.9,16,16),new THREE.MeshBasicMaterial({color:tier.color,transparent:true,opacity:.09,blending:THREE.AdditiveBlending,depthWrite:false}));group.add(glow);group.add(core);group.position.set(x,y,z);group.userData={core,glow,tier,value:tier.value,state:"active",fade:1,train};group.scale.setScalar(introScale);scene.add(group);beacons.push(group);}
+function spawnTrain(){trainId++;const xIndex=Math.floor(Math.random()*3),yIndex=Math.floor(Math.random()*3),x=LANE_X[xIndex],y=LANE_Y[yIndex],tier=chooseTier();let length;if(tier.value>=200)length=3+Math.floor(Math.random()*4);else if(tier.value>=100)length=5+Math.floor(Math.random()*6);else if(tier.value>=50)length=8+Math.floor(Math.random()*8);else length=12+Math.floor(Math.random()*14);for(let i=0;i<length;i++)makeBeacon(tier,x,y,FAR_Z-i*TRAIN_GAP,trainId);document.getElementById("signal").textContent=runStarted?"Signal: stay connected":"Signal: touch first string";}
+function spawnWave(){const trains=Math.random()<.78?2:3;for(let i=0;i<trains;i++)setTimeout(spawnTrain,i*120);}
+function moveLane(dx,dy){if(!gameStarted||gameOver)return;laneX=Math.max(0,Math.min(2,laneX+dx));laneY=Math.max(0,Math.min(2,laneY+dy));targetX=LANE_X[laneX];targetY=LANE_Y[laneY];const namesY=["UP","CENTER","DOWN"],namesX=["LEFT","CENTER","RIGHT"];document.getElementById("laneLabel").textContent=namesY[laneY]+" "+namesX[laneX];if(navigator.vibrate)navigator.vibrate(10);}
 let downX=0,downY=0;
 
 // iPhone Safari audio unlock: capture the earliest touch event possible.
@@ -945,12 +818,6 @@ function startGame(){
     });
 
     runStartTime = performance.now();
-    heroMode = true;
-    heroBannerShown = true;
-    pathHistory = [{x:laneX,y:laneY,d:0,m:1,kind:"start"}];
-    updateFlowHUD();
-    updateChallenge();
-    showModeBanner("FLOW IGNITION");
 
     spawnWave();
 
@@ -1044,14 +911,7 @@ function takeStrike(){
 
     if(!runStarted || gameOver) return;
 
-    if(heroMode){
-        breakTimer=0;
-        showModeBanner("HERO FLOW");
-        return;
-    }
-
     strikes++;
-    resetFlow("strike");
 
     track("strike",{
     strike_number: strikes,
@@ -1089,28 +949,11 @@ function takeStrike(){
         endRun();
     }
 
-}function collectBeacon(b){
- if(b.userData.state!=="active")return;
- b.userData.state="collected";b.userData.fade=1;
- if(!runStarted){runStarted=true;breakTimer=0;document.getElementById("signal").textContent="Signal: run started";}
- const now=performance.now();
- combo=(now-lastFoundAt<1000)?Math.min(combo+1,5):1;
- lastFoundAt=now;breakTimer=0;
- flowStreak++;
- const previousFlow=flowMultiplier;
- flowMultiplier=currentFlowMultiplier();
- bestFlowMultiplier=Math.max(bestFlowMultiplier,flowMultiplier);
- if(flowMultiplier!==previousFlow){showModeBanner("FLOW x"+flowMultiplier);updateFlowHUD(true);}else updateFlowHUD(false);
- const gained=b.userData.value*flowMultiplier;
- score+=gained;foundCount++;
- addFlowPoint("collect");
- if(foundCount===1){track("first_source_collected");}
- if(score>bestScore){bestScore=score;localStorage.setItem("sourceLaneBestScore",String(bestScore));}
- playCoin(b.userData.tier);
- showScorePopup("+"+gained+(b.userData.risk.name!=="SAFE"?"  "+b.userData.risk.name:""));
- updateHUD();updateChallenge();
- if(navigator.vibrate)navigator.vibrate(b.userData.risk.name==="LEGENDARY"?[10,25,10]:4);
-}
+}function collectBeacon(b){if(b.userData.state!=="active")return;b.userData.state="collected";b.userData.fade=1;if(!runStarted){runStarted=true;breakTimer=0;document.getElementById("signal").textContent="Signal: run started";}const now=performance.now();combo=(now-lastFoundAt<1000)?Math.min(combo+1,5):1;lastFoundAt=now;breakTimer=0;const gained=b.userData.value*combo;score+=gained;foundCount++;if(foundCount===1){
+
+    track("first_source_collected");
+
+}if(score>bestScore){bestScore=score;localStorage.setItem("sourceLaneBestScore",String(bestScore));}playCoin(b.userData.tier);showScorePopup("+"+gained);updateHUD();if(navigator.vibrate)navigator.vibrate(4);}
 function updateHUD(){
 
     document.getElementById("distance").textContent =
@@ -1123,7 +966,6 @@ function updateHUD(){
 function endRun(){
 
     gameOver = true;
-    addFlowPoint("end");
 
     const runSeconds =
         (performance.now() - runStartTime) / 1000;
@@ -1137,8 +979,7 @@ function endRun(){
         strikes: strikes,
         score: score,
         duration: lastRunDuration,
-        sources: foundCount,
-        best_flow: bestFlowMultiplier
+        sources: foundCount
     });
 
     // Dedicated survival-time event
@@ -1146,8 +987,7 @@ function endRun(){
         seconds: lastRunDuration,
         level: level,
         distance: Math.floor(distance),
-        score: score,
-        best_flow: bestFlowMultiplier
+        score: score
     });
 
     // Existing full run summary
@@ -1157,8 +997,7 @@ function endRun(){
         strikes: strikes,
         score: score,
         sources: foundCount,
-        duration: lastRunDuration,
-        best_flow: bestFlowMultiplier
+        duration: lastRunDuration
     });
     
     const isNewBestDistance = distance > bestDistance;
@@ -1249,12 +1088,6 @@ function endRun(){
         <span>${bestLevel}</span>
     </div>
 
-
-    <div class="flowSummary">
-        BEST FLOW x${bestFlowMultiplier} · ${foundCount} NODES<br>
-        ${challengeComplete ? "TODAY'S FLOW COMPLETE" : "CHALLENGE STILL OPEN"}
-    </div>
-
     <div class="tapContinue">
         TAP TO RESTART
     </div>
@@ -1292,7 +1125,7 @@ vix.style.transform = "translateY(0)";
 
 title.style.transform = "translate(-50%,-50%)";
 
-const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");center.style.borderColor="rgba(255,255,255,.95)";center.style.boxShadow="0 0 10px rgba(255,255,255,.55)";document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level = 1;flowStreak=0;flowMultiplier=1;bestFlowMultiplier=1;pathHistory=[{x:1,y:1,d:0,m:1,kind:"start"}];heroMode=true;heroBannerShown=true;challengeComplete=false;pendingModeBanner="FLOW IGNITION";updateFlowHUD();updateChallenge();
+const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");center.style.borderColor="rgba(255,255,255,.95)";center.style.boxShadow="0 0 10px rgba(255,255,255,.55)";document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level = 1;
 
 lastLevel = 1;strikes = 0;milestonesReached = {};runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;updateStrikes();updateHUD();spawnWave();startMusic();}
 function togglePause(){
@@ -1334,8 +1167,6 @@ const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
 function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;
 level = Math.floor(distance / 500) + 1;
-heroMode = ((performance.now()-runStartTime)/1000) < HERO_SECONDS;
-if(!heroMode && heroBannerShown){heroBannerShown=false;showModeBanner("TRUE FLOW");}
 
 if (level > lastLevel) {
 
@@ -1386,7 +1217,7 @@ for(const m of milestones){
 
     }
 
-}updateChallenge();spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));const cycleDistance = distance % 3000;warpAmount = Math.min(cycleDistance / 3000, 1);
+}spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));const cycleDistance = distance % 3000;warpAmount = Math.min(cycleDistance / 3000, 1);
 
 const stage =
 Math.min(
@@ -1458,7 +1289,7 @@ warpAmount
 
 
 camera.fov = targetFov;
-camera.updateProjectionMatrix();beacons.forEach(b=>{if(b.userData.state==="active"){b.position.z+=speed*dt*b.userData.speedMult;b.lookAt(camera.position);const dz=Math.abs(b.position.z-camera.position.z),dxy=Math.hypot(b.position.x-camera.position.x,b.position.y-camera.position.y);if(dz<42&&dxy<(heroMode?COLLECT_RADIUS*1.45:COLLECT_RADIUS))collectBeacon(b);if(b.position.z>NEAR_Z+60)b.userData.state="missed";}if(b.userData.state==="collected"||b.userData.state==="missed"){b.userData.fade-=dt*2.8;const f=Math.max(0,b.userData.fade);b.userData.core.material.transparent=true;b.userData.core.material.opacity=f;b.userData.glow.material.opacity =
+camera.updateProjectionMatrix();beacons.forEach(b=>{if(b.userData.state==="active"){b.position.z+=speed*dt;b.lookAt(camera.position);const dz=Math.abs(b.position.z-camera.position.z),dxy=Math.hypot(b.position.x-camera.position.x,b.position.y-camera.position.y);if(dz<42&&dxy<COLLECT_RADIUS)collectBeacon(b);if(b.position.z>NEAR_Z+60)b.userData.state="missed";}if(b.userData.state==="collected"||b.userData.state==="missed"){b.userData.fade-=dt*2.8;const f=Math.max(0,b.userData.fade);b.userData.core.material.transparent=true;b.userData.core.material.opacity=f;b.userData.glow.material.opacity =
 f * (
 0.09 +
 warpAmount * 0.18
@@ -1667,7 +1498,6 @@ const introProgress =
     Math.min(rawIntro, 1);
 
 const fade = 1 - introProgress;
-releasePendingModeBanner();
 
 title.style.transform =
     "translate(-50%,-50%)";
