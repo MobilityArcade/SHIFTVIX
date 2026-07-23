@@ -205,10 +205,9 @@ canvas{display:block}
 #challengeHud{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:22;width:min(520px,88vw);pointer-events:none;text-align:center;color:rgba(255,255,255,.9);font-size:11px;font-weight:800;letter-spacing:1.4px;text-shadow:0 0 10px #000}
 #challengeBar{margin:7px auto 0;width:min(330px,74vw);height:5px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden;border:1px solid rgba(255,255,255,.12)}
 #challengeFill{height:100%;width:0%;background:linear-gradient(90deg,#55ccff,#ff66cc,#ffd36a);box-shadow:0 0 15px rgba(255,102,204,.9);transition:width .2s}
-#modeBanner{position:absolute;left:50%;top:39%;transform:translate(-50%,-50%);z-index:65;pointer-events:none;font-size:18px;font-weight:1000;letter-spacing:4px;opacity:0;color:#ffd36a;text-shadow:0 0 14px #ffd36a,0 0 42px #ff8800}
+#modeBanner{position:absolute;left:50%;top:31%;transform:translate(-50%,-50%);z-index:65;pointer-events:none;font-size:16px;font-weight:1000;letter-spacing:3px;opacity:0;color:#ffd36a;text-shadow:0 0 14px #ffd36a,0 0 42px #ff8800;white-space:nowrap}
 #modeBanner.show{animation:modeFlash 1.25s ease-out forwards}
 @keyframes modeFlash{0%{opacity:0;transform:translate(-50%,-25%) scale(.8)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-85%) scale(1)}}
-#pathCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:54;display:none;pointer-events:none}
 .resultsCard{position:relative;z-index:56}
 .flowSummary{margin:16px 0 4px;padding:12px;border-radius:16px;background:rgba(125,249,255,.06);border:1px solid rgba(125,249,255,.18);font-size:12px;line-height:1.6;letter-spacing:1.3px}
 .riskLegend{font-size:10px;opacity:.72;margin-top:8px;letter-spacing:1.5px}
@@ -228,7 +227,7 @@ canvas{display:block}
 </div></div>
 <div style="display:none"><span id="world">Distance Run</span>
 <span id="found">0</span><span id="score">0</span><span id="bestScore">0</span><span id="combo">1x</span><div id="signal"></div></div></div>
-<div id="center"></div><div id="pauseText">PAUSED</div><div id="laneLabel">CENTER</div><canvas id="pathCanvas"></canvas><div id="roundComplete"></div>
+<div id="center"></div><div id="pauseText">PAUSED</div><div id="laneLabel">CENTER</div><div id="roundComplete"></div>
 <div id="flowHud"><div id="flowLabel">FLOW STREAK</div><div id="flowValue">x1</div></div>
 <div id="challengeHud"><div id="challengeText">TODAY'S FLOW: LOADING…</div><div id="challengeBar"><div id="challengeFill"></div></div></div>
 <div id="modeBanner"></div>
@@ -791,13 +790,25 @@ function resetFlow(reason="break"){
   flowMultiplier=1;
   updateFlowHUD(true);
 }
+let pendingModeBanner = null;
+function introIsClear(){
+  return distance >= 72;
+}
 function showModeBanner(text){
   const el=document.getElementById("modeBanner");
   if(!el)return;
+  if(!introIsClear()){
+    pendingModeBanner = text;
+    return;
+  }
+  pendingModeBanner = null;
   el.textContent=text;
   el.classList.remove("show");
   void el.offsetWidth;
   el.classList.add("show");
+}
+function releasePendingModeBanner(){
+  if(pendingModeBanner && introIsClear()) showModeBanner(pendingModeBanner);
 }
 function updateChallenge(){
   const value=Math.min(activeChallenge.target,activeChallenge.value());
@@ -811,44 +822,6 @@ function updateChallenge(){
     track("challenge_completed",{challenge:activeChallenge.id,level,distance:Math.floor(distance),score});
   }
 }
-function drawRunPath(){
-  const canvas=document.getElementById("pathCanvas");
-  const ctx=canvas.getContext("2d");
-  canvas.width=Math.floor(innerWidth*devicePixelRatio);
-  canvas.height=Math.floor(innerHeight*devicePixelRatio);
-  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
-  ctx.clearRect(0,0,innerWidth,innerHeight);
-  canvas.style.display="block";
-  ctx.fillStyle="rgba(0,0,0,.60)";
-  ctx.fillRect(0,0,innerWidth,innerHeight);
-  if(pathHistory.length<2)return;
-  const padX=innerWidth*.12,padY=innerHeight*.12;
-  const w=innerWidth-padX*2,h=innerHeight-padY*2;
-  const maxD=Math.max(1,pathHistory[pathHistory.length-1].d);
-  const laneMap=[padX,padX+w/2,padX+w];
-  ctx.lineCap="round";ctx.lineJoin="round";
-  for(let i=1;i<pathHistory.length;i++){
-    const a=pathHistory[i-1],b=pathHistory[i];
-    const x1=laneMap[a.x],x2=laneMap[b.x];
-    const y1=padY+h-(a.d/maxD)*h;
-    const y2=padY+h-(b.d/maxD)*h;
-    const color=b.kind==="strike"?"#ff4444":b.kind==="miss"?"#ff8844":(b.m>=16?"#ffffff":b.m>=8?"#ffd36a":b.m>=4?"#ff66cc":"#55ccff");
-    ctx.strokeStyle=color;
-    ctx.shadowColor=color;
-    ctx.shadowBlur=14;
-    ctx.globalAlpha=.82;
-    ctx.lineWidth=Math.min(14,3+b.m*.45);
-    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
-  }
-  ctx.globalAlpha=.24;ctx.shadowBlur=0;ctx.strokeStyle="#ffffff";ctx.lineWidth=1;
-  for(const x of laneMap){ctx.beginPath();ctx.moveTo(x,padY);ctx.lineTo(x,padY+h);ctx.stroke();}
-  ctx.globalAlpha=1;
-}
-function hideRunPath(){
-  const canvas=document.getElementById("pathCanvas");
-  canvas.style.display="none";
-}
-
 function makeStarField(){const count=850,positions=new Float32Array(count*3),colors=new Float32Array(count*3),palette=[0xffffff,0x777777,0x55ccff,0xff66cc,0x5d3dff,0xff8800].map(c=>new THREE.Color(c));for(let i=0;i<count;i++){positions[i*3]=(Math.random()*2-1)*260;positions[i*3+1]=(Math.random()*2-1)*180;positions[i*3+2]=-50-Math.random()*1200;const c=palette[Math.floor(Math.random()*palette.length)].clone().multiplyScalar(.35+Math.random()*.7);colors[i*3]=c.r;colors[i*3+1]=c.g;colors[i*3+2]=c.b;}const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.BufferAttribute(positions,3));geo.setAttribute("color",new THREE.BufferAttribute(colors,3));const mat=new THREE.PointsMaterial({size:1.3,sizeAttenuation:true,transparent:true,opacity:.72,vertexColors:true});const pts=new THREE.Points(geo,mat);scene.add(pts);stars.push(pts);}
 function makeLaneGuides(){LANE_X.forEach(x=>{LANE_Y.forEach(y=>{const geo=new THREE.BufferGeometry(),positions=[];for(let i=0;i<52;i++)positions.push(x,y,-80-i*25);geo.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));const mat=new THREE.PointsMaterial({color:0xff66cc,size:.85,transparent:true,opacity:.0,sizeAttenuation:true,depthWrite:false});const pts=new THREE.Points(geo,mat);scene.add(pts);laneGuides.push(pts);});});}
 function chooseTier(){const r=Math.random();if(r<.35)return TIERS[0];if(r<.60)return TIERS[1];if(r<.78)return TIERS[2];if(r<.90)return TIERS[3];if(r<.98)return TIERS[4];return TIERS[5];}
@@ -1151,7 +1124,6 @@ function endRun(){
 
     gameOver = true;
     addFlowPoint("end");
-    drawRunPath();
 
     const runSeconds =
         (performance.now() - runStartTime) / 1000;
@@ -1277,8 +1249,8 @@ function endRun(){
         <span>${bestLevel}</span>
     </div>
 
+
     <div class="flowSummary">
-        FLOW PATH CREATED<br>
         BEST FLOW x${bestFlowMultiplier} · ${foundCount} NODES<br>
         ${challengeComplete ? "TODAY'S FLOW COMPLETE" : "CHALLENGE STILL OPEN"}
     </div>
@@ -1295,7 +1267,6 @@ function endRun(){
 
 }
 function resetRun(){
-    hideRunPath();
 
     // This function is reached when the player taps
     // the results screen after losing all three lives.
@@ -1321,7 +1292,7 @@ vix.style.transform = "translateY(0)";
 
 title.style.transform = "translate(-50%,-50%)";
 
-const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");center.style.borderColor="rgba(255,255,255,.95)";center.style.boxShadow="0 0 10px rgba(255,255,255,.55)";document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level = 1;flowStreak=0;flowMultiplier=1;bestFlowMultiplier=1;pathHistory=[{x:1,y:1,d:0,m:1,kind:"start"}];heroMode=true;heroBannerShown=true;challengeComplete=false;updateFlowHUD();updateChallenge();showModeBanner("FLOW IGNITION");
+const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");center.style.borderColor="rgba(255,255,255,.95)";center.style.boxShadow="0 0 10px rgba(255,255,255,.55)";document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level = 1;flowStreak=0;flowMultiplier=1;bestFlowMultiplier=1;pathHistory=[{x:1,y:1,d:0,m:1,kind:"start"}];heroMode=true;heroBannerShown=true;challengeComplete=false;pendingModeBanner="FLOW IGNITION";updateFlowHUD();updateChallenge();
 
 lastLevel = 1;strikes = 0;milestonesReached = {};runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;updateStrikes();updateHUD();spawnWave();startMusic();}
 function togglePause(){
@@ -1696,6 +1667,7 @@ const introProgress =
     Math.min(rawIntro, 1);
 
 const fade = 1 - introProgress;
+releasePendingModeBanner();
 
 title.style.transform =
     "translate(-50%,-50%)";
@@ -1789,9 +1761,10 @@ window.addEventListener("beforeunload",()=>{
     });
 
 });
-window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);if(gameOver)drawRunPath();});
+window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 document.addEventListener("visibilitychange",()=>{if(!document.hidden && gameStarted && !musicStarted){startMusic();}});
 makeStarField();makeLaneGuides();updateStrikes();updateHUD();startGame();animate();
 </script>
 </body>
 </html>
+
