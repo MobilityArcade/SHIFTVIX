@@ -473,6 +473,75 @@ function playToneAt(freq,type,volume,duration,startTime){
   osc.stop(startTime + duration + 0.02);
 }
 
+// =========================
+// SHIFTVIX HEARTBEAT / WAR DRUM LAYER
+// =========================
+let drumStep = 0;
+let nextDrumTime = 0;
+let drumEnabled = true;
+
+function getDrumBPM(){
+  // Starts steady and gradually intensifies with distance.
+  // Capped so it never becomes frantic or overwhelms the soundtrack.
+  const bpm = 76 + Math.min(46, distance / 115);
+  return Math.max(76, Math.min(122, bpm));
+}
+
+function playDrumHit(time, accent = 1){
+  if(!audioCtx || !drumEnabled) return;
+
+  // Deep body: low sine tone with a quick downward pitch sweep.
+  const bodyOsc = audioCtx.createOscillator();
+  const bodyGain = audioCtx.createGain();
+  bodyOsc.type = "sine";
+  bodyOsc.frequency.setValueAtTime(92, time);
+  bodyOsc.frequency.exponentialRampToValueAtTime(48, time + 0.18);
+  bodyGain.gain.setValueAtTime(0.0001, time);
+  bodyGain.gain.linearRampToValueAtTime(0.095 * accent, time + 0.008);
+  bodyGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.34);
+  bodyOsc.connect(bodyGain).connect(audioCtx.destination);
+  bodyOsc.start(time);
+  bodyOsc.stop(time + 0.38);
+
+  // Soft hand-drum knock so the pulse reads clearly on phone speakers.
+  const knockOsc = audioCtx.createOscillator();
+  const knockGain = audioCtx.createGain();
+  knockOsc.type = "triangle";
+  knockOsc.frequency.setValueAtTime(165, time);
+  knockOsc.frequency.exponentialRampToValueAtTime(82, time + 0.07);
+  knockGain.gain.setValueAtTime(0.0001, time);
+  knockGain.gain.linearRampToValueAtTime(0.032 * accent, time + 0.004);
+  knockGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.13);
+  knockOsc.connect(knockGain).connect(audioCtx.destination);
+  knockOsc.start(time);
+  knockOsc.stop(time + 0.15);
+}
+
+function drumScheduler(){
+  if(!audioCtx || !musicStarted || paused || gameOver || !drumEnabled) return;
+
+  const scheduleAheadTime = 0.14;
+
+  while(nextDrumTime < audioCtx.currentTime + scheduleAheadTime){
+    const bpm = getDrumBPM();
+    const beatDuration = 60 / bpm;
+
+    // Strong-soft-strong-soft pulse, like a physical heartbeat/war drum.
+    const accent = drumStep % 4 === 0 ? 1.18 : (drumStep % 2 === 0 ? 1.05 : 0.82);
+    playDrumHit(nextDrumTime, accent);
+
+    drumStep++;
+    nextDrumTime += beatDuration;
+  }
+}
+
+function resetDrumPulse(){
+  drumStep = 0;
+  if(audioCtx){
+    nextDrumTime = audioCtx.currentTime + 0.08;
+  }
+}
+
 let musicStep = 0;
 let nextNoteTime = 0;
 
@@ -768,6 +837,8 @@ function musicScheduler(){
     musicStep++;
     nextNoteTime += STEP;
   }
+
+  drumScheduler();
 }
 
 function startMusic(){
@@ -792,6 +863,7 @@ function startMusic(){
     musicStarted = true;
     musicStep = 0;
     nextNoteTime = audioCtx.currentTime + 0.035;
+    resetDrumPulse();
 
     // Instant audible unlock ping. Very short and quiet, but it confirms
     // Safari has actually opened the audio path.
@@ -1152,6 +1224,7 @@ function startGame(){
     heroMode = true;
     heroBannerShown = true;
     runStartStrikes = strikes;
+    resetDrumPulse();
     beginCurrentFlow();
 
     spawnWave();
@@ -1351,6 +1424,7 @@ function updateHUD(){
 function endRun(){
 
     gameOver = true;
+    drumStep = 0;
 
     const runSeconds =
         (performance.now() - runStartTime) / 1000;
