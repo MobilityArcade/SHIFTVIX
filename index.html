@@ -1604,7 +1604,7 @@ function resetRun(){
 
     paused = false;
 
-    const title = document.getElementById("gameTitle");
+    
 
     title.style.opacity = 1;
 
@@ -1629,6 +1629,7 @@ function togglePause(){
     resumeMusicAfterPause();
   }
 }
+
 const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
 function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;
