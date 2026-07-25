@@ -916,8 +916,8 @@ function createFlow(index){
     return {id:`controlled_level_${n}`,name,label:`REACH LEVEL ${target} WITH ${maxStrikes===0?"NO STRIKES":"1 STRIKE OR LESS"}`,target,metric:"maxStrikesLevel",maxStrikes};
   }
   const target=100+cycle*15;
-  return {id:`mixed_${n}`,name,label:`COLLECT ${target} ORBS WITH 2+ LIVES`,target,metric:"orbsWithLives"};
-function beginCurrentFlow(){
+  return {id:`mixed_${n}`,name,label:`COLLECT ${target} ORBS WITH 2+ LIVES`,target,metric:"orbsWithLives"};} 
+    function beginCurrentFlow(){
 
     objectiveOrbsCollected = 0;
 
