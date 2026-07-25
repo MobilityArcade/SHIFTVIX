@@ -935,63 +935,78 @@ function challengeValue(ch){
   return 0;
 }
 function completeCurrentFlow(){
-  if(challengeAdvanceTimer)return;
-  const finished=activeChallenge;
-  completedFlows=Math.max(completedFlows,currentFlowIndex+1);
-  localStorage.setItem("shiftvixCompletedFlows",String(completedFlows));
-    
-    flowsCompletedThisRun++;
+    if(challengeAdvanceTimer)return;
 
-track("current_flow_completed", {
-    flow_number: currentFlowIndex + 1,
-    flow_id: finished.id,
-    flow_stage: flowStageFor(currentFlowIndex).name,
-    level,
-    distance: Math.floor(distance),
-    score
-});
+    const finished = activeChallenge;
 
-track("flow_details", {
-    flow_number: currentFlowIndex + 1,
-    flow_type: finished.metric,
-    flow_name: finished.label
-});
-
-if (currentFlowIndex + 1 > highestFlowReported) {
-
-    highestFlowReported = currentFlowIndex + 1;
+    completedFlows = Math.max(
+        completedFlows,
+        currentFlowIndex + 1
+    );
 
     localStorage.setItem(
-        "shiftvixHighestFlowReported",
-        highestFlowReported
+        "shiftvixCompletedFlows",
+        String(completedFlows)
     );
+
+    flowsCompletedThisRun++;
+
+    track("current_flow_completed", {
+        flow_number: currentFlowIndex + 1,
+        flow_id: finished.id,
+        flow_stage: flowStageFor(currentFlowIndex).name,
+        level,
+        distance: Math.floor(distance),
+        score
+    });
+
+    track("flow_details", {
+        flow_number: currentFlowIndex + 1,
+        flow_type: finished.metric,
+        flow_name: finished.label
+    });
 
     if (currentFlowIndex + 1 > highestFlowReported) {
 
-    highestFlowReported = currentFlowIndex + 1;
+        highestFlowReported = currentFlowIndex + 1;
 
-    localStorage.setItem(
-        "shiftvixHighestFlowReported",
-        String(highestFlowReported)
+        localStorage.setItem(
+            "shiftvixHighestFlowReported",
+            String(highestFlowReported)
+        );
+
+        track("highest_flow_reached", {
+            highest_flow: highestFlowReported
+        });
+    }
+
+    showModeBanner("CURRENT FLOW COMPLETE");
+
+    currentFlowIndex = Math.min(
+        FLOW_TOTAL - 1,
+        currentFlowIndex + 1
     );
 
-    track("highest_flow_reached", {
-        highest_flow: highestFlowReported
-    });
-}
-  showModeBanner("CURRENT FLOW COMPLETE");
+    localStorage.setItem(
+        "shiftvixCurrentFlow",
+        String(currentFlowIndex)
+    );
 
-  // Start the next flow immediately. This prevents orb pickups during the
-  // completion animation from being lost or making the next counter appear stuck.
-  currentFlowIndex=Math.min(FLOW_TOTAL-1,currentFlowIndex+1);
-  localStorage.setItem("shiftvixCurrentFlow",String(currentFlowIndex));
-  activeChallenge=createFlow(currentFlowIndex);
-  challengeStart={found:foundCount,score,distance,strikes,tierCounts:{...tierCounts}};
-  challengeAdvanceTimer=setTimeout(()=>{
-    challengeAdvanceTimer=null;
-    updateChallenge();
-    showModeBanner("NEXT FLOW");
-  },650);
+    activeChallenge = createFlow(currentFlowIndex);
+
+    challengeStart = {
+        found: foundCount,
+        score,
+        distance,
+        strikes,
+        tierCounts: {...tierCounts}
+    };
+
+    challengeAdvanceTimer = setTimeout(() => {
+        challengeAdvanceTimer = null;
+        updateChallenge();
+        showModeBanner("NEXT FLOW");
+    }, 650);
 }
 function updateChallenge(){
   if(!activeChallenge){
