@@ -1629,7 +1629,6 @@ function togglePause(){
     resumeMusicAfterPause();
   }
 }
-const title = document.getElementById("gameTitle");
 const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
 function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){speed=SPEED_START+Math.min(150,distance*.018);distance+=speed*dt*.08;
@@ -1954,8 +1953,6 @@ introCameraZ
 Math.pow(warpAmount,1.6)
 *
 5;
-
-const title = document.getElementById("gameTitle");
 
 const introDelay = 24;   // logo holds still first
 const introLength = 55;  // then separates
