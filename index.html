@@ -840,6 +840,7 @@ const flowTitles = ["IGNITION","ALIGNMENT","MOMENTUM","RHYTHM","FOCUS","CONTROL"
 let currentFlowIndex = Math.max(0,Math.min(FLOW_TOTAL-1,Number(localStorage.getItem("shiftvixCurrentFlow")||0)));
 let completedFlows = Math.max(0,Math.min(FLOW_TOTAL,Number(localStorage.getItem("shiftvixCompletedFlows")||0)));
 let flowsCompletedThisRun = 0;
+let highestFlowReported = Number(localStorage.getItem("shiftvixHighestFlowReported") || 0);
 let activeChallenge = null;
 let challengeStart = null;
 let challengeAdvanceTimer = null;
@@ -956,9 +957,28 @@ track("flow_details", {
     flow_name: finished.label
 });
 
-track("highest_flow_reached", {
-    highest_flow: currentFlowIndex + 1
-});
+if (currentFlowIndex + 1 > highestFlowReported) {
+
+    highestFlowReported = currentFlowIndex + 1;
+
+    localStorage.setItem(
+        "shiftvixHighestFlowReported",
+        highestFlowReported
+    );
+
+    if (currentFlowIndex + 1 > highestFlowReported) {
+
+    highestFlowReported = currentFlowIndex + 1;
+
+    localStorage.setItem(
+        "shiftvixHighestFlowReported",
+        String(highestFlowReported)
+    );
+
+    track("highest_flow_reached", {
+        highest_flow: highestFlowReported
+    });
+}
   showModeBanner("CURRENT FLOW COMPLETE");
 
   // Start the next flow immediately. This prevents orb pickups during the
