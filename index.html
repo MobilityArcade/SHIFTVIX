@@ -937,7 +937,9 @@ function completeCurrentFlow(){
   const finished=activeChallenge;
   completedFlows=Math.max(completedFlows,currentFlowIndex+1);
   localStorage.setItem("shiftvixCompletedFlows",String(completedFlows));
-  track("current_flow_completed",{flow_number:currentFlowIndex+1,flow_id:finished.id,flow_stage:flowStageFor(currentFlowIndex).name,level,distance:Math.floor(distance),score});
+  track("current_flow_completed",{flow_number:currentFlowIndex+1,flow_id:finished.id,flow_stage:flowStageFor(currentFlowIndex).name,level,distance:Math.floor(distance),score});track("highest_flow_reached", {
+    highest_flow: currentFlowIndex + 1
+});
   showModeBanner("CURRENT FLOW COMPLETE");
 
   // Start the next flow immediately. This prevents orb pickups during the
