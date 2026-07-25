@@ -839,6 +839,7 @@ const FLOW_STAGES = [
 const flowTitles = ["IGNITION","ALIGNMENT","MOMENTUM","RHYTHM","FOCUS","CONTROL","CADENCE","VELOCITY","RESOLVE","ASCENT","CLARITY","ENDURANCE","PULSE","VECTOR","ORBIT","SURGE","NEXUS","APEX","ZENITH","INFINITY"];
 let currentFlowIndex = Math.max(0,Math.min(FLOW_TOTAL-1,Number(localStorage.getItem("shiftvixCurrentFlow")||0)));
 let completedFlows = Math.max(0,Math.min(FLOW_TOTAL,Number(localStorage.getItem("shiftvixCompletedFlows")||0)));
+let flowsCompletedThisRun = 0;
 let activeChallenge = null;
 let challengeStart = null;
 let challengeAdvanceTimer = null;
@@ -937,7 +938,27 @@ function completeCurrentFlow(){
   const finished=activeChallenge;
   completedFlows=Math.max(completedFlows,currentFlowIndex+1);
   localStorage.setItem("shiftvixCompletedFlows",String(completedFlows));
-  track("current_flow_completed",{flow_number:currentFlowIndex+1,flow_id:finished.id,flow_stage:flowStageFor(currentFlowIndex).name,level,distance:Math.floor(distance),score});
+    
+    flowsCompletedThisRun++;
+
+track("current_flow_completed", {
+    flow_number: currentFlowIndex + 1,
+    flow_id: finished.id,
+    flow_stage: flowStageFor(currentFlowIndex).name,
+    level,
+    distance: Math.floor(distance),
+    score
+});
+
+track("flow_details", {
+    flow_number: currentFlowIndex + 1,
+    flow_type: finished.metric,
+    flow_name: finished.label
+});
+
+track("highest_flow_reached", {
+    highest_flow: currentFlowIndex + 1
+});
   showModeBanner("CURRENT FLOW COMPLETE");
 
   // Start the next flow immediately. This prevents orb pickups during the
@@ -1001,7 +1022,10 @@ function resumeMusicAfterPause(){
   startMusic();
 }
 function openFlowArchive(){
-  archiveWasPaused=paused;
+  track("flow_archive_opened",{
+    current_flow: currentFlowIndex + 1,
+    completed: completedFlows
+});  archiveWasPaused=paused;
   renderFlowArchive();
   document.getElementById("flowArchive").style.display="grid";
   paused=true;
@@ -1131,16 +1155,22 @@ function startGame(){
 
     // Fires every time a new game session begins
     track("game_started",{
-        starting_level: 1
-    });
+    starting_level:1
+});
 
-    runStartTime = performance.now();
-    heroMode = true;
-    heroBannerShown = true;
-    runStartStrikes = strikes;
-    beginCurrentFlow();
+runStartTime = performance.now();
 
-    spawnWave();
+heroMode = true;
+
+heroBannerShown = true;
+
+runStartStrikes = strikes;
+
+flowsCompletedThisRun = 0;  
+
+beginCurrentFlow();
+
+spawnWave();
 
     startMusic();
 }
@@ -1338,6 +1368,12 @@ function endRun(){
 
     lastRunDuration = Math.round(runSeconds);
 
+    track("flow_failed",{
+    current_flow: currentFlowIndex + 1,
+    progress: challengeValue(activeChallenge),
+    target: activeChallenge.target
+});
+
     // Exact level where all three lives were lost
     track("death_level",{
         level: level,
@@ -1358,13 +1394,16 @@ function endRun(){
 
     // Existing full run summary
     track("run_ended",{
-        level: level,
-        distance: Math.floor(distance),
-        strikes: strikes,
-        score: score,
-        sources: foundCount,
-        duration: lastRunDuration,
-    });
+    level: level,
+    distance: Math.floor(distance),
+    strikes: strikes,
+    score: score,
+    sources: foundCount,
+    duration: lastRunDuration,
+
+    flows_completed: flowsCompletedThisRun,
+    highest_flow: currentFlowIndex + 1
+});
     
     const isNewBestDistance = distance > bestDistance;
     if(isNewBestDistance){
