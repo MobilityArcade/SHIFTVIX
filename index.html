@@ -840,7 +840,13 @@ const flowTitles = ["IGNITION","ALIGNMENT","MOMENTUM","RHYTHM","FOCUS","CONTROL"
 let currentFlowIndex = Math.max(0,Math.min(FLOW_TOTAL-1,Number(localStorage.getItem("shiftvixCurrentFlow")||0)));
 let completedFlows = Math.max(0,Math.min(FLOW_TOTAL,Number(localStorage.getItem("shiftvixCompletedFlows")||0)));
 let flowsCompletedThisRun = 0;
-let highestFlowReported = Number(localStorage.getItem("shiftvixHighestFlowReported") || 0);
+
+let highestFlowReported = Number(
+    localStorage.getItem("shiftvixHighestFlowReported") || 0
+);
+
+let objectiveOrbsCollected = 0;
+
 let activeChallenge = null;
 let challengeStart = null;
 let challengeAdvanceTimer = null;
@@ -911,15 +917,26 @@ function createFlow(index){
   }
   const target=100+cycle*15;
   return {id:`mixed_${n}`,name,label:`COLLECT ${target} ORBS WITH 2+ LIVES`,target,metric:"orbsWithLives"};
-}
 function beginCurrentFlow(){
-  activeChallenge=createFlow(currentFlowIndex);
-  challengeStart={found:foundCount,score,distance,strikes,tierCounts:{...tierCounts}};
-  updateChallenge();
+
+    objectiveOrbsCollected = 0;
+
+    activeChallenge = createFlow(currentFlowIndex);
+
+    challengeStart = {
+        found: foundCount,
+        score,
+        distance,
+        strikes,
+        tierCounts: {...tierCounts}
+    };
+
+    updateChallenge();
 }
+
 function challengeValue(ch){
   if(!challengeStart)return 0;
-  const totalOrbs=Math.max(0,foundCount-challengeStart.found);
+  const totalOrbs = objectiveOrbsCollected;
   const colorOrbs=Math.max(0,(tierCounts[ch.color]||0)-(challengeStart.tierCounts[ch.color]||0));
   if(ch.metric==="level")return level;
   if(ch.metric==="orbs")return totalOrbs;
@@ -994,6 +1011,8 @@ function completeCurrentFlow(){
 
     activeChallenge = createFlow(currentFlowIndex);
 
+    objectiveOrbsCollected = 0;
+
     challengeStart = {
         found: foundCount,
         score,
@@ -1019,7 +1038,18 @@ function updateChallenge(){
   // Keep the active-play HUD minimal. Full flow number, category, title,
   // completion history, and exact totals remain available inside FLOW PATH.
   document.getElementById("challengeName").textContent="CURRENT FLOW";
-  document.getElementById("challengeText").textContent=activeChallenge.label;
+  const displaysCount = [
+    "orbs",
+    "clean",
+    "orbsWithLives",
+    "color",
+    "cleanColor"
+].includes(activeChallenge.metric);
+
+document.getElementById("challengeText").textContent =
+    displaysCount
+        ? `${activeChallenge.label} · ${Math.floor(value)}/${activeChallenge.target}`
+        : activeChallenge.label;
   document.getElementById("challengeFill").style.width=pct+"%";
   if(!challengeAdvanceTimer && raw>=activeChallenge.target)completeCurrentFlow();
 }
@@ -1376,8 +1406,13 @@ function takeStrike(){
  if(!runStarted){runStarted=true;breakTimer=0;document.getElementById("signal").textContent="Signal: run started";}
  lastFoundAt=performance.now();breakTimer=0;
  const gained=b.userData.value;
- score+=gained;foundCount++;
- tierCounts[b.userData.tier.name]=(tierCounts[b.userData.tier.name]||0)+1;
+ score += gained;
+foundCount++;
+
+objectiveOrbsCollected++;
+
+tierCounts[b.userData.tier.name] =
+    (tierCounts[b.userData.tier.name] || 0) + 1;
  if(foundCount===1){track("first_source_collected",{tier:b.userData.tier.name});}
  if(score>bestScore){bestScore=score;localStorage.setItem("sourceLaneBestScore",String(bestScore));}
  playCoin(b.userData.tier);
