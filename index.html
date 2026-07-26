@@ -497,7 +497,7 @@ function playDrumHit(time, accent = 1){
   bodyOsc.frequency.setValueAtTime(92, time);
   bodyOsc.frequency.exponentialRampToValueAtTime(48, time + 0.18);
   bodyGain.gain.setValueAtTime(0.0001, time);
-  bodyGain.gain.linearRampToValueAtTime(0.095 * accent, time + 0.008);
+  bodyGain.gain.linearRampToValueAtTime(0.130 * accent, time + 0.008);
   bodyGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.34);
   bodyOsc.connect(bodyGain).connect(audioCtx.destination);
   bodyOsc.start(time);
@@ -510,7 +510,7 @@ function playDrumHit(time, accent = 1){
   knockOsc.frequency.setValueAtTime(165, time);
   knockOsc.frequency.exponentialRampToValueAtTime(82, time + 0.07);
   knockGain.gain.setValueAtTime(0.0001, time);
-  knockGain.gain.linearRampToValueAtTime(0.032 * accent, time + 0.004);
+  knockGain.gain.linearRampToValueAtTime(0.045 * accent, time + 0.004);
   knockGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.13);
   knockOsc.connect(knockGain).connect(audioCtx.destination);
   knockOsc.start(time);
