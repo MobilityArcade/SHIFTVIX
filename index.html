@@ -936,18 +936,19 @@ function createFlow(index){
     return {id:`level_${n}`,name,label:`REACH LEVEL ${target}`,target,metric:"level"};
   }
   if(type===1){
-    const target=60+cycle*11;
+    const target=250+cycle*45;
     return {id:`orbs_${n}`,name,label:`COLLECT ${target} ORBS`,target,metric:"orbs"};
   }
   if(type===2){
     const colors=["BLUE","GREEN","PURPLE","ORANGE","RED"];
     const color=colors[cycle%colors.length];
-    const base={BLUE:45,GREEN:36,PURPLE:28,ORANGE:20,RED:10}[color];
-    const target=base+cycle*3;
+    const base={BLUE:150,GREEN:120,PURPLE:80,ORANGE:40,RED:20}[color];
+    const growth={BLUE:25,GREEN:20,PURPLE:14,ORANGE:8,RED:4}[color];
+    const target=base+cycle*growth;
     return {id:`${color.toLowerCase()}_${n}`,name,label:`COLLECT ${target} ${color} ORBS`,target,metric:"color",color};
   }
   if(type===3){
-    const target=3000+cycle*850;
+    const target=10000+cycle*2500;
     return {id:`score_${n}`,name,label:`SCORE ${target.toLocaleString()} POINTS`,target,metric:"score"};
   }
   if(type===4){
@@ -956,23 +957,23 @@ function createFlow(index){
     return {id:`survive_${n}`,name,label:`REACH LEVEL ${target} WITH ${lives} LIVES`,target,metric:"lives",lives};
   }
   if(type===5){
-    const target=1500+cycle*550;
+    const target=3000+cycle*900;
     return {id:`distance_${n}`,name,label:`TRAVEL ${target.toLocaleString()}m`,target,metric:"distance"};
   }
   if(type===6){
-    const target=75+cycle*13;
+    const target=200+cycle*30;
     return {id:`clean_${n}`,name,label:`COLLECT ${target} ORBS BEFORE A STRIKE`,target,metric:"clean"};
   }
   if(type===7){
-    const target=2400+cycle*725;
+    const target=9000+cycle*1800;
     return {id:`precision_${n}`,name,label:`SCORE ${target.toLocaleString()} WITH 2+ LIVES`,target,metric:"precision"};
   }
   if(type===8){
-    const target=20+cycle*4;
+    const target=100+cycle*18;
     return {id:`blue_${n}`,name,label:`COLLECT ${target} BLUE ORBS WITHOUT A STRIKE`,target,metric:"cleanColor",color:"BLUE"};
   }
   if(type===9){
-    const target=25+cycle*5;
+    const target=120+cycle*22;
     return {id:`green_${n}`,name,label:`COLLECT ${target} GREEN ORBS`,target,metric:"color",color:"GREEN"};
   }
   if(type===10){
@@ -980,7 +981,7 @@ function createFlow(index){
     const maxStrikes=cycle<8?1:0;
     return {id:`controlled_level_${n}`,name,label:`REACH LEVEL ${target} WITH ${maxStrikes===0?"NO STRIKES":"1 STRIKE OR LESS"}`,target,metric:"maxStrikesLevel",maxStrikes};
   }
-  const target=100+cycle*15;
+  const target=250+cycle*40;
   return {id:`mixed_${n}`,name,label:`COLLECT ${target} ORBS WITH 2+ LIVES`,target,metric:"orbsWithLives"};
 }
 function beginCurrentFlow(){
