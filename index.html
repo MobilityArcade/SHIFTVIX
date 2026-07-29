@@ -346,96 +346,128 @@ const TARGET_CAMERA_Z=72;
 let warpAmount = 0;
 
 // =========================
-// SHIFTVIX WARP BANKING 2.0
-// Cinematic curvature and star-flow response. Gameplay lanes and collision math stay unchanged.
+// SHIFTVIX WARP BANKING 3.0 + WARP CURVATURE 4.0
+// Space momentum, dynamic vanishing point, layered depth, ambient route drift,
+// and restrained gravitational-style curvature. Gameplay coordinates stay unchanged.
 // =========================
-const MAX_BANK_ROLL = THREE.MathUtils.degToRad(5.25);
-const MAX_BANK_PITCH = THREE.MathUtils.degToRad(1.85);
-const MAX_BANK_YAW = THREE.MathUtils.degToRad(1.05);
+const MAX_BANK_ROLL = THREE.MathUtils.degToRad(5.6);
+const MAX_BANK_PITCH = THREE.MathUtils.degToRad(2.0);
+const MAX_BANK_YAW = THREE.MathUtils.degToRad(1.25);
+
 let bankRoll = 0;
 let bankPitch = 0;
 let bankYaw = 0;
-let bankRollTarget = 0;
-let bankPitchTarget = 0;
-let bankYawTarget = 0;
+let bankRollVelocity = 0;
+let bankPitchVelocity = 0;
+let bankYawVelocity = 0;
+
 let warpCurveX = 0;
 let warpCurveY = 0;
-let warpCurveXTarget = 0;
-let warpCurveYTarget = 0;
+let warpCurveVelocityX = 0;
+let warpCurveVelocityY = 0;
+
+let routePhase = Math.random() * Math.PI * 2;
+let routePhaseSpeed = 0.075 + Math.random() * 0.025;
+let vanishingX = 0;
+let vanishingY = 0;
+let lensPulse = 0;
 
 function addWarpBank(dx,dy){
-  // A swipe creates a gentle steering impulse, then naturally settles to neutral.
-  const speedFeel = 0.82 + Math.min(0.28, distance / 18000);
+  const speedFeel = 0.84 + Math.min(0.24, distance / 19000);
 
-  bankRollTarget = THREE.MathUtils.clamp(
-    bankRollTarget - dx * THREE.MathUtils.degToRad(3.55) * speedFeel,
-    -MAX_BANK_ROLL,
-    MAX_BANK_ROLL
-  );
-  bankPitchTarget = THREE.MathUtils.clamp(
-    bankPitchTarget + dy * THREE.MathUtils.degToRad(1.25) * speedFeel,
-    -MAX_BANK_PITCH,
-    MAX_BANK_PITCH
-  );
-  bankYawTarget = THREE.MathUtils.clamp(
-    bankYawTarget - dx * THREE.MathUtils.degToRad(0.68) * speedFeel,
-    -MAX_BANK_YAW,
-    MAX_BANK_YAW
-  );
+  // Steering impulses carry momentum instead of snapping to a fixed angle.
+  bankRollVelocity += -dx * THREE.MathUtils.degToRad(13.5) * speedFeel;
+  bankPitchVelocity +=  dy * THREE.MathUtils.degToRad(5.0) * speedFeel;
+  bankYawVelocity +=   -dx * THREE.MathUtils.degToRad(3.7) * speedFeel;
 
-  // Only the distant particle field curves. Near gameplay remains locked and readable.
-  warpCurveXTarget = THREE.MathUtils.clamp(warpCurveXTarget - dx * 18, -24, 24);
-  warpCurveYTarget = THREE.MathUtils.clamp(warpCurveYTarget + dy * 10, -14, 14);
+  // The deep field receives a longer, softer directional impulse.
+  warpCurveVelocityX += -dx * 58 * speedFeel;
+  warpCurveVelocityY +=  dy * 31 * speedFeel;
 }
 
 function updateWarpBanking(dt){
-  const engage = 1 - Math.exp(-dt * 7.2);
-  const settle = Math.exp(-dt * 1.92);
-  const curveEngage = 1 - Math.exp(-dt * 3.4);
-  const curveSettle = Math.exp(-dt * 0.72);
+  // Spring-damped aircraft-like response.
+  const rollSpring = -bankRoll * 26;
+  const pitchSpring = -bankPitch * 28;
+  const yawSpring = -bankYaw * 24;
 
-  bankRoll += (bankRollTarget - bankRoll) * engage;
-  bankPitch += (bankPitchTarget - bankPitch) * engage;
-  bankYaw += (bankYawTarget - bankYaw) * engage;
-  warpCurveX += (warpCurveXTarget - warpCurveX) * curveEngage;
-  warpCurveY += (warpCurveYTarget - warpCurveY) * curveEngage;
+  bankRollVelocity += rollSpring * dt;
+  bankPitchVelocity += pitchSpring * dt;
+  bankYawVelocity += yawSpring * dt;
 
-  bankRollTarget *= settle;
-  bankPitchTarget *= settle;
-  bankYawTarget *= settle;
-  warpCurveXTarget *= curveSettle;
-  warpCurveYTarget *= curveSettle;
+  const angularDrag = Math.exp(-dt * 5.5);
+  bankRollVelocity *= angularDrag;
+  bankPitchVelocity *= angularDrag;
+  bankYawVelocity *= angularDrag;
 
-  // Slow route curvature grows with warp intensity but never becomes a spin.
-  const ambientRoll = Math.sin(distance * 0.00105) * warpAmount * THREE.MathUtils.degToRad(0.42);
-  const ambientYaw = Math.sin(distance * 0.00066) * warpAmount * THREE.MathUtils.degToRad(0.22);
-  const ambientPitch = Math.sin(distance * 0.00048 + 1.2) * warpAmount * THREE.MathUtils.degToRad(0.10);
+  bankRoll = THREE.MathUtils.clamp(bankRoll + bankRollVelocity * dt, -MAX_BANK_ROLL, MAX_BANK_ROLL);
+  bankPitch = THREE.MathUtils.clamp(bankPitch + bankPitchVelocity * dt, -MAX_BANK_PITCH, MAX_BANK_PITCH);
+  bankYaw = THREE.MathUtils.clamp(bankYaw + bankYawVelocity * dt, -MAX_BANK_YAW, MAX_BANK_YAW);
+
+  // Long route curvature has more inertia than the camera.
+  warpCurveVelocityX += -warpCurveX * 2.15 * dt;
+  warpCurveVelocityY += -warpCurveY * 2.35 * dt;
+  const curveDrag = Math.exp(-dt * 1.85);
+  warpCurveVelocityX *= curveDrag;
+  warpCurveVelocityY *= curveDrag;
+  warpCurveX = THREE.MathUtils.clamp(warpCurveX + warpCurveVelocityX * dt, -28, 28);
+  warpCurveY = THREE.MathUtils.clamp(warpCurveY + warpCurveVelocityY * dt, -16, 16);
+
+  // Variable route: long graceful curves separated by calmer sections.
+  routePhase += dt * routePhaseSpeed * (0.65 + warpAmount * 0.35);
+  const routeEnvelope = 0.36 + 0.64 * Math.pow(0.5 + 0.5 * Math.sin(routePhase * 0.53 + 0.8), 2);
+  const ambientCurveX = Math.sin(routePhase) * routeEnvelope * warpAmount * 7.5;
+  const ambientCurveY = Math.sin(routePhase * 0.71 + 1.45) * routeEnvelope * warpAmount * 3.6;
+
+  // Dynamic vanishing point follows steering, but remains inside a safe 3–4% window.
+  const targetVanishingX = THREE.MathUtils.clamp(
+    -bankYaw * 285 + (warpCurveX + ambientCurveX) * 0.12,
+    -18, 18
+  );
+  const targetVanishingY = THREE.MathUtils.clamp(
+    bankPitch * 210 + (warpCurveY + ambientCurveY) * 0.10,
+    -10, 10
+  );
+  const vanishEase = 1 - Math.exp(-dt * 2.7);
+  vanishingX += (targetVanishingX - vanishingX) * vanishEase;
+  vanishingY += (targetVanishingY - vanishingY) * vanishEase;
+
+  // 4.0 curvature pulse is deliberately tiny and slow.
+  lensPulse = (0.5 + 0.5 * Math.sin(routePhase * 0.41 + 2.2)) * warpAmount;
+
+  const ambientRoll = Math.sin(routePhase * 0.88) * warpAmount * THREE.MathUtils.degToRad(0.38);
+  const ambientYaw = Math.sin(routePhase * 0.61 + 0.4) * warpAmount * THREE.MathUtils.degToRad(0.20);
+  const ambientPitch = Math.sin(routePhase * 0.47 + 1.2) * warpAmount * THREE.MathUtils.degToRad(0.09);
 
   camera.rotation.z = bankRoll + ambientRoll;
   camera.rotation.x += bankPitch + ambientPitch;
   camera.rotation.y += bankYaw + ambientYaw;
 
-  // The star layer counter-moves and slowly bends, creating a roller-coaster sensation
-  // without changing the player's actual lane coordinates.
-  stars.forEach(s=>{
-    s.rotation.z = -(bankRoll + ambientRoll) * 0.28;
-    s.position.x = -bankYaw * 46;
-    s.position.y = bankPitch * 34;
+  stars.forEach((s,index)=>{
+    const depthWeight = 0.78 + index * 0.12;
+    s.rotation.z = -(bankRoll + ambientRoll) * (0.18 + depthWeight * 0.08);
+    s.position.x = -vanishingX * (0.42 + depthWeight * 0.12);
+    s.position.y = -vanishingY * (0.34 + depthWeight * 0.10);
   });
+
+  return {ambientCurveX, ambientCurveY};
 }
 
 function resetWarpBanking(){
   bankRoll = 0;
   bankPitch = 0;
   bankYaw = 0;
-  bankRollTarget = 0;
-  bankPitchTarget = 0;
-  bankYawTarget = 0;
+  bankRollVelocity = 0;
+  bankPitchVelocity = 0;
+  bankYawVelocity = 0;
   warpCurveX = 0;
   warpCurveY = 0;
-  warpCurveXTarget = 0;
-  warpCurveYTarget = 0;
-  camera.rotation.z = 0;
+  warpCurveVelocityX = 0;
+  warpCurveVelocityY = 0;
+  vanishingX = 0;
+  vanishingY = 0;
+  lensPulse = 0;
+  camera.rotation.set(0,0,0);
   stars.forEach(s=>{
     s.rotation.z = 0;
     s.position.x = 0;
@@ -1643,13 +1675,9 @@ atmosphereColors[stage]
 );
 
 camera.lookAt(
-
-camera.position.x * 0.995,
-
-camera.position.y * 0.995,
-
+camera.position.x * 0.995 + vanishingX,
+camera.position.y * 0.995 + vanishingY,
 -500
-
 );let targetFov =
 70
 +
@@ -1674,14 +1702,31 @@ warpAmount * 0.18
     const baseY = baseXY ? baseXY[i*2+1] : pos.getY(i);
     const currentZ = pos.getZ(i);
 
-    // Curvature is strongest far away and fades to zero near the player,
-    // so the lane target remains visually dependable at decision time.
+    // Layered depth: far stars bend most, middle stars moderately,
+    // and near decision-space remains almost perfectly stable.
     const farDepth = THREE.MathUtils.clamp((-currentZ - 70) / 1080, 0, 1);
     const curveEase = farDepth * farDepth * (3 - 2 * farDepth);
-    const ambientCurveX = Math.sin(distance * 0.00058) * warpAmount * 5.5;
-    const ambientCurveY = Math.sin(distance * 0.00043 + 1.7) * warpAmount * 2.8;
-    const x = baseX + (warpCurveX + ambientCurveX) * curveEase;
-    const y = baseY + (warpCurveY + ambientCurveY) * curveEase;
+    const nearLayer = 1 - farDepth;
+    const ambientCurveX = Math.sin(routePhase) * warpAmount * 7.5;
+    const ambientCurveY = Math.sin(routePhase * 0.71 + 1.45) * warpAmount * 3.6;
+
+    let x = baseX + (warpCurveX + ambientCurveX + vanishingX * 0.65) * curveEase;
+    let y = baseY + (warpCurveY + ambientCurveY + vanishingY * 0.55) * curveEase;
+
+    // Warp Curvature 4.0: restrained gravitational-style lensing.
+    // It bends only the peripheral deep field and never the gameplay objects.
+    const radius = Math.max(1, Math.hypot(baseX,baseY));
+    const edgeNorm = THREE.MathUtils.clamp((radius - 85) / 190, 0, 1);
+    const lensStrength = lensPulse * curveEase * edgeNorm * edgeNorm * 0.018;
+    const lensCenterX = vanishingX * 1.8;
+    const lensCenterY = vanishingY * 1.5;
+    x += (baseX - lensCenterX) * lensStrength;
+    y += (baseY - lensCenterY) * lensStrength;
+
+    // Slight counter-parallax gives close particles more steering response
+    // while far stars hold the curved route.
+    x += -bankYaw * 82 * nearLayer * 0.28;
+    y +=  bankPitch * 58 * nearLayer * 0.24;
 
     // Distance from the center of the playfield
     const edge =
@@ -1844,7 +1889,7 @@ s.material.size = warpSize * stretch;
 
 s.material.opacity = warpOpacity;});
 
-// Apply Warp Banking 2.0 after lookAt() has established the base view.
+// Apply Warp Banking 3.0 + Warp Curvature 4.0 after lookAt() establishes the base view.
 updateWarpBanking(dt);
 updateHUD();}if(gameStarted&&!gameOver){
 introScale += (1-introScale)*dt*0.6;beacons.forEach(b=>{if(b.userData.state==="active") b.scale.lerp(new THREE.Vector3(introScale,introScale,introScale),0.08);});
