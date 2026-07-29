@@ -344,6 +344,105 @@ let introCameraZ=48;
 const TARGET_CAMERA_Z=72;
 // ---------- WARP ----------
 let warpAmount = 0;
+
+// =========================
+// SHIFTVIX WARP BANKING 2.0
+// Cinematic curvature and star-flow response. Gameplay lanes and collision math stay unchanged.
+// =========================
+const MAX_BANK_ROLL = THREE.MathUtils.degToRad(5.25);
+const MAX_BANK_PITCH = THREE.MathUtils.degToRad(1.85);
+const MAX_BANK_YAW = THREE.MathUtils.degToRad(1.05);
+let bankRoll = 0;
+let bankPitch = 0;
+let bankYaw = 0;
+let bankRollTarget = 0;
+let bankPitchTarget = 0;
+let bankYawTarget = 0;
+let warpCurveX = 0;
+let warpCurveY = 0;
+let warpCurveXTarget = 0;
+let warpCurveYTarget = 0;
+
+function addWarpBank(dx,dy){
+  // A swipe creates a gentle steering impulse, then naturally settles to neutral.
+  const speedFeel = 0.82 + Math.min(0.28, distance / 18000);
+
+  bankRollTarget = THREE.MathUtils.clamp(
+    bankRollTarget - dx * THREE.MathUtils.degToRad(3.55) * speedFeel,
+    -MAX_BANK_ROLL,
+    MAX_BANK_ROLL
+  );
+  bankPitchTarget = THREE.MathUtils.clamp(
+    bankPitchTarget + dy * THREE.MathUtils.degToRad(1.25) * speedFeel,
+    -MAX_BANK_PITCH,
+    MAX_BANK_PITCH
+  );
+  bankYawTarget = THREE.MathUtils.clamp(
+    bankYawTarget - dx * THREE.MathUtils.degToRad(0.68) * speedFeel,
+    -MAX_BANK_YAW,
+    MAX_BANK_YAW
+  );
+
+  // Only the distant particle field curves. Near gameplay remains locked and readable.
+  warpCurveXTarget = THREE.MathUtils.clamp(warpCurveXTarget - dx * 18, -24, 24);
+  warpCurveYTarget = THREE.MathUtils.clamp(warpCurveYTarget + dy * 10, -14, 14);
+}
+
+function updateWarpBanking(dt){
+  const engage = 1 - Math.exp(-dt * 7.2);
+  const settle = Math.exp(-dt * 1.92);
+  const curveEngage = 1 - Math.exp(-dt * 3.4);
+  const curveSettle = Math.exp(-dt * 0.72);
+
+  bankRoll += (bankRollTarget - bankRoll) * engage;
+  bankPitch += (bankPitchTarget - bankPitch) * engage;
+  bankYaw += (bankYawTarget - bankYaw) * engage;
+  warpCurveX += (warpCurveXTarget - warpCurveX) * curveEngage;
+  warpCurveY += (warpCurveYTarget - warpCurveY) * curveEngage;
+
+  bankRollTarget *= settle;
+  bankPitchTarget *= settle;
+  bankYawTarget *= settle;
+  warpCurveXTarget *= curveSettle;
+  warpCurveYTarget *= curveSettle;
+
+  // Slow route curvature grows with warp intensity but never becomes a spin.
+  const ambientRoll = Math.sin(distance * 0.00105) * warpAmount * THREE.MathUtils.degToRad(0.42);
+  const ambientYaw = Math.sin(distance * 0.00066) * warpAmount * THREE.MathUtils.degToRad(0.22);
+  const ambientPitch = Math.sin(distance * 0.00048 + 1.2) * warpAmount * THREE.MathUtils.degToRad(0.10);
+
+  camera.rotation.z = bankRoll + ambientRoll;
+  camera.rotation.x += bankPitch + ambientPitch;
+  camera.rotation.y += bankYaw + ambientYaw;
+
+  // The star layer counter-moves and slowly bends, creating a roller-coaster sensation
+  // without changing the player's actual lane coordinates.
+  stars.forEach(s=>{
+    s.rotation.z = -(bankRoll + ambientRoll) * 0.28;
+    s.position.x = -bankYaw * 46;
+    s.position.y = bankPitch * 34;
+  });
+}
+
+function resetWarpBanking(){
+  bankRoll = 0;
+  bankPitch = 0;
+  bankYaw = 0;
+  bankRollTarget = 0;
+  bankPitchTarget = 0;
+  bankYawTarget = 0;
+  warpCurveX = 0;
+  warpCurveY = 0;
+  warpCurveXTarget = 0;
+  warpCurveYTarget = 0;
+  camera.rotation.z = 0;
+  stars.forEach(s=>{
+    s.rotation.z = 0;
+    s.position.x = 0;
+    s.position.y = 0;
+  });
+}
+
 let introScale=1.2;
 const clock=new THREE.Clock(), beacons=[], stars=[], laneGuides=[];
 const TIERS=[{name:"WHITE",color:0xffffff,value:10,size:3.8,freq:880},{name:"BLUE",color:0x55ccff,value:25,size:4.3,freq:1046},{name:"GREEN",color:0x66ff66,value:50,size:4.8,freq:1174},{name:"PURPLE",color:0xcc66ff,value:75,size:5.1,freq:1240},{name:"ORANGE",color:0xff8800,value:100,size:5.4,freq:1318},{name:"RED",color:0xff4444,value:200,size:6.1,freq:1568}];
@@ -927,7 +1026,7 @@ let pendingModeBanner = null;
 function introIsClear(){return distance >= 72;}
 function showModeBanner(text){const el=document.getElementById("modeBanner");if(!el)return;if(!introIsClear()){pendingModeBanner=text;return;}pendingModeBanner=null;el.textContent=text;el.classList.remove("show");void el.offsetWidth;el.classList.add("show");}
 function releasePendingModeBanner(){if(pendingModeBanner&&introIsClear())showModeBanner(pendingModeBanner);}
-function makeStarField(){const count=850,positions=new Float32Array(count*3),colors=new Float32Array(count*3),palette=[0xffffff,0x777777,0x55ccff,0xff66cc,0x5d3dff,0xff8800].map(c=>new THREE.Color(c));for(let i=0;i<count;i++){positions[i*3]=(Math.random()*2-1)*260;positions[i*3+1]=(Math.random()*2-1)*180;positions[i*3+2]=-50-Math.random()*1200;const c=palette[Math.floor(Math.random()*palette.length)].clone().multiplyScalar(.35+Math.random()*.7);colors[i*3]=c.r;colors[i*3+1]=c.g;colors[i*3+2]=c.b;}const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.BufferAttribute(positions,3));geo.setAttribute("color",new THREE.BufferAttribute(colors,3));const mat=new THREE.PointsMaterial({size:1.3,sizeAttenuation:true,transparent:true,opacity:.72,vertexColors:true});const pts=new THREE.Points(geo,mat);scene.add(pts);stars.push(pts);}
+function makeStarField(){const count=850,positions=new Float32Array(count*3),colors=new Float32Array(count*3),baseXY=new Float32Array(count*2),palette=[0xffffff,0x777777,0x55ccff,0xff66cc,0x5d3dff,0xff8800].map(c=>new THREE.Color(c));for(let i=0;i<count;i++){const x=(Math.random()*2-1)*260,y=(Math.random()*2-1)*180;positions[i*3]=x;positions[i*3+1]=y;positions[i*3+2]=-50-Math.random()*1200;baseXY[i*2]=x;baseXY[i*2+1]=y;const c=palette[Math.floor(Math.random()*palette.length)].clone().multiplyScalar(.35+Math.random()*.7);colors[i*3]=c.r;colors[i*3+1]=c.g;colors[i*3+2]=c.b;}const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.BufferAttribute(positions,3));geo.setAttribute("color",new THREE.BufferAttribute(colors,3));const mat=new THREE.PointsMaterial({size:1.3,sizeAttenuation:true,transparent:true,opacity:.72,vertexColors:true});const pts=new THREE.Points(geo,mat);pts.userData.baseXY=baseXY;scene.add(pts);stars.push(pts);}
 function makeLaneGuides(){LANE_X.forEach(x=>{LANE_Y.forEach(y=>{const geo=new THREE.BufferGeometry(),positions=[];for(let i=0;i<52;i++)positions.push(x,y,-80-i*25);geo.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));const mat=new THREE.PointsMaterial({color:0xff66cc,size:.85,transparent:true,opacity:.0,sizeAttenuation:true,depthWrite:false});const pts=new THREE.Points(geo,mat);scene.add(pts);laneGuides.push(pts);});});}
 function chooseTier(){const r=Math.random();if(r<.35)return TIERS[0];if(r<.60)return TIERS[1];if(r<.78)return TIERS[2];if(r<.90)return TIERS[3];if(r<.98)return TIERS[4];return TIERS[5];}
 function makeBeacon(tier,x,y,z,train){
@@ -950,7 +1049,7 @@ function spawnTrain(){
  document.getElementById("signal").textContent=runStarted?"Signal: stay connected":"Signal: touch first string";
 }
 function spawnWave(){const trains=heroMode?2:(Math.random()<.78?2:3);for(let i=0;i<trains;i++)setTimeout(spawnTrain,i*120);}
-function moveLane(dx,dy){if(!gameStarted||gameOver)return;laneX=Math.max(0,Math.min(2,laneX+dx));laneY=Math.max(0,Math.min(2,laneY+dy));targetX=LANE_X[laneX];targetY=LANE_Y[laneY];const namesY=["UP","CENTER","DOWN"],namesX=["LEFT","CENTER","RIGHT"];document.getElementById("laneLabel").textContent=namesY[laneY]+" "+namesX[laneX];if(navigator.vibrate)navigator.vibrate(10);}
+function moveLane(dx,dy){if(!gameStarted||gameOver)return;laneX=Math.max(0,Math.min(2,laneX+dx));laneY=Math.max(0,Math.min(2,laneY+dy));targetX=LANE_X[laneX];targetY=LANE_Y[laneY];addWarpBank(dx,dy);const namesY=["UP","CENTER","DOWN"],namesX=["LEFT","CENTER","RIGHT"];document.getElementById("laneLabel").textContent=namesY[laneY]+" "+namesX[laneX];if(navigator.vibrate)navigator.vibrate(10);}
 let downX=0,downY=0;
 
 // iPhone Safari audio unlock: capture the earliest touch event possible.
@@ -1424,7 +1523,7 @@ title.style.transform = "translate(-50%,-50%)";
 
 const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");center.style.borderColor="rgba(255,255,255,.95)";center.style.boxShadow="0 0 10px rgba(255,255,255,.55)";document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;beginCurrentFlow();
 
-lastLevel = 1;strikes = 0;milestonesReached = {};runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;musicStarted=false;resetMusicEvolution();updateStrikes();updateHUD();spawnWave();startMusic();}
+lastLevel = 1;strikes = 0;milestonesReached = {};runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;musicStarted=false;resetWarpBanking();resetMusicEvolution();updateStrikes();updateHUD();spawnWave();startMusic();}
 function togglePause(){
   if(gameOver)return;
   paused=!paused;
@@ -1570,14 +1669,25 @@ f * (
 warpAmount * 0.18
 );b.scale.setScalar(Math.max(.001,f));}});for(let i=beacons.length-1;i>=0;i--){const b=beacons[i];if((b.userData.state==="collected"||b.userData.state==="missed")&&b.userData.fade<=0){scene.remove(b);beacons.splice(i,1);}};stars.forEach(s=>{const pos = s.geometry.attributes.position;const speedMultiplier =1 + warpAmount * 7;const stretch =1 + warpAmount * 5;for(let i=0;i<pos.count;i++){
 
-    const x = pos.getX(i);
-    const y = pos.getY(i);
+    const baseXY = s.userData.baseXY;
+    const baseX = baseXY ? baseXY[i*2] : pos.getX(i);
+    const baseY = baseXY ? baseXY[i*2+1] : pos.getY(i);
+    const currentZ = pos.getZ(i);
+
+    // Curvature is strongest far away and fades to zero near the player,
+    // so the lane target remains visually dependable at decision time.
+    const farDepth = THREE.MathUtils.clamp((-currentZ - 70) / 1080, 0, 1);
+    const curveEase = farDepth * farDepth * (3 - 2 * farDepth);
+    const ambientCurveX = Math.sin(distance * 0.00058) * warpAmount * 5.5;
+    const ambientCurveY = Math.sin(distance * 0.00043 + 1.7) * warpAmount * 2.8;
+    const x = baseX + (warpCurveX + ambientCurveX) * curveEase;
+    const y = baseY + (warpCurveY + ambientCurveY) * curveEase;
 
     // Distance from the center of the playfield
     const edge =
         Math.min(
             1,
-            Math.hypot(x,y)/220
+            Math.hypot(baseX,baseY)/220
         );
 
     // Outer stars travel faster than center stars
@@ -1732,12 +1842,11 @@ warpAmount * 0.22;
 
 s.material.size = warpSize * stretch;
 
-s.material.opacity = warpOpacity;camera.rotation.z =
-Math.sin(distance * 0.0015)
-*
-warpAmount
-*
-0.004;});updateHUD();}if(gameStarted&&!gameOver){
+s.material.opacity = warpOpacity;});
+
+// Apply Warp Banking 2.0 after lookAt() has established the base view.
+updateWarpBanking(dt);
+updateHUD();}if(gameStarted&&!gameOver){
 introScale += (1-introScale)*dt*0.6;beacons.forEach(b=>{if(b.userData.state==="active") b.scale.lerp(new THREE.Vector3(introScale,introScale,introScale),0.08);});
 introCameraZ += (TARGET_CAMERA_Z-introCameraZ)*dt*0.18;
 camera.position.z=introCameraZ;camera.position.x +=
