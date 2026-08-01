@@ -265,19 +265,43 @@ canvas{display:block}
 }
 .scorePopup{position:absolute;left:50%;top:43%;transform:translate(-50%,-50%);z-index:60;pointer-events:none;font-size:26px;font-weight:900;letter-spacing:2px;color:#ffd36a;text-shadow:0 0 12px rgba(255,211,106,.95),0 0 38px rgba(255,120,0,.6);animation:scoreRise .9s ease-out forwards}
 @keyframes scoreRise{0%{opacity:0;transform:translate(-50%,-10%) scale(.8)}18%{opacity:1}100%{opacity:0;transform:translate(-50%,-145%) scale(1.08)}}
-#pauseText{position:absolute;left:50%;top:calc(50% + 52px);transform:translateX(-50%);z-index:16;font-size:12px;font-weight:900;letter-spacing:4px;color:#ffd36a;text-shadow:0 0 12px rgba(255,211,106,.9);display:none;pointer-events:none}
+#pauseText{display:none!important}
 
 /* =========================
-   SHIFTVIX — CURRENT FLOW SYSTEM
+   SHIFTVIX v2.5 — PATCH 9 PAUSE INTEGRATION
+   ========================= */
+#pauseMenu{
+  position:absolute;inset:0;z-index:85;display:none;place-items:center;
+  background:rgba(0,0,0,.48);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+#pauseMenu.show{display:grid;animation:pauseFadeIn .18s ease-out both}
+.pausePanel{
+  width:min(390px,84vw);padding:28px 24px 24px;border-radius:24px;text-align:center;
+  background:rgba(0,0,0,.86);border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 0 70px rgba(255,211,106,.12),inset 0 0 40px rgba(255,255,255,.025);
+}
+.pauseTitle{font-size:24px;font-weight:1000;letter-spacing:5px;color:#ffd36a;text-shadow:0 0 18px rgba(255,211,106,.72)}
+.pauseSelection{margin:18px 0 20px;padding:14px 12px;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.09)}
+.pauseFlowName{font-size:13px;font-weight:1000;letter-spacing:2px;color:#fff}
+.pauseFlowObjective{margin-top:7px;font-size:12px;line-height:1.35;letter-spacing:1px;color:rgba(255,255,255,.68)}
+.pauseActions{display:grid;gap:10px}
+.pauseButton{min-height:48px;border-radius:14px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.045);color:#fff;font:900 13px Arial;letter-spacing:2.5px;cursor:pointer}
+.pauseButton.primary{border-color:rgba(255,211,106,.55);color:#ffd36a;background:rgba(255,211,106,.08);box-shadow:0 0 16px rgba(255,211,106,.10)}
+.pauseButton:active{transform:scale(.985)}
+.pauseHint{margin-top:15px;font-size:9px;letter-spacing:1.4px;color:rgba(255,255,255,.34)}
+@keyframes pauseFadeIn{from{opacity:0}to{opacity:1}}
+
+/* =========================
+   SHIFTVIX — FLOW SYSTEM
    ========================= */
 #challengeHud{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:22;width:min(620px,92vw);text-align:center;color:#fff;font-weight:900;text-shadow:0 0 10px #000;cursor:pointer;pointer-events:auto}
-#challengeName{font-size:15px;letter-spacing:2.4px;color:#ffd36a;margin-bottom:9px;text-shadow:0 0 10px rgba(255,211,106,.5)}
+#challengeName{font-size:20px;letter-spacing:2.8px;color:#ffd36a;margin-bottom:9px;text-shadow:0 0 10px rgba(255,211,106,.5),0 0 24px rgba(255,211,106,.22)}
 #challengeText{font-size:clamp(17px,4.5vw,22px);line-height:1.18;letter-spacing:1.6px;color:#fff;white-space:normal;overflow:visible;text-overflow:clip;padding:0 8px}
 #challengeBar{margin:11px auto 0;width:min(430px,82vw);height:7px;border-radius:999px;background:rgba(255,255,255,.11);overflow:hidden;border:1px solid rgba(255,211,106,.28);box-shadow:inset 0 0 8px rgba(0,0,0,.7)}
 #challengeFill{height:100%;width:0%;background:linear-gradient(90deg,#8f6a16 0%,#d6aa38 45%,#ffd36a 100%);box-shadow:0 0 12px rgba(255,211,106,.82);transition:width .2s}
 @media (max-width:768px){
   #challengeHud{bottom:24px;width:92vw}
-  #challengeName{font-size:15px;margin-bottom:8px}
+  #challengeName{font-size:22px;margin-bottom:8px;letter-spacing:2.5px}
   #challengeText{font-size:19px;letter-spacing:1.3px}
   #challengeBar{width:82vw;height:7px}
 }
@@ -286,10 +310,287 @@ canvas{display:block}
 @keyframes modeFlash{0%{opacity:0;transform:translate(-50%,-25%) scale(.8)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-85%) scale(1)}}
 .resultsCard{position:relative;z-index:56}
 .flowSummary{margin:16px 0 4px;padding:12px;border-radius:16px;background:rgba(125,249,255,.06);border:1px solid rgba(125,249,255,.18);font-size:12px;line-height:1.6;letter-spacing:1.3px}
-#flowArchive{position:absolute;inset:0;z-index:90;display:none;place-items:center;background:rgba(0,0,0,.82);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-.archiveCard{width:min(520px,86vw);max-height:72vh;overflow:hidden;border-radius:24px;padding:24px;background:rgba(0,0,0,.92);border:1px solid rgba(255,255,255,.18);box-shadow:0 0 80px rgba(255,211,106,.12)}
-.archiveHeader{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:14px}.archiveHeader h2{margin:0;font-size:22px;letter-spacing:3px}.archiveClose{font-size:24px;cursor:pointer;padding:6px 10px}
-#archiveList{max-height:56vh;overflow:auto;padding-right:6px}.archiveRow{display:flex;justify-content:space-between;gap:20px;padding:11px 4px;border-top:1px solid rgba(255,255,255,.09);font-size:12px;letter-spacing:1.2px}.archiveRow.done{color:#fff}.archiveRow.current{color:#ffd36a}.archiveRow.locked{color:rgba(255,255,255,.28)}
+/* =========================
+   SHIFTVIX CORE FLOW REFINEMENT 2.2 — RUN COMPLETE
+   ========================= */
+.resultsCard.flowResults{width:min(420px,82vw);min-width:0;padding:30px 30px 26px;text-shadow:none}
+.flowResults .big{margin-bottom:18px;font-size:31px;letter-spacing:4px;text-shadow:0 0 16px rgba(255,255,255,.46)}
+.runSnapshot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.runMetric{padding:11px 7px;border-radius:12px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.09)}
+.runMetricLabel{font-size:8px;font-weight:900;letter-spacing:1.4px;color:rgba(255,255,255,.48)}
+.runMetricValue{margin-top:5px;font-size:18px;font-weight:1000;letter-spacing:.5px;color:#fff}
+.runFlowPanel{margin:0 0 14px;padding:16px 14px;border-radius:17px;background:rgba(125,249,255,.055);border:1px solid rgba(125,249,255,.18);box-shadow:inset 0 0 24px rgba(125,249,255,.025)}
+.runFlowTop{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.runFlowNumber{font-size:11px;font-weight:1000;letter-spacing:1.8px;color:#fff}
+.runFlowCategory{font-size:11px;font-weight:1000;letter-spacing:1.8px;color:#ffd36a}
+.runFlowObjective{margin-top:9px;font-size:13px;font-weight:900;line-height:1.35;letter-spacing:.7px;color:rgba(255,255,255,.88)}
+.runFlowProgressText{margin-top:10px;font-size:10px;font-weight:900;letter-spacing:1.1px;color:rgba(255,255,255,.56)}
+.runFlowBar{height:6px;margin-top:9px;border-radius:999px;overflow:hidden;background:rgba(255,255,255,.10);border:1px solid rgba(255,211,106,.20)}
+.runFlowFill{height:100%;border-radius:inherit;background:linear-gradient(90deg,#8f6a16,#ffd36a);box-shadow:0 0 10px rgba(255,211,106,.65)}
+.runArchiveProgress{margin:12px 0 16px;font-size:10px;font-weight:900;letter-spacing:1.4px;color:rgba(255,255,255,.48)}
+.runActions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.runAction{min-height:48px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.045);color:#fff;font:900 12px Arial;letter-spacing:2px;cursor:pointer;transition:transform .12s ease,border-color .15s ease,background .15s ease,box-shadow .15s ease}
+.runAction.primary{border-color:rgba(255,211,106,.58);background:rgba(255,211,106,.09);color:#ffd36a;box-shadow:0 0 17px rgba(255,211,106,.10)}
+.runAction:hover,.runAction:focus-visible{outline:none;transform:translateY(-1px);border-color:rgba(255,211,106,.72);background:rgba(255,211,106,.10);box-shadow:0 0 18px rgba(255,211,106,.14)}
+.runAction:active{transform:scale(.985)}
+@media(max-width:600px){.resultsCard.flowResults{width:min(390px,84vw);padding:26px 20px 22px}.flowResults .big{font-size:27px}.runMetricValue{font-size:16px}.runActions{grid-template-columns:1fr}.runAction{min-height:52px}}
+/* =========================
+   SHIFTVIX v2.5 — FLOW ARCHIVE
+   ========================= */
+
+#flowArchive{
+    position:absolute;
+    inset:0;
+    z-index:90;
+    display:none;
+    place-items:center;
+    background:rgba(0,0,0,.86);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+}
+
+.archiveCard{
+    width:min(620px,88vw);
+    max-height:78vh;
+    overflow:hidden;
+    border-radius:24px;
+    padding:24px;
+    background:rgba(0,0,0,.94);
+    border:1px solid rgba(255,255,255,.18);
+    box-shadow:
+        0 0 80px rgba(255,211,106,.12),
+        inset 0 0 50px rgba(255,255,255,.025);
+}
+
+.archiveHeader{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    margin-bottom:10px;
+}
+
+.archiveHeader h2{
+    margin:0;
+    font-size:22px;
+    letter-spacing:3px;
+    color:#ffd36a;
+}
+
+.archiveClose{
+    font-size:27px;
+    cursor:pointer;
+    padding:6px 10px;
+    color:#ffffff;
+}
+
+.archiveProgress{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 0 15px;
+    margin-bottom:4px;
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:1.8px;
+    color:rgba(255,255,255,.66);
+}
+
+.archiveLegend{
+    display:flex;
+    gap:18px;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:1.4px;
+    color:rgba(255,255,255,.48);
+}
+
+#archiveList{
+    max-height:60vh;
+    overflow:auto;
+    padding-right:7px;
+    padding-bottom:20px;
+}
+
+.archiveBlock{
+    margin:0 0 22px;
+    padding-top:15px;
+    border-top:1px solid rgba(255,255,255,.10);
+}
+
+.archiveBlock:first-of-type{
+    border-top:none;
+    padding-top:0;
+}
+
+.archiveBlockLabel{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:2px;
+    color:rgba(255,255,255,.55);
+}
+
+.archiveBlock.lockedBlock .archiveBlockLabel{
+    color:rgba(255,255,255,.22);
+}
+
+.archiveGrid{
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    gap:8px;
+}
+
+.archiveRow{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:42px;
+    padding:3px;
+    border-radius:11px;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.035);
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.5px;
+    color:rgba(255,255,255,.68);
+    box-sizing:border-box;
+}
+
+.archiveRow.selectable{
+    cursor:pointer;
+    transition:
+        transform .14s ease,
+        border-color .14s ease,
+        background .14s ease,
+        box-shadow .14s ease;
+}
+
+.archiveRow.selectable:hover,
+.archiveRow.selectable:focus-visible{
+    transform:translateY(-1px) scale(1.025);
+    border-color:rgba(255,211,106,.62);
+    background:rgba(255,211,106,.08);
+    box-shadow:0 0 14px rgba(255,211,106,.16);
+    outline:none;
+}
+
+.archiveRow.available{
+    color:rgba(255,255,255,.88);
+    border-color:rgba(255,255,255,.18);
+    background:rgba(255,255,255,.055);
+}
+
+.archiveRow.available .archiveStatus{
+    color:#ffd36a;
+}
+
+.archiveRow.done{
+    color:#ffffff;
+    border-color:rgba(125,249,255,.32);
+    background:rgba(125,249,255,.075);
+    box-shadow:inset 0 0 12px rgba(125,249,255,.05);
+}
+
+.archiveRow.current{
+    color:#ffd36a;
+    border-color:#ffd36a;
+    background:rgba(255,211,106,.09);
+    box-shadow:
+        0 0 10px rgba(255,211,106,.18),
+        inset 0 0 12px rgba(255,211,106,.08);
+}
+
+.archiveRow.locked{
+    color:rgba(255,255,255,.20);
+    border-color:rgba(255,255,255,.055);
+    background:rgba(255,255,255,.015);
+}
+
+.archiveStatus{
+    position:absolute;
+    top:2px;
+    right:4px;
+    font-size:8px;
+    line-height:1;
+}
+
+@media(max-width:600px){
+
+    .archiveCard{
+        width:88vw;
+        padding:20px 16px;
+    }
+
+    .archiveGrid{
+        grid-template-columns:repeat(5,1fr);
+        gap:7px;
+    }
+
+    .archiveRow{
+        min-height:39px;
+        font-size:11px;
+    }
+}
+
+/* =========================
+   SHIFTVIX v2.5 — PATCH 10 POLISH
+   ========================= */
+:root{--shift-gold:#ffd36a;--shift-cyan:#7df9ff}
+button,.archiveRow{-webkit-tap-highlight-color:transparent}
+#pauseMenu,#flowArchive{opacity:0;visibility:hidden;pointer-events:none;display:grid;transition:opacity .18s ease,visibility 0s linear .18s}
+#pauseMenu.show,#flowArchive.show{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .18s ease}
+#pauseMenu.show{animation:none}
+.pausePanel,.archiveCard{transform:translateY(8px) scale(.985);transition:transform .2s ease}
+#pauseMenu.show .pausePanel,#flowArchive.show .archiveCard{transform:translateY(0) scale(1)}
+.pauseButton{transition:transform .12s ease,border-color .15s ease,background .15s ease,box-shadow .15s ease}
+.pauseButton:hover,.pauseButton:focus-visible{outline:none;border-color:rgba(255,211,106,.72);background:rgba(255,211,106,.10);box-shadow:0 0 18px rgba(255,211,106,.14)}
+.pauseButton:focus-visible,.archiveClose:focus-visible,.archiveRow:focus-visible{outline:2px solid var(--shift-gold);outline-offset:2px}
+.archiveClose{border-radius:10px;transition:background .14s ease,color .14s ease}
+.archiveClose:hover,.archiveClose:focus-visible{background:rgba(255,255,255,.08);color:var(--shift-gold);outline:none}
+.archiveBlockLabel .blockProgress{font-size:9px;letter-spacing:1px;color:rgba(255,255,255,.36)}
+.archiveRow{overflow:hidden;padding:4px 4px 17px}
+.archiveFlowType{position:absolute;left:5px;right:5px;bottom:5px;font-size:10px;line-height:1;font-weight:1000;letter-spacing:1px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:rgba(255,255,255,.62)}
+.archiveFlowType.category-reach{color:#ffd36a;text-shadow:0 0 8px rgba(255,211,106,.32)}
+.archiveFlowType.category-collect{color:#7df9ff;text-shadow:0 0 8px rgba(125,249,255,.30)}
+.archiveFlowType.category-travel{color:#69a9ff;text-shadow:0 0 8px rgba(105,169,255,.30)}
+.archiveFlowType.category-score{color:#ce7dff;text-shadow:0 0 8px rgba(206,125,255,.30)}
+.archiveRow.current .archiveFlowType{color:rgba(255,211,106,.75)}
+.archiveRow.done .archiveFlowType{color:rgba(125,249,255,.52)}
+.archiveRow.locked .archiveFlowType{display:none}
+.archiveRow.selectedFlash{animation:selectedFlowFlash .42s ease-out}
+@keyframes selectedFlowFlash{0%{transform:scale(1)}45%{transform:scale(1.10);box-shadow:0 0 24px rgba(255,211,106,.45)}100%{transform:scale(1)}}
+#challengeHud{transition:opacity .18s ease,transform .18s ease}
+body.uiModalOpen #challengeHud{opacity:.22;pointer-events:none}
+body.uiModalOpen #center{pointer-events:none}
+@media(max-width:600px){
+  .pausePanel{width:min(390px,86vw);padding:24px 18px 20px}
+  .pauseButton{min-height:52px;font-size:14px}
+  .archiveCard{max-height:84vh;padding:18px 14px}
+  #archiveList{max-height:66vh}
+  .archiveRow{min-height:44px}
+  .archiveFlowType{font-size:8.5px;bottom:5px;letter-spacing:.8px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+}
+
+/* SHIFTVIX v2.3 — Gravity / Reverse visual field */
+#flowFx{position:absolute;inset:0;z-index:12;pointer-events:none;opacity:0;transition:opacity .18s ease;mix-blend-mode:screen;background:radial-gradient(circle at 50% 48%,transparent 28%,rgba(120,80,255,.10) 62%,rgba(40,180,255,.16) 100%);box-shadow:inset 0 -18vh 22vh rgba(80,30,255,.08),inset 0 18vh 22vh rgba(0,180,255,.06)}
+#flowFx.gravity{opacity:var(--gravity-fx,0);filter:saturate(calc(1 + var(--gravity-fx,0)*.8)) contrast(calc(1 + var(--gravity-fx,0)*.12))}
+#flowFx.pulse{opacity:var(--pulse-fx,.2);background:radial-gradient(circle at 50% 50%,rgba(125,249,255,.22),rgba(80,120,255,.10) 34%,transparent 68%);filter:brightness(calc(.9 + var(--pulse-fx,.2)*.9)) saturate(calc(1 + var(--pulse-fx,.2)*.75));}
+#pulseWaves{position:absolute;inset:0;z-index:14;pointer-events:none;overflow:hidden;}
+.pulseWave{position:absolute;left:50%;top:50%;width:32px;height:32px;border-radius:50%;border:2px solid rgba(125,249,255,.85);box-shadow:0 0 18px rgba(125,249,255,.75),inset 0 0 16px rgba(125,249,255,.25);transform:translate(-50%,-50%) scale(.2);opacity:0;animation:pulseShockwave .9s cubic-bezier(.1,.55,.2,1) forwards;}
+.pulseWave.secondary{border-color:rgba(255,102,204,.55);animation-delay:.08s;}
+@keyframes pulseShockwave{0%{opacity:.95;transform:translate(-50%,-50%) scale(.25)}65%{opacity:.34}100%{opacity:0;transform:translate(-50%,-50%) scale(18)}}
+#flowFx.reverse{opacity:.62;background:radial-gradient(circle at 50% 50%,transparent 30%,rgba(255,50,40,.08) 64%,rgba(255,0,120,.17) 100%);animation:reverseBreath 1.35s ease-in-out infinite alternate}
+@keyframes reverseBreath{from{filter:hue-rotate(0deg) brightness(.9)}to{filter:hue-rotate(22deg) brightness(1.25)}}
 </style>
 </head>
 <body>
@@ -306,10 +607,25 @@ canvas{display:block}
 <div style="display:none"><span id="world">Distance Run</span>
 <span id="found">0</span><span id="score">0</span><span id="bestScore">0</span><span id="combo">1x</span><div id="signal"></div></div></div>
 <div id="center"></div><div id="pauseText">PAUSED</div><div id="laneLabel">CENTER</div><div id="roundComplete"></div>
+<div id="pauseMenu" aria-hidden="true">
+  <div class="pausePanel" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+    <div class="pauseTitle" id="pauseTitle">PAUSED</div>
+    <div class="pauseSelection">
+      <div class="pauseFlowName" id="pauseFlowName">FLOW 1 · REACH</div>
+      <div class="pauseFlowObjective" id="pauseFlowObjective">LOADING…</div>
+    </div>
+    <div class="pauseActions">
+      <button class="pauseButton primary" id="pauseResume" type="button">RESUME</button>
+      <button class="pauseButton" id="pauseFlowPath" type="button">FLOW PATH</button>
+    </div>
+    <div class="pauseHint">CENTER EYE OR ESC TO RESUME</div>
+  </div>
+</div>
 <div id="challengeHud"><div id="challengeName">CURRENT FLOW</div><div id="challengeText">LOADING…</div><div id="challengeBar"><div id="challengeFill"></div></div></div>
-<div id="modeBanner"></div>
-<div id="flowArchive"><div class="archiveCard"><div class="archiveHeader"><h2>FLOW PATH</h2><div class="archiveClose" id="archiveClose">×</div></div><div id="archiveList"></div></div></div>
+<div id="modeBanner"></div><div id="flowFx"></div><div id="pulseWaves"></div>
+<div id="flowArchive" aria-hidden="true"><div class="archiveCard" role="dialog" aria-modal="true" aria-labelledby="flowPathTitle"><div class="archiveHeader"><h2 id="flowPathTitle">FLOW PATH</h2><button class="archiveClose" id="archiveClose" type="button" aria-label="Close Flow Path">×</button></div><div id="archiveList"></div></div></div>
 
+<!-- SHIFTVIX CORE FLOW REFINEMENT 2.2 -->
 <script type="module">
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x000000,0.0011);
@@ -337,6 +653,16 @@ let runStartTime = 0;
 // Stores the completed run time for restart analytics
 let lastRunDuration = 0;
 
+// =========================
+// SHIFTVIX v2.5 ANALYTICS (Patch 7 scaffold)
+// =========================
+const ANALYTICS_VERSION="2.5";
+const analyticsSessionId=`${Date.now()}-${Math.random().toString(36).slice(2,10)}`;
+let analyticsRunId=null,analyticsRunStartedAt=0,analyticsFlowStartedAt=0;
+function analyticsBaseData(){return {analytics_version:ANALYTICS_VERSION,analytics_session_id:analyticsSessionId,analytics_run_id:analyticsRunId||"not_started"};}
+function trackGame(eventName,data={}){track(eventName,{...analyticsBaseData(),...data});}
+
+
 // Remembers whether this browser has ever started SHIFTVIX before
 let hasPlayedBefore =
     localStorage.getItem("shiftvixHasPlayed") === "true";
@@ -344,6 +670,272 @@ let introCameraZ=48;
 const TARGET_CAMERA_Z=72;
 // ---------- WARP ----------
 let warpAmount = 0;
+
+// =========================
+// SHIFTVIX v2.4 — ENVIRONMENT ENGINE
+// Normal, Curved, Mirror, Gravity, Reverse, and Pulse share one interface.
+//
+// Core Flow Refinement 2.0:
+//   10 CURVED · 20 MIRROR · 30 GRAVITY · 40 REVERSE · 50 PULSE
+//
+// Testing override:
+//   ?environment=normal | curved | mirror | gravity | reverse | pulse
+// =========================
+const ENVIRONMENT_TYPES = Object.freeze({
+  NORMAL:"normal",
+  CURVED:"curved",
+  MIRROR:"mirror",
+  GRAVITY:"gravity",
+  REVERSE:"reverse",
+  PULSE:"pulse"
+});
+
+const environmentQuery = new URLSearchParams(window.location.search)
+  .get("environment")?.toLowerCase();
+    
+
+function environmentTypeForFlow(index){
+
+    const flowNumber = (index % 30) + 1;
+
+    const specialSlots = [
+        3, 5, 7, 10,
+        13, 15, 17, 20,
+        23, 25, 27, 30
+    ];
+
+    const rotation = [ENVIRONMENT_TYPES.NORMAL];
+
+    const slotIndex = specialSlots.indexOf(flowNumber);
+
+    if(slotIndex === -1){
+        return ENVIRONMENT_TYPES.NORMAL;
+    }
+
+    const blockIndex = Math.floor(index / 30);
+    const globalSpecialIndex =
+        (blockIndex * specialSlots.length) + slotIndex;
+
+    return ENVIRONMENT_TYPES.NORMAL;
+}
+    
+function flowNameForType(type){
+  return `${String(type||ENVIRONMENT_TYPES.NORMAL).toUpperCase()} FLOW`;
+}
+
+function flowNameForIndex(index){
+  const forced=(environmentQuery&&ENVIRONMENTS?.[environmentQuery])?environmentQuery:null;
+  return flowNameForType(forced||environmentTypeForFlow(index));
+}
+
+function easeInOutCubic(t){
+  return t < 0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+}
+function rotatePoint(x,y,angle){
+  const c=Math.cos(angle),s=Math.sin(angle);
+  return {x:x*c-y*s,y:x*s+y*c};
+}
+function setFlowFx(mode,intensity=0){
+  const fx=document.getElementById("flowFx");
+  if(!fx)return;
+  fx.className=mode||"";
+  fx.style.setProperty("--gravity-fx",String(THREE.MathUtils.clamp(intensity,0,1)));
+  fx.style.setProperty("--pulse-fx",String(THREE.MathUtils.clamp(intensity,0,1)));
+}
+
+const normalEnvironment={
+  id:ENVIRONMENT_TYPES.NORMAL,name:"CURRENT FLOW",
+  reset(){setFlowFx("",0);},start(){setFlowFx("",0);},update(){},
+  transformPoint(x,y){return {x,y};},
+  transformSwipe(dx,dy){return {x:dx,y:dy};},
+  transformLaneInput(dx,dy){return {x:dx,y:dy};},
+  getRotation(){return 0;}
+};
+
+const curvedEnvironment={
+  id:ENVIRONMENT_TYPES.CURVED,name:"CURRENT FLOW",
+  warningDistance:450,startDistance:500,
+  turnAngle:THREE.MathUtils.degToRad(-30),turnDuration:1.8,
+  flowStartDistance:0,rotation:0,turnFrom:0,turnTarget:0,elapsed:0,
+  active:false,triggered:false,warningShown:false,
+  reset(){this.flowStartDistance=distance;this.rotation=0;this.turnFrom=0;this.turnTarget=0;this.elapsed=0;this.active=false;this.triggered=false;this.warningShown=false;setFlowFx("",0);},
+  start(){this.reset();},
+  beginTurn(){if(this.triggered)return;this.triggered=true;this.active=true;this.elapsed=0;this.turnFrom=this.rotation;this.turnTarget=this.turnAngle;showModeBanner("CURRENT FLOW");track("environment_event_started",{environment:this.id,distance:Math.floor(distance),degrees:30,direction:"clockwise"});},
+  update(dt){const flowDistance=Math.max(0,distance-this.flowStartDistance);if(!this.warningShown&&flowDistance>=this.warningDistance){this.warningShown=true;showModeBanner("TURN APPROACHING");bankRollVelocity+=THREE.MathUtils.degToRad(1.5);warpCurveVelocityX+=10;}if(!this.triggered&&flowDistance>=this.startDistance)this.beginTurn();if(this.active){this.elapsed+=dt;const p=THREE.MathUtils.clamp(this.elapsed/this.turnDuration,0,1);this.rotation=THREE.MathUtils.lerp(this.turnFrom,this.turnTarget,easeInOutCubic(p));bankRollVelocity+=THREE.MathUtils.degToRad(2)*dt;warpCurveVelocityX+=12*dt;if(p>=1){this.rotation=this.turnTarget;this.active=false;showModeBanner("TURN COMPLETE");track("environment_event_completed",{environment:this.id,distance:Math.floor(distance),degrees:30,direction:"clockwise"});}}},
+  transformPoint(x,y){return rotatePoint(x,y,this.rotation);},
+  transformSwipe(dx,dy){return rotatePoint(dx,dy,this.rotation);},
+  transformLaneInput(dx,dy){return {x:dx,y:dy};},
+  getRotation(){return this.rotation;}
+};
+
+const mirrorEnvironment={
+  id:ENVIRONMENT_TYPES.MIRROR,name:"CURRENT FLOW",swipeCount:0,
+  reset(){this.swipeCount=0;setFlowFx("",0);},
+  start(){this.reset();track("environment_event_started",{environment:this.id,distance:Math.floor(distance)});},update(){},
+  transformPoint(x,y){return {x,y};},
+  transformSwipe(dx,dy){this.swipeCount++;track("mirror_swipe",{flow_number:currentFlowIndex+1,swipe_count:this.swipeCount});return {x:-dx,y:dy};},
+  transformLaneInput(dx,dy){return {x:-dx,y:dy};},getRotation(){return 0;}
+};
+
+const gravityEnvironment={
+  id:ENVIRONMENT_TYPES.GRAVITY,name:"CURRENT FLOW",
+  warningDistance:120,rampDistance:180,holdDistance:420,releaseDistance:690,endDistance:850,
+  flowStartDistance:0,gravityDirection:1,intensity:0,phase:"idle",warningShown:false,activeTracked:false,recoveryTracked:false,completionTracked:false,
+  reset(){this.flowStartDistance=distance;this.gravityDirection=Math.random()<.5?-1:1;this.intensity=0;this.phase="idle";this.warningShown=false;this.activeTracked=false;this.recoveryTracked=false;this.completionTracked=false;setFlowFx("",0);},
+  start(){this.reset();track("gravity_flow_loaded",{flow_number:currentFlowIndex+1,direction:this.gravityDirection>0?"down":"up",distance:Math.floor(distance)});},
+  update(dt){
+    const d=Math.max(0,distance-this.flowStartDistance);
+    if(!this.warningShown&&d>=this.warningDistance){this.warningShown=true;this.phase="warning";showModeBanner("GRAVITY SHIFT");track("gravity_warning_shown",{flow_number:currentFlowIndex+1,direction:this.gravityDirection>0?"down":"up",flow_distance:Math.floor(d)});}
+    let target=0;
+    if(d>=this.rampDistance&&d<this.holdDistance){this.phase="ramp_in";target=THREE.MathUtils.clamp((d-this.rampDistance)/(this.holdDistance-this.rampDistance),0,1);}
+    else if(d>=this.holdDistance&&d<this.releaseDistance){this.phase="full_gravity";target=1;}
+    else if(d>=this.releaseDistance&&d<this.endDistance){this.phase="recovery";target=1-THREE.MathUtils.clamp((d-this.releaseDistance)/(this.endDistance-this.releaseDistance),0,1);}
+    else if(d>=this.endDistance){this.phase="recovered";target=0;}
+    const ease=1-Math.exp(-dt*3.2);this.intensity+=(target-this.intensity)*ease;
+    if(this.intensity>.03){setFlowFx("gravity",this.intensity);bankPitchVelocity+=this.gravityDirection*this.intensity*1.0*dt;bankRollVelocity+=this.gravityDirection*this.intensity*THREE.MathUtils.degToRad(2.2)*dt;warpCurveVelocityY+=this.gravityDirection*this.intensity*9*dt;warpCurveVelocityX+=Math.sin(distance*.018)*this.intensity*2.2*dt;lensPulse=Math.max(lensPulse,this.intensity*.78);}
+    else setFlowFx("",0);
+    if(!this.activeTracked&&this.intensity>=.5){this.activeTracked=true;showModeBanner("GRAVITY ACTIVE");track("gravity_shift_started",{flow_number:currentFlowIndex+1,direction:this.gravityDirection>0?"down":"up",flow_distance:Math.floor(d),ramp_distance:this.holdDistance-this.rampDistance});}
+    if(!this.recoveryTracked&&this.activeTracked&&d>=this.releaseDistance){this.recoveryTracked=true;showModeBanner("GRAVITY RELEASE");track("gravity_recovery_started",{flow_number:currentFlowIndex+1,flow_distance:Math.floor(d)});}
+    if(!this.completionTracked&&this.recoveryTracked&&this.phase==="recovered"&&this.intensity<.02){this.completionTracked=true;this.phase="complete";showModeBanner("GRAVITY NORMALIZED");track("gravity_shift_completed",{flow_number:currentFlowIndex+1,direction:this.gravityDirection>0?"down":"up",flow_distance:Math.floor(d),duration_distance:this.endDistance-this.rampDistance});}
+  },
+  transformPoint(x,y){const roll=this.getRotation();const p=rotatePoint(x,y,roll);return {x:p.x,y:p.y+this.gravityDirection*this.intensity*7};},
+  transformSwipe(dx,dy){return this.intensity>=.5?{x:dx,y:-dy}:{x:dx,y:dy};},
+  transformLaneInput(dx,dy){return this.intensity>=.5?{x:dx,y:-dy}:{x:dx,y:dy};},
+  getRotation(){return this.gravityDirection*this.intensity*THREE.MathUtils.degToRad(8.5);}
+};
+
+const reverseEnvironment={
+  id:ENVIRONMENT_TYPES.REVERSE,name:"CURRENT FLOW",inputCount:0,
+  reset(){this.inputCount=0;setFlowFx("",0);},
+  start(){this.inputCount=0;setFlowFx("reverse",1);showModeBanner("CURRENT FLOW");track("reverse_flow_started",{flow_number:currentFlowIndex+1,distance:Math.floor(distance)});},
+  update(){setFlowFx("reverse",1);},
+  transformPoint(x,y){return {x,y};},
+  transformSwipe(dx,dy){this.inputCount++;track("reverse_input",{flow_number:currentFlowIndex+1,input_count:this.inputCount});return {x:-dx,y:-dy};},
+  transformLaneInput(dx,dy){return {x:-dx,y:-dy};},getRotation(){return 0;}
+};
+
+
+// =========================
+// SHIFTVIX v2.4 — PULSE COMPLETE
+// Heartbeat-synchronized world breathing, lane spacing, camera impulse,
+// audio modulation, shockwaves, and rhythm analytics.
+// =========================
+let pulseCameraOffset=0;
+let pulseFovBoost=0;
+
+function emitPulseShockwave(){
+  const host=document.getElementById("pulseWaves");
+  if(!host)return;
+  ["","secondary"].forEach(cls=>{
+    const ring=document.createElement("div");
+    ring.className=`pulseWave ${cls}`.trim();
+    host.appendChild(ring);
+    ring.addEventListener("animationend",()=>ring.remove(),{once:true});
+  });
+}
+
+const pulseEnvironment={
+  id:ENVIRONMENT_TYPES.PULSE,name:"CURRENT FLOW",
+  impulse:0,phase:0,pulseCount:0,collections:0,onBeatCollections:0,strikes:0,
+  lastBeatAt:0,lastBeatPerformance:0,beatIntervals:[],startedAt:0,lastAnalyticsPulse:0,
+  reset(){
+    if(this.startedAt&&this.pulseCount){
+      const avg=this.beatIntervals.length?this.beatIntervals.reduce((a,b)=>a+b,0)/this.beatIntervals.length:0;
+      const variance=this.beatIntervals.length?this.beatIntervals.reduce((a,b)=>a+(b-avg)*(b-avg),0)/this.beatIntervals.length:0;
+      track("pulse_flow_completed",{
+        flow_number:currentFlowIndex+1,pulse_count:this.pulseCount,
+        collections:this.collections,on_beat_collections:this.onBeatCollections,
+        pulse_accuracy:this.collections?Math.round(this.onBeatCollections/this.collections*100):0,
+        rhythm_stability:avg?Math.max(0,Math.round(100-Math.sqrt(variance)/avg*100)):100,
+        pulse_strikes:this.strikes
+      });
+    }
+    this.impulse=0;this.phase=0;this.pulseCount=0;this.collections=0;this.onBeatCollections=0;this.strikes=0;
+    this.lastBeatAt=0;this.lastBeatPerformance=0;this.beatIntervals=[];this.startedAt=0;this.lastAnalyticsPulse=0;
+    pulseCameraOffset=0;pulseFovBoost=0;setFlowFx("",0);
+    stars.forEach(s=>s.scale.set(1,1,1));
+  },
+  start(){
+    this.reset();this.startedAt=performance.now();setFlowFx("pulse",.22);showModeBanner("CURRENT FLOW");
+    track("pulse_flow_started",{flow_number:currentFlowIndex+1,distance:Math.floor(distance),bpm:Math.round(getDrumBPM())});
+  },
+  onBeat(time,accent=1){
+    if(this.lastBeatAt){const interval=time-this.lastBeatAt;if(interval>.2&&interval<1.5){this.beatIntervals.push(interval);if(this.beatIntervals.length>24)this.beatIntervals.shift();}}
+    this.lastBeatAt=time;this.lastBeatPerformance=performance.now()/1000;this.pulseCount++;this.impulse=Math.min(1.25,.82+accent*.22);emitPulseShockwave();
+    pulseCameraOffset=Math.max(pulseCameraOffset,1.15+accent*.45);
+    pulseFovBoost=Math.max(pulseFovBoost,1.2+accent*.7);
+    bankPitchVelocity-=THREE.MathUtils.degToRad(.32)*accent;
+    warpCurveVelocityX+=Math.sin(this.pulseCount*.9)*1.8*accent;
+    lensPulse=Math.max(lensPulse,.92);
+    if(audioCtx&&musicFilter&&musicMasterGain){
+      const now=audioCtx.currentTime;
+      const base=1350+Math.max(0,Math.min(1,distance/5000))*7600;
+      musicFilter.frequency.cancelScheduledValues(now);
+      musicFilter.frequency.setValueAtTime(Math.min(12000,base*1.18),now);
+      musicFilter.frequency.exponentialRampToValueAtTime(Math.max(80,base),now+.18);
+      musicMasterGain.gain.cancelScheduledValues(now);
+      musicMasterGain.gain.setValueAtTime(.9,now);
+      musicMasterGain.gain.exponentialRampToValueAtTime(.82,now+.2);
+    }
+    if(this.pulseCount-this.lastAnalyticsPulse>=8){
+      this.lastAnalyticsPulse=this.pulseCount;
+      track("pulse_peak",{flow_number:currentFlowIndex+1,pulse_count:this.pulseCount,bpm:Math.round(getDrumBPM()),distance:Math.floor(distance)});
+    }
+  },
+  update(dt){
+    this.phase+=dt*Math.PI*2*(getDrumBPM()/60);
+    this.impulse*=Math.exp(-dt*5.4);
+    const breath=.5+.5*Math.sin(this.phase-Math.PI/2);
+    const visual=Math.min(1,.18+this.impulse*.72+breath*.12);
+    setFlowFx("pulse",visual);
+    pulseCameraOffset*=Math.exp(-dt*6.2);
+    pulseFovBoost*=Math.exp(-dt*6.4);
+    const starScale=1+this.impulse*.028+breath*.012;
+    stars.forEach(s=>s.scale.set(starScale,starScale,1));
+  },
+  onCollect(){
+    this.collections++;
+    const age=performance.now()/1000-this.lastBeatPerformance;
+    if(age>=0&&age<=.24)this.onBeatCollections++;
+    if(this.collections%25===0)track("pulse_accuracy",{flow_number:currentFlowIndex+1,collections:this.collections,on_beat_collections:this.onBeatCollections,accuracy:this.collections?Math.round(this.onBeatCollections/this.collections*100):0});
+  },
+  onStrike(){this.strikes++;track("pulse_collision",{flow_number:currentFlowIndex+1,pulse_count:this.pulseCount,distance:Math.floor(distance)});},
+  transformPoint(x,y){
+    const breath=.5+.5*Math.sin(this.phase-Math.PI/2);
+    const spacing=1+(breath-.5)*.055+this.impulse*.035;
+    return {x:x*spacing,y:y*spacing};
+  },
+  transformSwipe(dx,dy){return {x:dx,y:dy};},
+  transformLaneInput(dx,dy){return {x:dx,y:dy};},
+  getRotation(){return Math.sin(this.phase*.5)*THREE.MathUtils.degToRad(.45)*this.impulse;}
+};
+
+const ENVIRONMENTS=Object.freeze({
+  [ENVIRONMENT_TYPES.NORMAL]:normalEnvironment,
+  [ENVIRONMENT_TYPES.CURVED]:curvedEnvironment,
+  [ENVIRONMENT_TYPES.MIRROR]:mirrorEnvironment,
+  [ENVIRONMENT_TYPES.GRAVITY]:gravityEnvironment,
+  [ENVIRONMENT_TYPES.REVERSE]:reverseEnvironment,
+  [ENVIRONMENT_TYPES.PULSE]:pulseEnvironment
+});
+
+const environmentEngine={
+  current:normalEnvironment,forcedType:null,
+  resolveType(index=currentFlowIndex){if(environmentQuery&&ENVIRONMENTS[environmentQuery]){this.forcedType=environmentQuery;return environmentQuery;}return environmentTypeForFlow(index);},
+  set(type,{announce=false}={}){const next=ENVIRONMENTS[type]||normalEnvironment;if(this.current&&this.current!==next)this.current.reset();this.current=next;this.current.start();this.applyLaneGuides();this.updatePlayerTarget();if(announce)showModeBanner(this.current.name);updateFlowHeading();track("environment_selected",{environment:this.current.id,flow_number:currentFlowIndex+1,forced:Boolean(this.forcedType)});},
+  resetForRun(){this.set(this.resolveType());},resetForFlow({announce=true}={}){this.set(this.resolveType(),{announce});},
+  update(dt){this.current.update(dt);this.applyLaneGuides();this.updatePlayerTarget();},
+  transformPoint(x,y){return this.current.transformPoint(x,y);},transformSwipe(dx,dy){return this.current.transformSwipe(dx,dy);},transformLaneInput(dx,dy){return this.current.transformLaneInput(dx,dy);},
+  updatePlayerTarget(){const p=this.transformPoint(LANE_X[laneX],LANE_Y[laneY]);targetX=p.x;targetY=p.y;},
+  applyLaneGuides(){const rotation=this.current.getRotation();laneGuides.forEach(guide=>{guide.rotation.z=rotation;});}
+};
+
+function updateFlowHeading(){const heading=document.getElementById("challengeName");if(heading)heading.textContent=environmentEngine.current.name;}
+function updateEnvironment(dt){environmentEngine.update(dt);}
+function resetEnvironmentForRun(){environmentEngine.resetForRun();}
+function environmentPoint(x,y){return environmentEngine.transformPoint(x,y);}
+function environmentSwipe(dx,dy){return environmentEngine.transformSwipe(dx,dy);}
+function environmentLaneInput(dx,dy){return environmentEngine.transformLaneInput(dx,dy);}
 
 // =========================
 // SHIFTVIX WARP BANKING 3.0 + WARP CURVATURE 4.0
@@ -622,6 +1214,7 @@ function playNoiseHit(time, volume, duration, highpass=1200){
 
 function playDrumHit(time, accent = 1){
   if(!audioCtx || !drumEnabled) return;
+  if(environmentEngine?.current?.id===ENVIRONMENT_TYPES.PULSE) pulseEnvironment.onBeat(time,accent);
   ensureMusicBus();
 
   const bodyOsc = audioCtx.createOscillator();
@@ -850,6 +1443,13 @@ function startMusic(){
 }
 
 const FLOW_TOTAL = 300;
+
+const FLOWS_PER_BLOCK = 30;
+
+const TOTAL_FLOW_BLOCKS = Math.ceil(
+    FLOW_TOTAL / FLOWS_PER_BLOCK
+);
+
 const FLOW_STAGES = [
   {name:"BEGINNING",end:30},
   {name:"EFFICIENCY",end:90},
@@ -858,81 +1458,582 @@ const FLOW_STAGES = [
   {name:"MASTERY",end:270},
   {name:"TRANSCENDENCE",end:300}
 ];
-const flowTitles = ["IGNITION","ALIGNMENT","MOMENTUM","RHYTHM","FOCUS","CONTROL","CADENCE","VELOCITY","RESOLVE","ASCENT","CLARITY","ENDURANCE","PULSE","VECTOR","ORBIT","SURGE","NEXUS","APEX","ZENITH","INFINITY"];
 let currentFlowIndex = Math.max(0,Math.min(FLOW_TOTAL-1,Number(localStorage.getItem("shiftvixCurrentFlow")||0)));
+let highestCompletedFlow = Number(localStorage.getItem("shiftvixHighestCompletedFlow") || 0);
 let completedFlows = Math.max(0,Math.min(FLOW_TOTAL,Number(localStorage.getItem("shiftvixCompletedFlows")||0)));
+let completedFlowIndexes = new Set(
+    (() => {
+        try{
+            const saved = JSON.parse(
+                localStorage.getItem(
+                    "shiftvixCompletedFlowIndexes"
+                ) || "[]"
+            );
+
+            if(Array.isArray(saved)){
+                return saved
+                    .map(Number)
+                    .filter(index=>
+                        Number.isInteger(index) &&
+                        index >= 0 &&
+                        index < FLOW_TOTAL
+                    );
+            }
+        }catch(error){
+            console.warn(
+                "SHIFTVIX completed Flow list could not be read.",
+                error
+            );
+        }
+
+        // Migration for players coming from the older
+        // consecutive-completion save format.
+        return Array.from(
+            {length:completedFlows},
+            (_,index)=>index
+        );
+    })()
+);
+completedFlows = completedFlowIndexes.size;
+let highestUnlockedBlock = Math.max(
+    1,
+    Math.min(
+        TOTAL_FLOW_BLOCKS,
+        Number(
+            localStorage.getItem(
+                "shiftvixHighestUnlockedBlock"
+            )
+        ) ||
+        Math.floor(
+            completedFlows / FLOWS_PER_BLOCK
+        ) + 1
+    )
+);
+    
 let objectiveOrbsCollected = 0;
 let activeChallenge = null;
 let challengeStart = null;
 let challengeAdvanceTimer = null;
 let archiveWasPaused = false;
+let replayReturnFlowIndex = null;
+    
+// =========================
+// SHIFTVIX v2.5 — FLOW SAVING
+// =========================
+
+const FLOW_SAVE_KEY =
+    "shiftvixFlowProgressV1";
+
+
+function persistentFlowIndex(){
+
+    // During a replay, save the player's real progression
+    // position rather than the older replayed Flow.
+    if(replayReturnFlowIndex !== null){
+
+        return replayReturnFlowIndex;
+    }
+
+    return currentFlowIndex;
+}
+
+
+function normalizeFlowProgress(){
+
+    completedFlowIndexes = new Set(
+        [...completedFlowIndexes]
+            .map(Number)
+            .filter(index=>
+                Number.isInteger(index) &&
+                index >= 0 &&
+                index < FLOW_TOTAL
+            )
+    );
+
+    completedFlows =
+        completedFlowIndexes.size;
+
+    completedFlows = Math.max(
+        0,
+        Math.min(
+            FLOW_TOTAL,
+            Number(completedFlows) || 0
+        )
+    );
+
+    highestCompletedFlow = Math.max(
+        0,
+        Math.min(
+            FLOW_TOTAL - 1,
+            Number(highestCompletedFlow) || 0
+        )
+    );
+
+    highestUnlockedBlock = Math.max(
+        1,
+        Math.min(
+            TOTAL_FLOW_BLOCKS,
+            Number(highestUnlockedBlock) || 1
+        )
+    );
+
+    currentFlowIndex = Math.max(
+        0,
+        Math.min(
+            FLOW_TOTAL - 1,
+            Number(currentFlowIndex) || 0
+        )
+    );
+
+    // Restore every fully completed 30-Flow block.
+    let requiredUnlockedBlock = 1;
+
+    for(
+        let blockNumber = 1;
+        blockNumber <= TOTAL_FLOW_BLOCKS;
+        blockNumber++
+    ){
+        const start =
+            (blockNumber - 1) *
+            FLOWS_PER_BLOCK;
+
+        const end = Math.min(
+            start + FLOWS_PER_BLOCK,
+            FLOW_TOTAL
+        );
+
+        let blockComplete = true;
+
+        for(let index=start;index<end;index++){
+            if(!completedFlowIndexes.has(index)){
+                blockComplete = false;
+                break;
+            }
+        }
+
+        if(!blockComplete){
+            break;
+        }
+
+        requiredUnlockedBlock =
+            Math.min(
+                TOTAL_FLOW_BLOCKS,
+                blockNumber + 1
+            );
+    }
+
+    highestUnlockedBlock = Math.max(
+        highestUnlockedBlock,
+        requiredUnlockedBlock
+    );
+}
+
+
+function saveFlowProgress(){
+
+    normalizeFlowProgress();
+
+    const savedCurrentFlow =
+        Math.max(
+            0,
+            Math.min(
+                FLOW_TOTAL - 1,
+                persistentFlowIndex()
+            )
+        );
+
+    const saveData = {
+        version:1,
+        currentFlowIndex:savedCurrentFlow,
+        completedFlows,
+        completedFlowIndexes:
+            [...completedFlowIndexes]
+                .sort((a,b)=>a-b),
+        highestCompletedFlow,
+        highestUnlockedBlock,
+        savedAt:Date.now()
+    };
+
+    // Individual keys remain for compatibility with
+    // the progression system already in the game.
+    localStorage.setItem(
+        "shiftvixCurrentFlow",
+        String(savedCurrentFlow)
+    );
+
+    localStorage.setItem(
+        "shiftvixCompletedFlows",
+        String(completedFlows)
+    );
+
+    localStorage.setItem(
+        "shiftvixCompletedFlowIndexes",
+        JSON.stringify(
+            [...completedFlowIndexes]
+                .sort((a,b)=>a-b)
+        )
+    );
+
+    localStorage.setItem(
+        "shiftvixHighestCompletedFlow",
+        String(highestCompletedFlow)
+    );
+
+    localStorage.setItem(
+        "shiftvixHighestUnlockedBlock",
+        String(highestUnlockedBlock)
+    );
+
+    // Complete backup snapshot.
+    localStorage.setItem(
+        FLOW_SAVE_KEY,
+        JSON.stringify(saveData)
+    );
+}
+
+
+function repairFlowProgressFromBackup(){
+
+    const rawSave =
+        localStorage.getItem(FLOW_SAVE_KEY);
+
+    if(!rawSave){
+
+        normalizeFlowProgress();
+        saveFlowProgress();
+        return;
+    }
+
+    try{
+
+        const saveData =
+            JSON.parse(rawSave);
+
+        if(
+            saveData &&
+            saveData.version === 1
+        ){
+
+            if(
+                Array.isArray(
+                    saveData.completedFlowIndexes
+                )
+            ){
+                for(
+                    const index of
+                    saveData.completedFlowIndexes
+                ){
+                    const parsedIndex =
+                        Number(index);
+
+                    if(
+                        Number.isInteger(parsedIndex) &&
+                        parsedIndex >= 0 &&
+                        parsedIndex < FLOW_TOTAL
+                    ){
+                        completedFlowIndexes.add(
+                            parsedIndex
+                        );
+                    }
+                }
+            }
+
+            completedFlows = Math.max(
+                completedFlows,
+                Number(
+                    saveData.completedFlows
+                ) || 0
+            );
+
+            // Older backups only stored a consecutive count.
+            if(
+                !Array.isArray(
+                    saveData.completedFlowIndexes
+                )
+            ){
+                for(
+                    let index=0;
+                    index<Math.min(
+                        completedFlows,
+                        FLOW_TOTAL
+                    );
+                    index++
+                ){
+                    completedFlowIndexes.add(index);
+                }
+            }
+
+            completedFlows =
+                completedFlowIndexes.size;
+
+            highestCompletedFlow = Math.max(
+                highestCompletedFlow,
+                Number(
+                    saveData.highestCompletedFlow
+                ) || 0
+            );
+
+            highestUnlockedBlock = Math.max(
+                highestUnlockedBlock,
+                Number(
+                    saveData.highestUnlockedBlock
+                ) || 1
+            );
+
+            const individualCurrent =
+                localStorage.getItem(
+                    "shiftvixCurrentFlow"
+                );
+
+            if(individualCurrent === null){
+
+                currentFlowIndex =
+                    Number(
+                        saveData.currentFlowIndex
+                    ) || 0;
+            }
+        }
+
+    }catch(error){
+
+        console.warn(
+            "SHIFTVIX save backup could not be read.",
+            error
+        );
+    }
+
+    normalizeFlowProgress();
+    saveFlowProgress();
+}
+
+
+repairFlowProgressFromBackup();
+    
+function blockForFlow(index){
+
+    return Math.floor(
+        index / FLOWS_PER_BLOCK
+    ) + 1;
+}
+
+
+function isBlockUnlocked(blockNumber){
+
+    return (
+        blockNumber >= 1 &&
+        blockNumber <= highestUnlockedBlock
+    );
+}
+
+
+function isFlowUnlocked(index){
+
+    if(index < 0 || index >= FLOW_TOTAL){
+        return false;
+    }
+
+    return isBlockUnlocked(
+        blockForFlow(index)
+    );
+}
+
+
+function isFlowCompleted(index){
+
+    return completedFlowIndexes.has(index);
+}
+
+
+function blockIsComplete(blockNumber){
+
+    if(
+        blockNumber < 1 ||
+        blockNumber > TOTAL_FLOW_BLOCKS
+    ){
+        return false;
+    }
+
+    const start =
+        (blockNumber - 1) *
+        FLOWS_PER_BLOCK;
+
+    const end = Math.min(
+        start + FLOWS_PER_BLOCK,
+        FLOW_TOTAL
+    );
+
+    for(let index=start;index<end;index++){
+
+        if(!isFlowCompleted(index)){
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+function nextUnfinishedUnlockedFlow(
+    afterIndex=currentFlowIndex
+){
+
+    // Search forward first so normal Flow 1 → Flow 2
+    // progression remains seamless.
+    for(
+        let index=afterIndex+1;
+        index<FLOW_TOTAL;
+        index++
+    ){
+        if(
+            isFlowUnlocked(index) &&
+            !isFlowCompleted(index)
+        ){
+            return index;
+        }
+    }
+
+    // Then wrap through earlier unfinished choices
+    // inside the player's unlocked Flow blocks.
+    for(
+        let index=0;
+        index<=afterIndex &&
+        index<FLOW_TOTAL;
+        index++
+    ){
+        if(
+            isFlowUnlocked(index) &&
+            !isFlowCompleted(index)
+        ){
+            return index;
+        }
+    }
+
+    return Math.max(
+        0,
+        Math.min(
+            FLOW_TOTAL-1,
+            afterIndex
+        )
+    );
+}
+
+
+function saveUnlockProgress(){
+
+    localStorage.setItem(
+        "shiftvixHighestUnlockedBlock",
+        String(highestUnlockedBlock)
+    );
+}
+
+
+function checkForBlockUnlock(completedFlowIndex){
+
+    const completedBlock =
+        blockForFlow(completedFlowIndex);
+
+    if(!blockIsComplete(completedBlock)){
+        return false;
+    }
+
+    const nextBlock =
+        completedBlock + 1;
+
+    if(
+        nextBlock > TOTAL_FLOW_BLOCKS ||
+        nextBlock <= highestUnlockedBlock
+    ){
+        return false;
+    }
+
+    highestUnlockedBlock = nextBlock;
+
+    saveFlowProgress();
+
+    trackGame("flow_block_unlocked",{
+        unlocked_block:nextBlock,
+        first_flow:
+            ((nextBlock - 1) *
+            FLOWS_PER_BLOCK) + 1,
+        last_flow:Math.min(
+            nextBlock * FLOWS_PER_BLOCK,
+            FLOW_TOTAL
+        )
+    });
+
+    return true;
+}
 
 function flowStageFor(index){
   const n=index+1;
   return FLOW_STAGES.find(stage=>n<=stage.end)||FLOW_STAGES[FLOW_STAGES.length-1];
 }
+function flowCategoryForIndex(index){
+  return ["REACH","COLLECT","TRAVEL","SCORE"][index%4];
+}
+
 function createFlow(index){
   const n=index+1;
-  const stage=flowStageFor(index);
-  const cycle=Math.floor(index/12);
-  const type=index%12;
-  const title=flowTitles[index%flowTitles.length];
-  const name=`${stage.name} · ${title}`;
+  const group=Math.floor(index/4);
+  const category=flowCategoryForIndex(index);
+  const name="CURRENT FLOW";
 
-  // Twelve rotating challenge families. Targets deliberately change every cycle,
-  // so all 300 flows are distinct instead of repeating the same objective.
-  if(type===0){
-    const target=4+cycle;
-    return {id:`level_${n}`,name,label:`REACH LEVEL ${target}`,target,metric:"level"};
+  // Core Flow Refinement 2.1: a clear four-part rhythm across all 300 Flows.
+  // REACH → COLLECT → TRAVEL → SCORE, then repeat.
+  if(category==="REACH"){
+    const variant=group%3;
+    const target=4+Math.floor(group/3);
+
+    if(variant===1){
+      const lives=group<18?2:3;
+      return {id:`reach_lives_${n}`,name,category,label:`REACH LEVEL ${target} WITH ${lives} LIVES`,target,metric:"lives",lives};
+    }
+
+    if(variant===2){
+      const maxStrikes=group<24?1:0;
+      return {id:`reach_control_${n}`,name,category,label:`REACH LEVEL ${target} WITH ${maxStrikes===0?"NO STRIKES":"1 STRIKE OR LESS"}`,target,metric:"maxStrikesLevel",maxStrikes};
+    }
+
+    return {id:`reach_${n}`,name,category,label:`REACH LEVEL ${target}`,target,metric:"level"};
   }
-  if(type===1){
-    const target=250+cycle*45;
-    return {id:`orbs_${n}`,name,label:`COLLECT ${target} ORBS`,target,metric:"orbs"};
-  }
-  if(type===2){
+
+  if(category==="COLLECT"){
+    const variant=group%4;
+
+    if(variant===0){
+      const target=600+group*55;
+      return {id:`collect_${n}`,name,category,label:`COLLECT ${target.toLocaleString()} ORBS`,target,metric:"orbs"};
+    }
+
     const colors=["BLUE","GREEN","PURPLE","ORANGE","RED"];
-    const color=colors[cycle%colors.length];
-    const base={BLUE:150,GREEN:120,PURPLE:80,ORANGE:40,RED:20}[color];
-    const growth={BLUE:25,GREEN:20,PURPLE:14,ORANGE:8,RED:4}[color];
-    const target=base+cycle*growth;
-    return {id:`${color.toLowerCase()}_${n}`,name,label:`COLLECT ${target} ${color} ORBS`,target,metric:"color",color};
+    const color=colors[group%colors.length];
+    const base={BLUE:500,GREEN:450,PURPLE:320,ORANGE:200,RED:120}[color];
+    const growth={BLUE:28,GREEN:25,PURPLE:18,ORANGE:12,RED:8}[color];
+    const target=base+group*growth;
+
+    if(variant===2){
+      return {id:`collect_clean_${color.toLowerCase()}_${n}`,name,category,label:`COLLECT ${target.toLocaleString()} ${color} ORBS WITHOUT A STRIKE`,target,metric:"cleanColor",color};
+    }
+
+    if(variant===3){
+      const totalTarget=700+group*60;
+      return {id:`collect_lives_${n}`,name,category,label:`COLLECT ${totalTarget.toLocaleString()} ORBS WITH 2+ LIVES`,target:totalTarget,metric:"orbsWithLives"};
+    }
+
+    return {id:`collect_${color.toLowerCase()}_${n}`,name,category,label:`COLLECT ${target.toLocaleString()} ${color} ORBS`,target,metric:"color",color};
   }
-  if(type===3){
-    const target=10000+cycle*2500;
-    return {id:`score_${n}`,name,label:`SCORE ${target.toLocaleString()} POINTS`,target,metric:"score"};
+
+  if(category==="TRAVEL"){
+    const target=1500+group*275;
+    return {id:`travel_${n}`,name,category,label:`TRAVEL ${target.toLocaleString()}m`,target,metric:"distance"};
   }
-  if(type===4){
-    const target=5+cycle;
-    const lives=cycle<6?2:3;
-    return {id:`survive_${n}`,name,label:`REACH LEVEL ${target} WITH ${lives} LIVES`,target,metric:"lives",lives};
+
+  const variant=group%2;
+  const target=15000+group*4200;
+  if(variant===1){
+    return {id:`score_precision_${n}`,name,category,label:`SCORE ${target.toLocaleString()} POINTS WITH 2+ LIVES`,target,metric:"precision"};
   }
-  if(type===5){
-    const target=3000+cycle*900;
-    return {id:`distance_${n}`,name,label:`TRAVEL ${target.toLocaleString()}m`,target,metric:"distance"};
-  }
-  if(type===6){
-    const target=200+cycle*30;
-    return {id:`clean_${n}`,name,label:`COLLECT ${target} ORBS BEFORE A STRIKE`,target,metric:"clean"};
-  }
-  if(type===7){
-    const target=9000+cycle*1800;
-    return {id:`precision_${n}`,name,label:`SCORE ${target.toLocaleString()} WITH 2+ LIVES`,target,metric:"precision"};
-  }
-  if(type===8){
-    const target=100+cycle*18;
-    return {id:`blue_${n}`,name,label:`COLLECT ${target} BLUE ORBS WITHOUT A STRIKE`,target,metric:"cleanColor",color:"BLUE"};
-  }
-  if(type===9){
-    const target=120+cycle*22;
-    return {id:`green_${n}`,name,label:`COLLECT ${target} GREEN ORBS`,target,metric:"color",color:"GREEN"};
-  }
-  if(type===10){
-    const target=4+cycle;
-    const maxStrikes=cycle<8?1:0;
-    return {id:`controlled_level_${n}`,name,label:`REACH LEVEL ${target} WITH ${maxStrikes===0?"NO STRIKES":"1 STRIKE OR LESS"}`,target,metric:"maxStrikesLevel",maxStrikes};
-  }
-  const target=250+cycle*40;
-  return {id:`mixed_${n}`,name,label:`COLLECT ${target} ORBS WITH 2+ LIVES`,target,metric:"orbsWithLives"};
+  return {id:`score_${n}`,name,category,label:`SCORE ${target.toLocaleString()} POINTS`,target,metric:"score"};
 }
 function beginCurrentFlow(){
 
@@ -968,26 +2069,170 @@ function challengeValue(ch){
   return 0;
 }
 function completeCurrentFlow(){
-  if(challengeAdvanceTimer)return;
-  const finished=activeChallenge;
-  completedFlows=Math.max(completedFlows,currentFlowIndex+1);
-  localStorage.setItem("shiftvixCompletedFlows",String(completedFlows));
-  track("current_flow_completed",{flow_number:currentFlowIndex+1,flow_id:finished.id,flow_stage:flowStageFor(currentFlowIndex).name,level,distance:Math.floor(distance),score});track("highest_flow_reached", {
-    highest_flow: currentFlowIndex + 1
-});
-  showModeBanner("CURRENT FLOW COMPLETE");
 
-  // Start the next flow immediately. This prevents orb pickups during the
-  // completion animation from being lost or making the next counter appear stuck.
-  currentFlowIndex=Math.min(FLOW_TOTAL-1,currentFlowIndex+1);
-  localStorage.setItem("shiftvixCurrentFlow",String(currentFlowIndex));
-  activeChallenge=createFlow(currentFlowIndex);
-  challengeStart={found:foundCount,score,distance,strikes,tierCounts:{...tierCounts}};
-  challengeAdvanceTimer=setTimeout(()=>{
-    challengeAdvanceTimer=null;
-    updateChallenge();
-    showModeBanner("NEXT FLOW");
-  },650);
+    if(challengeAdvanceTimer){
+        return;
+    }
+
+    const finished = activeChallenge;
+    const finishedFlowIndex =
+        currentFlowIndex;
+
+    const wasAlreadyCompleted =
+        isFlowCompleted(
+            finishedFlowIndex
+        );
+
+    completedFlowIndexes.add(
+        finishedFlowIndex
+    );
+
+    completedFlows =
+        completedFlowIndexes.size;
+
+    highestCompletedFlow = Math.max(
+        highestCompletedFlow,
+        finishedFlowIndex
+    );
+
+    saveFlowProgress();
+
+    const blockUnlocked =
+        checkForBlockUnlock(
+            finishedFlowIndex
+        );
+
+    track("current_flow_completed",{
+        flow_number:
+            finishedFlowIndex + 1,
+        flow_id:finished.id,
+        flow_stage:
+            flowStageFor(
+                finishedFlowIndex
+            ).name,
+        environment:
+            environmentEngine.current.id,
+        level,
+        distance:Math.floor(distance),
+        score,
+        first_completion:
+            !wasAlreadyCompleted,
+        completed_flows_total:
+            completedFlows
+    });
+
+    track("highest_flow_reached",{
+        highest_flow:
+            finishedFlowIndex + 1
+    });
+
+    showModeBanner(
+        blockUnlocked
+            ? `FLOWS ${
+                highestUnlockedBlock *
+                FLOWS_PER_BLOCK -
+                FLOWS_PER_BLOCK + 1
+              }–${
+                Math.min(
+                    highestUnlockedBlock *
+                    FLOWS_PER_BLOCK,
+                    FLOW_TOTAL
+                )
+              } UNLOCKED`
+            : `${environmentEngine.current.name} COMPLETE`
+    );
+
+if(replayReturnFlowIndex !== null){
+
+    const restoredFlowIndex =
+        replayReturnFlowIndex;
+
+    replayReturnFlowIndex = null;
+
+    currentFlowIndex =
+        restoredFlowIndex;
+
+    saveFlowProgress();
+
+    activeChallenge =
+        createFlow(currentFlowIndex);
+
+    objectiveOrbsCollected = 0;
+
+    challengeStart = {
+        found:foundCount,
+        score,
+        distance,
+        strikes,
+        tierCounts:{...tierCounts}
+    };
+
+    environmentEngine.resetForFlow({
+        announce:false
+    });
+
+    challengeAdvanceTimer =
+        setTimeout(()=>{
+
+            challengeAdvanceTimer = null;
+
+            updateChallenge();
+
+            showModeBanner(
+                `REPLAY COMPLETE · FLOW ${
+                    currentFlowIndex + 1
+                } RESTORED`
+            );
+
+        },650);
+
+    track("flow_replay_completed",{
+        replayed_flow:
+            finishedFlowIndex + 1,
+        restored_flow:
+            currentFlowIndex + 1
+    });
+
+    return;
+}
+    
+    const proposedNextIndex =
+        nextUnfinishedUnlockedFlow(
+            finishedFlowIndex
+        );
+
+    currentFlowIndex =
+        proposedNextIndex;
+
+    saveFlowProgress();
+
+    activeChallenge =
+        createFlow(currentFlowIndex);
+
+    challengeStart = {
+        found:foundCount,
+        score,
+        distance,
+        strikes,
+        tierCounts:{...tierCounts}
+    };
+
+    environmentEngine.resetForFlow({
+        announce:false
+    });
+
+    challengeAdvanceTimer =
+        setTimeout(()=>{
+
+            challengeAdvanceTimer = null;
+
+            updateChallenge();
+
+            showModeBanner(
+                environmentEngine.current.name
+            );
+
+        },650);
 }
 function updateChallenge(){
   if(!activeChallenge){
@@ -999,61 +2244,392 @@ function updateChallenge(){
   const pct=Math.max(0,Math.min(100,(value/activeChallenge.target)*100));
   // Keep the active-play HUD minimal. Full flow number, category, title,
   // completion history, and exact totals remain available inside FLOW PATH.
-  document.getElementById("challengeName").textContent="CURRENT FLOW";
+  updateFlowHeading();
   document.getElementById("challengeText").textContent=activeChallenge.label;
   document.getElementById("challengeFill").style.width=pct+"%";
   if(!challengeAdvanceTimer && raw>=activeChallenge.target)completeCurrentFlow();
 }
+// SHIFTVIX v2.5 PATCH 8 — FLOW SELECTION
 function renderFlowArchive(){
-  const list=document.getElementById("archiveList");
-  let html=`<div class="archiveRow done"><span>FLOWS COMPLETED</span><span>${completedFlows}/${FLOW_TOTAL}</span></div>`;
 
-  // Show the entire 300-flow path. The list is scrollable and automatically
-  // positions the current flow in view after opening.
-  for(let i=0;i<FLOW_TOTAL;i++){
-    const flow=createFlow(i);
-    const cls=i<completedFlows?"done":(i===currentFlowIndex?"current":"locked");
-    const mark=i<completedFlows?"✓":(i===currentFlowIndex?"CURRENT":"LOCKED");
-    html+=`<div class="archiveRow ${cls}" data-flow-index="${i}"><span>${String(i+1).padStart(3,"0")} · ${flow.name}<br>${flow.label}</span><span>${mark}</span></div>`;
-  }
-  list.innerHTML=html;
-  requestAnimationFrame(()=>{
-    const current=list.querySelector(`[data-flow-index="${currentFlowIndex}"]`);
-    if(current)current.scrollIntoView({block:"center"});
-  });
+    const list = document.getElementById("archiveList");
+    if(!list) return;
+
+    let html = `
+        <div class="archiveProgress">
+            <span>FLOWS COMPLETED</span>
+            <span>${Math.min(completedFlows,FLOW_TOTAL)} / ${FLOW_TOTAL}</span>
+        </div>
+
+        <div class="archiveLegend">
+            <span>✓ COMPLETED</span>
+            <span>▶ CURRENT</span>
+            <span>• AVAILABLE</span>
+            <span>🔒 LOCKED</span>
+        </div>
+    `;
+
+    for(let block = 0; block < TOTAL_FLOW_BLOCKS; block++){
+        const blockNumber = block + 1;
+        const blockStart = block * FLOWS_PER_BLOCK;
+        const blockEnd = Math.min(blockStart + FLOWS_PER_BLOCK,FLOW_TOTAL);
+        const blockLocked = !isBlockUnlocked(blockNumber);
+        let blockDone = 0;
+        for(let i=blockStart;i<blockEnd;i++) if(isFlowCompleted(i)) blockDone++;
+
+        html += `
+            <section class="archiveBlock ${blockLocked ? "lockedBlock" : ""}" data-block="${blockNumber}">
+                <div class="archiveBlockLabel">
+                    <span>FLOWS ${blockStart + 1}–${blockEnd}</span>
+                    <span class="blockProgress">${blockLocked ? "🔒" : `${blockDone}/${blockEnd-blockStart}`}</span>
+                </div>
+                <div class="archiveGrid">
+        `;
+
+        for(let i = blockStart; i < blockEnd; i++){
+            const flowNumber = i + 1;
+            const isCompleted = isFlowCompleted(i);
+            const isCurrent = i === currentFlowIndex;
+            const isLocked = !isFlowUnlocked(i);
+            const flowType = createFlow(i).category;
+            let rowClass = "available selectable";
+            let status = "•";
+
+            if(isLocked){rowClass="locked";status="🔒";}
+            else if(isCurrent){rowClass="current selectable";status="▶";}
+            else if(isCompleted){rowClass="done selectable";status="✓";}
+
+            html += `
+                <div
+                    class="archiveRow ${rowClass}"
+                    data-flow-index="${i}"
+                    role="button"
+                    tabindex="${isLocked ? -1 : 0}"
+                    aria-disabled="${isLocked}"
+                    aria-current="${isCurrent ? "true" : "false"}"
+                    aria-label="Flow ${flowNumber}, ${flowType.toLowerCase()} objective${isCompleted ? ", completed" : isLocked ? ", locked" : ", available"}"
+                    title="Flow ${flowNumber} · ${flowType}"
+                >
+                    <span>${flowNumber}</span>
+                    <span class="archiveStatus">${status}</span>
+                    <span class="archiveFlowType category-${flowType.toLowerCase()}">${flowType}</span>
+                </div>
+            `;
+        }
+        html += `</div></section>`;
+    }
+
+    list.innerHTML = html;
+
+    requestAnimationFrame(()=>{
+        if(archiveScrollTop > 0){
+            list.scrollTop = archiveScrollTop;
+            return;
+        }
+        const current = list.querySelector(`[data-flow-index="${currentFlowIndex}"]`);
+        if(current) current.scrollIntoView({block:"center",behavior:"auto"});
+    });
 }
+function loadSelectedFlow(
+    flowIndex,
+    {
+        replay=false,
+        announce=true
+    }={}
+){
+
+    if(
+        !Number.isInteger(flowIndex) ||
+        flowIndex < 0 ||
+        flowIndex >= FLOW_TOTAL ||
+        !isFlowUnlocked(flowIndex)
+    ){
+        trackGame("locked_flow_selected",{
+            selected_flow:
+                Number.isFinite(flowIndex)
+                    ? flowIndex + 1
+                    : -1,
+            completed_flows:
+                completedFlows,
+            unlocked_block:
+                highestUnlockedBlock
+        });
+
+        showModeBanner("FLOW LOCKED");
+        return false;
+    }
+
+    if(challengeAdvanceTimer){
+        clearTimeout(
+            challengeAdvanceTimer
+        );
+        challengeAdvanceTimer = null;
+    }
+
+    if(replay){
+        // A completed Flow is practice. Return to the
+        // player's real active Flow when practice ends.
+        if(replayReturnFlowIndex === null){
+            replayReturnFlowIndex =
+                currentFlowIndex;
+        }
+    }else{
+        // Selecting an unfinished unlocked Flow becomes
+        // the player's real active progression choice.
+        replayReturnFlowIndex = null;
+    }
+
+    currentFlowIndex = flowIndex;
+
+    objectiveOrbsCollected = 0;
+
+    activeChallenge =
+        createFlow(currentFlowIndex);
+
+    challengeStart = {
+        found:foundCount,
+        score,
+        distance,
+        strikes,
+        tierCounts:{...tierCounts}
+    };
+
+    environmentEngine.resetForFlow({
+        announce:false
+    });
+
+    saveFlowProgress();
+    updateChallenge();
+
+    trackGame(
+        replay
+            ? "flow_replay_started"
+            : "flow_selected",
+        {
+            selected_flow:
+                currentFlowIndex + 1,
+            return_flow:
+                replay &&
+                replayReturnFlowIndex !== null
+                    ? replayReturnFlowIndex + 1
+                    : null,
+            environment:
+                environmentEngine.current.id,
+            flow_stage:
+                flowStageFor(
+                    currentFlowIndex
+                ).name
+        }
+    );
+
+    closeFlowArchive();
+
+    if(announce){
+        showModeBanner(
+            replay
+                ? `REPLAY FLOW ${
+                    currentFlowIndex + 1
+                  }`
+                : `FLOW ${
+                    currentFlowIndex + 1
+                  } SELECTED`
+        );
+    }
+
+    return true;
+}
+
+
+function selectFlowFromArchive(flowIndex){
+
+    const now = performance.now();
+    if(now < flowSelectionLockedUntil) return false;
+    flowSelectionLockedUntil = now + 320;
+
+    const row = document.querySelector(`.archiveRow[data-flow-index="${flowIndex}"]`);
+    if(row){
+        row.classList.remove("selectedFlash");
+        void row.offsetWidth;
+        row.classList.add("selectedFlash");
+    }
+
+    if(
+        !Number.isInteger(flowIndex) ||
+        !isFlowUnlocked(flowIndex)
+    ){
+        loadSelectedFlow(flowIndex);
+        return;
+    }
+
+    // Completed Flows automatically enter replay mode.
+    // Unfinished Flows become the player's active choice.
+    loadSelectedFlow(
+        flowIndex,
+        {
+            replay:
+                isFlowCompleted(flowIndex)
+        }
+    );
+}
+
+// =========================
+// SHIFTVIX v2.5 — PATCH 9 PAUSE INTEGRATION
+// =========================
+let pauseStartedAt = 0;
+let archiveOpenedFromPause = false;
+let pauseToggleLockedUntil = 0;
+let archiveScrollTop = 0;
+let flowSelectionLockedUntil = 0;
+let pausePreviouslyFocused = null;
+
 function pauseMusicOnly(){
   if(musicTimer){clearInterval(musicTimer);musicTimer=null;}
 }
+
+function updatePauseSelection(){
+  const name=document.getElementById("pauseFlowName");
+  const objective=document.getElementById("pauseFlowObjective");
+  const flow=activeChallenge||createFlow(currentFlowIndex);
+  if(name)name.textContent=`FLOW ${currentFlowIndex+1} · ${flow.category}`;
+  if(objective)objective.textContent=flow.label;
+}
+
 function applyPauseVisuals(isPaused){
   const center=document.getElementById("center");
-  const pauseText=document.getElementById("pauseText");
-  if(pauseText)pauseText.style.display=isPaused?"block":"none";
-  center.style.borderColor=isPaused?"#ffd36a":"rgba(255,255,255,.95)";
-  center.style.boxShadow=isPaused?"0 0 20px #ffd36a":"0 0 10px rgba(255,255,255,.55)";
+  const menu=document.getElementById("pauseMenu");
+  if(center){
+    center.style.borderColor=isPaused?"#ffd36a":"rgba(255,255,255,.95)";
+    center.style.boxShadow=isPaused?"0 0 20px #ffd36a":"0 0 10px rgba(255,255,255,.55)";
+  }
+  if(menu){
+    menu.classList.toggle("show",Boolean(isPaused));
+    menu.setAttribute("aria-hidden",isPaused?"false":"true");
+  }
+  document.body.classList.toggle("uiModalOpen",Boolean(isPaused));
+  if(isPaused)updatePauseSelection();
 }
 function resumeMusicAfterPause(){
   musicStarted=false;
   if(musicTimer){clearInterval(musicTimer);musicTimer=null;}
   startMusic();
 }
-function openFlowArchive(){
-  archiveWasPaused=paused;
-  renderFlowArchive();
-  document.getElementById("flowArchive").style.display="grid";
+
+function pauseGame(source="center"){
+  if(gameOver||paused)return;
   paused=true;
+  pauseStartedAt=performance.now();
+  pausePreviouslyFocused=document.activeElement;
   pauseMusicOnly();
   applyPauseVisuals(true);
+  requestAnimationFrame(()=>document.getElementById("pauseResume")?.focus());
+  trackGame("game_paused",{source,flow_number:currentFlowIndex+1});
 }
+
+function resumeGame(source="resume"){
+  if(gameOver||!paused)return;
+  const archive=document.getElementById("flowArchive");
+  if(archive&&archive.classList.contains("show"))return;
+  const pauseSeconds=pauseStartedAt?Math.round((performance.now()-pauseStartedAt)/1000):0;
+  paused=false;
+  pauseStartedAt=0;
+  applyPauseVisuals(false);
+  resumeMusicAfterPause();
+  if(pausePreviouslyFocused&&typeof pausePreviouslyFocused.focus==="function"){
+    pausePreviouslyFocused.focus({preventScroll:true});
+  }
+  pausePreviouslyFocused=null;
+  trackGame("game_resumed",{source,pause_seconds:pauseSeconds,flow_number:currentFlowIndex+1});
+}
+
+function togglePause(source="center"){
+  const now=performance.now();
+  if(now<pauseToggleLockedUntil||gameOver)return;
+  pauseToggleLockedUntil=now+240;
+  if(paused)resumeGame(source);else pauseGame(source);
+}
+
+function openFlowArchive(source="hud"){
+  const archive=document.getElementById("flowArchive");
+  if(!archive||archive.classList.contains("show"))return;
+  archiveOpenedFromPause=paused;
+  archiveWasPaused=paused;
+  if(!paused)pauseGame("flow_path");
+  archiveScrollTop=0;
+  renderFlowArchive();
+  archive.classList.add("show");
+  archive.setAttribute("aria-hidden","false");
+  document.getElementById("pauseMenu")?.classList.remove("show");
+  document.body.classList.add("uiModalOpen");
+  requestAnimationFrame(()=>{
+    const current=archive.querySelector(`[data-flow-index="${currentFlowIndex}"]`);
+    (current||document.getElementById("archiveClose"))?.focus();
+  });
+  trackGame("pause_flow_path_opened",{source,opened_while_paused:archiveOpenedFromPause,flow_number:currentFlowIndex+1});
+}
+
 function closeFlowArchive(){
-  document.getElementById("flowArchive").style.display="none";
-  paused=archiveWasPaused;
-  applyPauseVisuals(paused);
-  if(!paused)resumeMusicAfterPause();
+  const archive=document.getElementById("flowArchive");
+  if(!archive||!archive.classList.contains("show"))return;
+  const list=document.getElementById("archiveList");
+  archiveScrollTop=list?.scrollTop||0;
+  archive.classList.remove("show");
+  archive.setAttribute("aria-hidden","true");
+  if(paused){
+    applyPauseVisuals(true);
+    updatePauseSelection();
+    requestAnimationFrame(()=>document.getElementById("pauseFlowPath")?.focus());
+  }else{
+    document.body.classList.remove("uiModalOpen");
+  }
+  archiveOpenedFromPause=false;
 }
-document.getElementById("challengeHud").addEventListener("click",openFlowArchive);
+document.getElementById("challengeHud").addEventListener("click",()=>openFlowArchive("hud"));
 document.getElementById("archiveClose").addEventListener("click",closeFlowArchive);
 document.getElementById("flowArchive").addEventListener("click",e=>{if(e.target.id==="flowArchive")closeFlowArchive();});
+document.getElementById("pauseResume").addEventListener("click",()=>resumeGame("pause_button"));
+document.getElementById("pauseFlowPath").addEventListener("click",()=>openFlowArchive("pause_menu"));
+document.getElementById("pauseMenu").addEventListener("click",e=>{if(e.target.id==="pauseMenu")document.getElementById("pauseResume")?.focus();});
+
+document
+    .getElementById("archiveList")
+    .addEventListener("click",e=>{
+        const row=e.target.closest(".archiveRow");
+        if(!row)return;
+        const flowIndex=Number(row.dataset.flowIndex);
+        const wasPaused=paused;
+        selectFlowFromArchive(flowIndex);
+        if(wasPaused){
+          paused=true;
+          applyPauseVisuals(true);
+          updatePauseSelection();
+          trackGame("flow_selected_while_paused",{selected_flow:currentFlowIndex+1,replay_active:replayReturnFlowIndex!==null});
+        }
+    });
+
+document
+    .getElementById("archiveList")
+    .addEventListener("keydown",e=>{
+        if(e.key!=="Enter"&&e.key!==" ")return;
+        const row=e.target.closest(".archiveRow");
+        if(!row)return;
+        e.preventDefault();
+        const wasPaused=paused;
+        selectFlowFromArchive(Number(row.dataset.flowIndex));
+        if(wasPaused){paused=true;applyPauseVisuals(true);updatePauseSelection();}
+    });
+
+document.addEventListener("keydown",e=>{
+  if(e.key!=="Tab"||!paused)return;
+  const archive=document.getElementById("flowArchive");
+  const root=archive?.classList.contains("show")?archive:document.getElementById("pauseMenu");
+  if(!root)return;
+  const focusable=[...root.querySelectorAll('button,[role="button"][tabindex="0"]')].filter(el=>!el.hasAttribute("disabled"));
+  if(!focusable.length)return;
+  const first=focusable[0],last=focusable[focusable.length-1];
+  if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+  else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+});
+
 let pendingModeBanner = null;
 function introIsClear(){return distance >= 72;}
 function showModeBanner(text){const el=document.getElementById("modeBanner");if(!el)return;if(!introIsClear()){pendingModeBanner=text;return;}pendingModeBanner=null;el.textContent=text;el.classList.remove("show");void el.offsetWidth;el.classList.add("show");}
@@ -1066,7 +2642,7 @@ function makeBeacon(tier,x,y,z,train){
  const core=new THREE.Mesh(new THREE.SphereGeometry(tier.size,18,18),new THREE.MeshBasicMaterial({color:tier.color}));
  const glow=new THREE.Mesh(new THREE.SphereGeometry(tier.size*1.9,16,16),new THREE.MeshBasicMaterial({color:tier.color,transparent:true,opacity:.10,blending:THREE.AdditiveBlending,depthWrite:false}));
  group.add(glow);group.add(core);group.position.set(x,y,z);
- group.userData={core,glow,tier,value:tier.value,state:"active",fade:1,train,speedMult:1};
+ group.userData={core,glow,tier,value:tier.value,state:"active",fade:1,train,speedMult:1,roadX:x,roadY:y};
  group.scale.setScalar(introScale);scene.add(group);beacons.push(group);
 }
 function spawnTrain(){
@@ -1081,7 +2657,8 @@ function spawnTrain(){
  document.getElementById("signal").textContent=runStarted?"Signal: stay connected":"Signal: touch first string";
 }
 function spawnWave(){const trains=heroMode?2:(Math.random()<.78?2:3);for(let i=0;i<trains;i++)setTimeout(spawnTrain,i*120);}
-function moveLane(dx,dy){if(!gameStarted||gameOver)return;laneX=Math.max(0,Math.min(2,laneX+dx));laneY=Math.max(0,Math.min(2,laneY+dy));targetX=LANE_X[laneX];targetY=LANE_Y[laneY];addWarpBank(dx,dy);const namesY=["UP","CENTER","DOWN"],namesX=["LEFT","CENTER","RIGHT"];document.getElementById("laneLabel").textContent=namesY[laneY]+" "+namesX[laneX];if(navigator.vibrate)navigator.vibrate(10);}
+function moveLane(dx,dy){if(!gameStarted||gameOver||paused)return;laneX=Math.max(0,Math.min(2,laneX+dx));laneY=Math.max(0,Math.min(2,laneY+dy));environmentEngine.updatePlayerTarget();addWarpBank(dx,dy);const namesY=["UP","CENTER","DOWN"],namesX=["LEFT","CENTER","RIGHT"];document.getElementById("laneLabel").textContent=namesY[laneY]+" "+namesX[laneX];if(navigator.vibrate)navigator.vibrate(10);}
+function moveLaneFromInput(dx,dy){const mapped=environmentLaneInput(dx,dy);moveLane(mapped.x,mapped.y);}
 let downX=0,downY=0;
 
 // iPhone Safari audio unlock: capture the earliest touch event possible.
@@ -1106,10 +2683,14 @@ window.addEventListener("pointerup",e=>{
   if(e.target&&e.target.id==="center")return;
   if(paused)return;
 
-  const dx = e.clientX - downX;
-  const dy = e.clientY - downY;
+  const rawDx = e.clientX - downX;
+  const rawDy = e.clientY - downY;
 
-  if (Math.hypot(dx, dy) < 20) return;
+  if (Math.hypot(rawDx, rawDy) < 20) return;
+
+  const roadSwipe = environmentSwipe(rawDx,rawDy);
+  const dx = roadSwipe.x;
+  const dy = roadSwipe.y;
 
   const straightThreshold = 70;
   const diagonalThreshold = 45;
@@ -1142,7 +2723,21 @@ window.addEventListener("pointerup",e=>{
   }
 
 });
-window.addEventListener("keydown",e=>{initAudio();if(!gameStarted)startGame();if(e.key==="ArrowLeft"||e.key==="a")moveLane(-1,0);if(e.key==="ArrowRight"||e.key==="d")moveLane(1,0);if(e.key==="ArrowUp"||e.key==="w")moveLane(0,-1);if(e.key==="ArrowDown"||e.key==="s")moveLane(0,1);});
+window.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){
+    const archive=document.getElementById("flowArchive");
+    if(archive&&archive.classList.contains("show")){closeFlowArchive();return;}
+    togglePause("keyboard");
+    return;
+  }
+  if(paused)return;
+  initAudio();
+  if(!gameStarted)startGame();
+  if(e.key==="ArrowLeft"||e.key==="a")moveLaneFromInput(-1,0);
+  if(e.key==="ArrowRight"||e.key==="d")moveLaneFromInput(1,0);
+  if(e.key==="ArrowUp"||e.key==="w")moveLaneFromInput(0,-1);
+  if(e.key==="ArrowDown"||e.key==="s")moveLaneFromInput(0,1);
+});
 function startGame(){
 
     if(gameStarted) return;
@@ -1307,6 +2902,7 @@ function takeStrike(){
 
     strikes++;
     lastStrikeDistance = distance;
+    if(environmentEngine?.current?.onStrike)environmentEngine.current.onStrike();
 
     track("strike",{
     strike_number: strikes,
@@ -1354,6 +2950,7 @@ score += gained;
 foundCount++;
 
 objectiveOrbsCollected++;
+if(environmentEngine?.current?.onCollect)environmentEngine.current.onCollect();
 
 tierCounts[b.userData.tier.name] =
     (tierCounts[b.userData.tier.name] || 0) + 1;
@@ -1373,6 +2970,16 @@ function updateHUD(){
         level;
 
 }
+function formatRunFlowProgress(flow,value){
+  const current=Math.max(0,Math.min(flow.target,value));
+  const whole=Math.floor(current);
+  const target=Math.floor(flow.target);
+  if(flow.metric==="distance")return `${whole.toLocaleString()} / ${target.toLocaleString()}m`;
+  if(flow.metric==="score"||flow.metric==="precision")return `${whole.toLocaleString()} / ${target.toLocaleString()} POINTS`;
+  if(flow.metric==="level"||flow.metric==="lives"||flow.metric==="maxStrikesLevel")return `LEVEL ${whole} / ${target}`;
+  return `${whole.toLocaleString()} / ${target.toLocaleString()} ORBS`;
+}
+
 function endRun(){
 
     gameOver = true;
@@ -1475,56 +3082,65 @@ function endRun(){
     const card =
         document.getElementById("roundComplete");
 
+    const runFlow = activeChallenge || createFlow(currentFlowIndex);
+    const runFlowRaw = challengeValue(runFlow);
+    const runFlowValue = Math.max(0,Math.min(runFlow.target,runFlowRaw));
+    const runFlowPct = Math.max(0,Math.min(100,(runFlowValue/runFlow.target)*100));
+    const runFlowProgress = formatRunFlowProgress(runFlow,runFlowValue);
+
     card.innerHTML = `
-<div class="resultsCard">
+<div class="resultsCard flowResults">
 
     <div class="big">RUN COMPLETE</div>
 
-    <div class="statLine">
-        <span>DISTANCE</span>
-        <span>${Math.floor(distance)}m</span>
+    <div class="runSnapshot">
+        <div class="runMetric">
+            <div class="runMetricLabel">DISTANCE</div>
+            <div class="runMetricValue">${Math.floor(distance).toLocaleString()}m</div>
+        </div>
+        <div class="runMetric">
+            <div class="runMetricLabel">LEVEL</div>
+            <div class="runMetricValue">${level}</div>
+        </div>
+        <div class="runMetric">
+            <div class="runMetricLabel">SCORE</div>
+            <div class="runMetricValue">${score.toLocaleString()}</div>
+        </div>
     </div>
 
-    <div class="statLine">
-    <span>LEVEL</span>
-    <span>${level}</span>
-</div>
-
-<div class="statLine">
-    <span>SCORE</span>
-    <span>${score.toLocaleString()}</span>
-</div>
-
-<div class="statLine">
-    <span>BEST DISTANCE</span>
-    <span>${Math.floor(bestDistance)}m ${isNewBestDistance ? "⭐" : ""}</span>
-</div>
-
-<div class="statLine">
-    <span>BEST LEVEL</span>
-    <span>${bestLevel}</span>
-</div>
-
-<div class="statLine">
-    <span>BEST SCORE</span>
-    <span>${bestScore.toLocaleString()}</span>
-</div>
-
-    <div class="flowSummary">
-        CURRENT FLOW ${currentFlowIndex+1}/${FLOW_TOTAL}<br>
-        ${activeChallenge ? activeChallenge.label : "FLOW PATH COMPLETE"}<br>
-        FLOWS COMPLETED ${completedFlows}/${FLOW_TOTAL}
+    <div class="runFlowPanel">
+        <div class="runFlowTop">
+            <span class="runFlowNumber">FLOW ${currentFlowIndex+1}</span>
+            <span class="runFlowCategory">${runFlow.category}</span>
+        </div>
+        <div class="runFlowObjective">${runFlow.label}</div>
+        <div class="runFlowProgressText">${runFlowProgress}</div>
+        <div class="runFlowBar" aria-label="Flow progress">
+            <div class="runFlowFill" style="width:${runFlowPct}%"></div>
+        </div>
     </div>
 
-    <div class="tapContinue">
-        TAP TO RESTART
+    <div class="runArchiveProgress">
+        ${completedFlows.toLocaleString()} / ${FLOW_TOTAL.toLocaleString()} FLOWS COMPLETE
+    </div>
+
+    <div class="runActions">
+        <button class="runAction primary" id="runPlayAgain" type="button">PLAY AGAIN</button>
+        <button class="runAction" id="runFlowPath" type="button">FLOW PATH</button>
     </div>
 
 </div>
 `;
-
     card.style.display = "grid";
-    card.onclick = resetRun;
+    card.onclick = null;
+    document.getElementById("runPlayAgain")?.addEventListener("click",event=>{
+        event.stopPropagation();
+        resetRun();
+    });
+    document.getElementById("runFlowPath")?.addEventListener("click",event=>{
+        event.stopPropagation();
+        openFlowArchive("run_complete");
+    });
 
 }
 function resetRun(){
@@ -1540,6 +3156,7 @@ function resetRun(){
     });
 
     paused = false;
+    applyPauseVisuals(false);
 
     const title = document.getElementById("gameTitle");
 
@@ -1553,19 +3170,9 @@ vix.style.transform = "translateY(0)";
 
 title.style.transform = "translate(-50%,-50%)";
 
-const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");center.style.borderColor="rgba(255,255,255,.95)";center.style.boxShadow="0 0 10px rgba(255,255,255,.55)";document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;beginCurrentFlow();
+const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");center.style.borderColor="rgba(255,255,255,.95)";center.style.boxShadow="0 0 10px rgba(255,255,255,.55)";document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;
 
-lastLevel = 1;strikes = 0;milestonesReached = {};runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;musicStarted=false;resetWarpBanking();resetMusicEvolution();updateStrikes();updateHUD();spawnWave();startMusic();}
-function togglePause(){
-  if(gameOver)return;
-  paused=!paused;
-  applyPauseVisuals(paused);
-  if(paused){
-    pauseMusicOnly();
-  }else{
-    resumeMusicAfterPause();
-  }
-}
+lastLevel = 1;strikes = 0;milestonesReached = {};runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;musicStarted=false;resetWarpBanking();resetEnvironmentForRun();beginCurrentFlow();resetMusicEvolution();updateStrikes();updateHUD();spawnWave();startMusic();}
 const title = document.getElementById("gameTitle");
 const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
@@ -1623,7 +3230,7 @@ for(const m of milestones){
 
     }
 
-}updateChallenge();spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));const cycleDistance = distance % 3000;warpAmount = Math.min(cycleDistance / 3000, 1);
+}updateChallenge();updateEnvironment(dt);spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));const cycleDistance = distance % 3000;warpAmount = Math.min(cycleDistance / 3000, 1);
 
 const stage =
 Math.min(
@@ -1683,6 +3290,8 @@ camera.position.y * 0.995 + vanishingY,
 +
 warpAmount*11
 +
+pulseFovBoost
++
 Math.sin(distance*0.004)
 *
 warpAmount
@@ -1691,7 +3300,12 @@ warpAmount
 
 
 camera.fov = targetFov;
-camera.updateProjectionMatrix();beacons.forEach(b=>{if(b.userData.state==="active"){b.position.z+=speed*dt*b.userData.speedMult;b.lookAt(camera.position);const dz=Math.abs(b.position.z-camera.position.z),dxy=Math.hypot(b.position.x-camera.position.x,b.position.y-camera.position.y);if(dz<42&&dxy<(heroMode?COLLECT_RADIUS*1.45:COLLECT_RADIUS))collectBeacon(b);if(b.position.z>NEAR_Z+60)b.userData.state="missed";}if(b.userData.state==="collected"||b.userData.state==="missed"){b.userData.fade-=dt*2.8;const f=Math.max(0,b.userData.fade);b.userData.core.material.transparent=true;b.userData.core.material.opacity=f;b.userData.glow.material.opacity =
+camera.updateProjectionMatrix();beacons.forEach(b=>{if(b.userData.state==="active"){
+const roadPoint=environmentPoint(b.userData.roadX,b.userData.roadY);
+b.position.x=roadPoint.x;
+b.position.y=roadPoint.y;
+b.position.z+=speed*dt*b.userData.speedMult;
+b.lookAt(camera.position);const dz=Math.abs(b.position.z-camera.position.z),dxy=Math.hypot(b.position.x-camera.position.x,b.position.y-camera.position.y);if(dz<42&&dxy<(heroMode?COLLECT_RADIUS*1.45:COLLECT_RADIUS))collectBeacon(b);if(b.position.z>NEAR_Z+60)b.userData.state="missed";}if(b.userData.state==="collected"||b.userData.state==="missed"){b.userData.fade-=dt*2.8;const f=Math.max(0,b.userData.fade);b.userData.core.material.transparent=true;b.userData.core.material.opacity=f;b.userData.glow.material.opacity =
 f * (
 0.09 +
 warpAmount * 0.18
@@ -1913,7 +3527,9 @@ introCameraZ
 -
 Math.pow(warpAmount,1.6)
 *
-5;
+5
+-
+pulseCameraOffset;
 
 const title = document.getElementById("gameTitle");
 
@@ -1954,6 +3570,7 @@ renderer.render(scene,camera);
 // ---------------------------
 
 let lastPadMove = 0;
+let lastPadPausePressed = false;
 
 function updateGamepad(){
 
@@ -1997,22 +3614,40 @@ function updateGamepad(){
 
     }
 
-    // Pause button
-
-    if(pad.buttons[9]?.pressed){
-
-        togglePause();
-
+    // Pause button — edge-triggered so holding it cannot toggle every frame.
+    const pausePressed=Boolean(pad.buttons[9]?.pressed);
+    if(pausePressed&&!lastPadPausePressed){
+        togglePause("gamepad");
     }
+    lastPadPausePressed=pausePressed;
 
 }
 const centerButton=document.getElementById("center");
 centerButton.addEventListener("pointerdown",e=>{
   e.preventDefault();
   e.stopPropagation();
-  togglePause();
+  const archive=document.getElementById("flowArchive");
+  if(archive&&archive.classList.contains("show"))return;
+  togglePause("center");
 },{passive:false});
+
+window.addEventListener(
+    "pagehide",
+    saveFlowProgress
+);
+
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden){
+    saveFlowProgress();
+    if(gameStarted&&!gameOver&&!paused)pauseGame("visibility_hidden");
+  }else if(gameStarted&&!musicStarted&&!paused){
+    startMusic();
+  }
+});
+    
 window.addEventListener("beforeunload",()=>{
+
+    saveFlowProgress();
 
     track("session_finished",{
 
@@ -2022,8 +3657,8 @@ window.addEventListener("beforeunload",()=>{
 
 });
 window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
-document.addEventListener("visibilitychange",()=>{if(!document.hidden && gameStarted && !musicStarted){startMusic();}});
-makeStarField();makeLaneGuides();updateStrikes();updateHUD();startGame();animate();
+
+makeStarField();makeLaneGuides();resetEnvironmentForRun();updateStrikes();updateHUD();startGame();animate();
 </script>
 </body>
 </html>
