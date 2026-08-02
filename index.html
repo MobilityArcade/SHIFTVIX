@@ -669,6 +669,7 @@ let hasPlayedBefore =
 let introCameraZ=48;
 const TARGET_CAMERA_Z=72;
 // ---------- WARP ----------
+// SHIFTVIX 5.3.2: extended visual build + continuous session music.
 let warpAmount = 0;
 
 // =========================
@@ -1254,7 +1255,7 @@ function playDrumHit(time, accent = 1){
 }
 
 function drumScheduler(){
-  if(!audioCtx || !musicStarted || paused || gameOver || !drumEnabled) return;
+  if(!audioCtx || !musicStarted || !drumEnabled) return;
   const scheduleAheadTime = 0.14;
   while(nextDrumTime < audioCtx.currentTime + scheduleAheadTime){
     const beatDuration = 60 / getDrumBPM();
@@ -1379,7 +1380,7 @@ function scheduleMusicStep(step,time,stepDuration){
 }
 
 function musicScheduler(){
-  if(!audioCtx || !musicStarted || paused || gameOver) return;
+  if(!audioCtx || !musicStarted) return;
   const BPM=148;
   const STEP=(60/BPM)/2;
   const scheduleAheadTime=0.12;
@@ -2483,7 +2484,8 @@ let flowSelectionLockedUntil = 0;
 let pausePreviouslyFocused = null;
 
 function pauseMusicOnly(){
-  if(musicTimer){clearInterval(musicTimer);musicTimer=null;}
+  // SHIFTVIX 5.3.2: gameplay pauses, but session music continues.
+  // The function remains for compatibility with the pause system.
 }
 
 function updatePauseSelection(){
@@ -2509,9 +2511,18 @@ function applyPauseVisuals(isPaused){
   if(isPaused)updatePauseSelection();
 }
 function resumeMusicAfterPause(){
-  musicStarted=false;
-  if(musicTimer){clearInterval(musicTimer);musicTimer=null;}
-  startMusic();
+  // Music should already be continuing. Recover only if the browser suspended
+  // audio or the scheduler was unexpectedly lost.
+  if(audioCtx && audioCtx.state==="suspended"){
+    audioCtx.resume().catch(()=>{});
+  }
+  if(musicStarted && !musicTimer){
+    nextNoteTime = Math.max(nextNoteTime, audioCtx.currentTime + 0.035);
+    nextDrumTime = Math.max(nextDrumTime, audioCtx.currentTime + 0.05);
+    musicTimer = setInterval(musicScheduler,25);
+  }else if(!musicStarted){
+    startMusic();
+  }
 }
 
 function pauseGame(source="center"){
@@ -2983,8 +2994,14 @@ function formatRunFlowProgress(flow,value){
 function endRun(){
 
     gameOver = true;
-    drumStep = 0;
-    if(musicTimer){ clearInterval(musicTimer); musicTimer = null; }
+
+    // SHIFTVIX 5.3.2: keep the same song and percussion sequence playing
+    // through Run Complete and Flow Path instead of creating a silent screen.
+    if(musicStarted && !musicTimer && audioCtx){
+        nextNoteTime = Math.max(nextNoteTime, audioCtx.currentTime + 0.035);
+        nextDrumTime = Math.max(nextDrumTime, audioCtx.currentTime + 0.05);
+        musicTimer = setInterval(musicScheduler,25);
+    }
 
     const runSeconds =
         (performance.now() - runStartTime) / 1000;
@@ -3172,7 +3189,7 @@ title.style.transform = "translate(-50%,-50%)";
 
 const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");center.style.borderColor="rgba(255,255,255,.95)";center.style.boxShadow="0 0 10px rgba(255,255,255,.55)";document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;
 
-lastLevel = 1;strikes = 0;milestonesReached = {};runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;musicStarted=false;resetWarpBanking();resetEnvironmentForRun();beginCurrentFlow();resetMusicEvolution();updateStrikes();updateHUD();spawnWave();startMusic();}
+lastLevel = 1;strikes = 0;milestonesReached = {};runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();resetEnvironmentForRun();beginCurrentFlow();updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
 const title = document.getElementById("gameTitle");
 const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
@@ -3231,30 +3248,57 @@ for(const m of milestones){
     }
 
 }updateChallenge();updateEnvironment(dt);spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));// =========================
-// SHIFTVIX 5.3.1 — WARP PACING
-// 0–700m: launch build
-// 700–1500m: rise smoothly to maximum warp
-// 1500–3000m: hold maximum warp until the next 3000m transition
-// Music timing and all gameplay systems remain unchanged.
+// SHIFTVIX 5.3.2 — EXTENDED WARP BUILD
+// The visual intensity that previously appeared near 1050m is now the cap.
+// 0–2500m: stretch that same visual buildup across a longer flight.
+// 2500–3000m: hold the capped maximum before the next warp cycle.
 // =========================
 const cycleDistance = distance % 3000;
+const WARP_BUILD_END = 2500;
+const WARP_REFERENCE_MAX_DISTANCE = 1050;
 
-if(cycleDistance < 700){
-  warpAmount = (cycleDistance / 700) * 0.35;
-}else if(cycleDistance < 1500){
-  const buildProgress = (cycleDistance - 700) / 800;
+// Convert the longer 0–2500m cycle back into the old 0–1050m visual range.
+// This preserves the preferred visual aesthetic without allowing later,
+// more chaotic intensity values to appear.
+const pacedVisualDistance =
+  Math.min(
+    WARP_REFERENCE_MAX_DISTANCE,
+    (cycleDistance / WARP_BUILD_END) * WARP_REFERENCE_MAX_DISTANCE
+  );
+
+if(pacedVisualDistance < 700){
+  warpAmount = (pacedVisualDistance / 700) * 0.35;
+}else{
+  const buildProgress =
+    THREE.MathUtils.clamp(
+      (pacedVisualDistance - 700) / 800,
+      0,
+      1
+    );
+
   const easedBuild =
     buildProgress * buildProgress * (3 - 2 * buildProgress);
 
   warpAmount = 0.35 + easedBuild * 0.65;
-}else{
-  warpAmount = 1.0;
 }
 
+// Hold the exact capped appearance from 2500m until the 3000m transition.
+if(cycleDistance >= WARP_BUILD_END){
+  const capProgress =
+    (WARP_REFERENCE_MAX_DISTANCE - 700) / 800;
+
+  const easedCap =
+    capProgress * capProgress * (3 - 2 * capProgress);
+
+  warpAmount = 0.35 + easedCap * 0.65;
+}
+
+// Atmosphere pacing follows the same capped visual distance so fog and color
+// do not keep escalating after the preferred 1050m-quality appearance.
 const stage =
 Math.min(
     6,
-    Math.floor(cycleDistance / 700)
+    Math.floor(pacedVisualDistance / 700)
 );
 
 const fogLevels = [
