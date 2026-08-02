@@ -3230,11 +3230,23 @@ for(const m of milestones){
 
     }
 
-}updateChallenge();updateEnvironment(dt);spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));const cycleDistance = distance % 3000;
+}updateChallenge();updateEnvironment(dt);spawnTimer-=dt;if(spawnTimer<=0){spawnTimer=.54+Math.random()*.26;spawnWave();}if(runStarted){breakTimer+=dt;if(breakTimer>BREAK_GRACE)takeStrike();}camera.position.x+=(targetX-camera.position.x)*(1-Math.pow(.0009,dt));camera.position.y+=(targetY-camera.position.y)*(1-Math.pow(.0009,dt));// =========================
+// SHIFTVIX 5.3.1 — WARP PACING
+// 0–700m: launch build
+// 700–1500m: rise smoothly to maximum warp
+// 1500–3000m: hold maximum warp until the next 3000m transition
+// Music timing and all gameplay systems remain unchanged.
+// =========================
+const cycleDistance = distance % 3000;
+
 if(cycleDistance < 700){
-  warpAmount = cycleDistance/700*0.35;
-}else if(cycleDistance < 2000){
-  warpAmount = 0.35 + ((cycleDistance-700)/1300)*0.65;
+  warpAmount = (cycleDistance / 700) * 0.35;
+}else if(cycleDistance < 1500){
+  const buildProgress = (cycleDistance - 700) / 800;
+  const easedBuild =
+    buildProgress * buildProgress * (3 - 2 * buildProgress);
+
+  warpAmount = 0.35 + easedBuild * 0.65;
 }else{
   warpAmount = 1.0;
 }
