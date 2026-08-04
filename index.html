@@ -628,7 +628,7 @@ body.uiModalOpen #center{pointer-events:none}
 <div id="modeBanner"></div><div id="flowFx"></div><div id="fluxFx"></div><div id="pulseWaves"></div>
 <div id="flowArchive" aria-hidden="true"><div class="archiveCard" role="dialog" aria-modal="true" aria-labelledby="flowPathTitle"><div class="archiveHeader"><h2 id="flowPathTitle">FLOW PATH</h2><button class="archiveClose" id="archiveClose" type="button" aria-label="Close Flow Path">×</button></div><div id="archiveList"></div></div></div>
 
-<!-- SHIFTVIX 5.5 — FLUX ORB -->
+<!-- SHIFTVIX 5.9 — PARTICLE LAYERING + FLUX ORB -->
 <script type="module">
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x000000,0.0011);
@@ -673,6 +673,7 @@ let introCameraZ=48;
 const TARGET_CAMERA_Z=72;
 // ---------- WARP ----------
 // SHIFTVIX 5.3.2: extended visual build + continuous session music.
+// SHIFTVIX 5.9: far, mid, and near particle depth fields.
 let warpAmount = 0;
 
 // =========================
@@ -946,7 +947,10 @@ const pulseEnvironment={
     this.impulse=0;this.phase=0;this.pulseCount=0;this.collections=0;this.onBeatCollections=0;this.strikes=0;
     this.lastBeatAt=0;this.lastBeatPerformance=0;this.beatIntervals=[];this.startedAt=0;this.lastAnalyticsPulse=0;
     pulseCameraOffset=0;pulseFovBoost=0;setFlowFx("",0);
-    stars.forEach(s=>s.scale.set(1,1,1));
+    stars.forEach(s=>{
+      s.userData.pulseScale=1;
+      s.scale.set(1,1,1);
+    });
   },
   start(){
     this.reset();this.startedAt=performance.now();setFlowFx("pulse",.22);showModeBanner("CURRENT FLOW");
@@ -984,7 +988,10 @@ const pulseEnvironment={
     pulseCameraOffset*=Math.exp(-dt*6.2);
     pulseFovBoost*=Math.exp(-dt*6.4);
     const starScale=1+this.impulse*.028+breath*.012;
-    stars.forEach(s=>s.scale.set(starScale,starScale,1));
+    stars.forEach(s=>{
+      s.userData.pulseScale=starScale;
+      s.scale.set(starScale,starScale,1);
+    });
   },
   onCollect(){
     this.collections++;
@@ -2741,7 +2748,144 @@ let pendingModeBanner = null;
 function introIsClear(){return distance >= 72;}
 function showModeBanner(text){const el=document.getElementById("modeBanner");if(!el)return;if(!introIsClear()){pendingModeBanner=text;return;}pendingModeBanner=null;el.textContent=text;el.classList.remove("show");void el.offsetWidth;el.classList.add("show");}
 function releasePendingModeBanner(){if(pendingModeBanner&&introIsClear())showModeBanner(pendingModeBanner);}
-function makeStarField(){const count=850,positions=new Float32Array(count*3),colors=new Float32Array(count*3),baseXY=new Float32Array(count*2),palette=[0xffffff,0x777777,0x55ccff,0xff66cc,0x5d3dff,0xff8800].map(c=>new THREE.Color(c));for(let i=0;i<count;i++){const x=(Math.random()*2-1)*260,y=(Math.random()*2-1)*180;positions[i*3]=x;positions[i*3+1]=y;positions[i*3+2]=-50-Math.random()*1200;baseXY[i*2]=x;baseXY[i*2+1]=y;const c=palette[Math.floor(Math.random()*palette.length)].clone().multiplyScalar(.35+Math.random()*.7);colors[i*3]=c.r;colors[i*3+1]=c.g;colors[i*3+2]=c.b;}const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.BufferAttribute(positions,3));geo.setAttribute("color",new THREE.BufferAttribute(colors,3));const mat=new THREE.PointsMaterial({size:1.3,sizeAttenuation:true,transparent:true,opacity:.72,vertexColors:true});const pts=new THREE.Points(geo,mat);pts.userData.baseXY=baseXY;scene.add(pts);stars.push(pts);}
+// =========================
+// SHIFTVIX 5.9 — PARTICLE LAYERING
+// Three lightweight point fields create depth without post-processing blur.
+// The combined particle count remains equal to the previous 850-particle field.
+// =========================
+const PARTICLE_LAYERS=Object.freeze([
+  {
+    id:"far",
+    count:430,
+    spreadX:285,
+    spreadY:195,
+    zNear:-360,
+    zFar:-1380,
+    baseSize:.72,
+    baseOpacity:.46,
+    speedScale:.45,
+    warpResponse:.72,
+    fluxResponse:.68,
+    edgeResponse:.56,
+    curveResponse:1.08,
+    parallaxResponse:.28
+  },
+  {
+    id:"mid",
+    count:300,
+    spreadX:265,
+    spreadY:184,
+    zNear:-150,
+    zFar:-1260,
+    baseSize:1.28,
+    baseOpacity:.68,
+    speedScale:1.0,
+    warpResponse:1.0,
+    fluxResponse:1.12,
+    edgeResponse:1.0,
+    curveResponse:.82,
+    parallaxResponse:.72
+  },
+  {
+    id:"near",
+    count:120,
+    spreadX:245,
+    spreadY:172,
+    zNear:-55,
+    zFar:-1040,
+    baseSize:2.20,
+    baseOpacity:.54,
+    speedScale:1.55,
+    warpResponse:1.22,
+    fluxResponse:1.72,
+    edgeResponse:1.24,
+    curveResponse:.42,
+    parallaxResponse:1.20
+  }
+]);
+
+function makeParticleLayer(config){
+  const positions=new Float32Array(config.count*3);
+  const colors=new Float32Array(config.count*3);
+  const baseXY=new Float32Array(config.count*2);
+  const palette=[
+    0xffffff,0x777777,0x55ccff,
+    0xff66cc,0x5d3dff,0xff8800
+  ].map(color=>new THREE.Color(color));
+
+  for(let i=0;i<config.count;i++){
+    const x=(Math.random()*2-1)*config.spreadX;
+    const y=(Math.random()*2-1)*config.spreadY;
+    const z=THREE.MathUtils.lerp(
+      config.zFar,
+      config.zNear,
+      Math.random()
+    );
+
+    positions[i*3]=x;
+    positions[i*3+1]=y;
+    positions[i*3+2]=z;
+    baseXY[i*2]=x;
+    baseXY[i*2+1]=y;
+
+    const brightness=
+      config.id==="far"
+        ? .28+Math.random()*.48
+        : config.id==="mid"
+          ? .40+Math.random()*.62
+          : .50+Math.random()*.72;
+
+    const color=palette[
+      Math.floor(Math.random()*palette.length)
+    ].clone().multiplyScalar(brightness);
+
+    colors[i*3]=color.r;
+    colors[i*3+1]=color.g;
+    colors[i*3+2]=color.b;
+  }
+
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute(
+    "position",
+    new THREE.BufferAttribute(positions,3)
+  );
+  geometry.setAttribute(
+    "color",
+    new THREE.BufferAttribute(colors,3)
+  );
+
+  const material=new THREE.PointsMaterial({
+    size:config.baseSize,
+    sizeAttenuation:true,
+    transparent:true,
+    opacity:config.baseOpacity,
+    vertexColors:true,
+    depthWrite:false,
+    blending:
+      config.id==="near"
+        ? THREE.AdditiveBlending
+        : THREE.NormalBlending
+  });
+
+  const points=new THREE.Points(geometry,material);
+  points.frustumCulled=false;
+  points.renderOrder=
+    config.id==="far" ? 0 :
+    config.id==="mid" ? 1 : 2;
+
+  points.userData={
+    ...config,
+    baseXY,
+    pulseScale:1
+  };
+
+  scene.add(points);
+  stars.push(points);
+}
+
+function makeStarField(){
+  PARTICLE_LAYERS.forEach(makeParticleLayer);
+}
 function makeLaneGuides(){LANE_X.forEach(x=>{LANE_Y.forEach(y=>{const geo=new THREE.BufferGeometry(),positions=[];for(let i=0;i<52;i++)positions.push(x,y,-80-i*25);geo.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));const mat=new THREE.PointsMaterial({color:0xff66cc,size:.85,transparent:true,opacity:.0,sizeAttenuation:true,depthWrite:false});const pts=new THREE.Points(geo,mat);scene.add(pts);laneGuides.push(pts);});});}
 function chooseTier(){const r=Math.random();if(r<.35)return TIERS[0];if(r<.60)return TIERS[1];if(r<.78)return TIERS[2];if(r<.90)return TIERS[3];if(r<.98)return TIERS[4];return TIERS[5];}
 function makeFluxOrb(){
@@ -3541,7 +3685,24 @@ b.lookAt(camera.position);const dz=Math.abs(b.position.z-camera.position.z),dxy=
 f * (
 0.09 +
 warpAmount * 0.18
-);b.scale.setScalar(Math.max(.001,f));}});for(let i=beacons.length-1;i>=0;i--){const b=beacons[i];if((b.userData.state==="collected"||b.userData.state==="missed")&&b.userData.fade<=0){scene.remove(b);beacons.splice(i,1);}};stars.forEach(s=>{const pos = s.geometry.attributes.position;const speedMultiplier =1 + warpAmount * 7 + fluxBoostAmount * 4.5;const stretch =1 + warpAmount * 5;for(let i=0;i<pos.count;i++){
+);b.scale.setScalar(Math.max(.001,f));}});for(let i=beacons.length-1;i>=0;i--){const b=beacons[i];if((b.userData.state==="collected"||b.userData.state==="missed")&&b.userData.fade<=0){scene.remove(b);beacons.splice(i,1);}};stars.forEach(s=>{
+const pos=s.geometry.attributes.position;
+const layer=s.userData;
+const layerWarp=
+  1+
+  warpAmount*7*layer.warpResponse+
+  fluxBoostAmount*4.5*layer.fluxResponse;
+
+const layerSpeedMultiplier=
+  layer.speedScale*
+  layerWarp;
+
+const layerStretch=
+  1+
+  warpAmount*(2.4+2.6*layer.warpResponse)+
+  fluxBoostAmount*(.7+1.1*layer.fluxResponse);
+
+for(let i=0;i<pos.count;i++){
 
     const baseXY = s.userData.baseXY;
     const baseX = baseXY ? baseXY[i*2] : pos.getX(i);
@@ -3556,8 +3717,26 @@ warpAmount * 0.18
     const ambientCurveX = Math.sin(routePhase) * warpAmount * 7.5;
     const ambientCurveY = Math.sin(routePhase * 0.71 + 1.45) * warpAmount * 3.6;
 
-    let x = baseX + (warpCurveX + ambientCurveX + vanishingX * 0.65) * curveEase;
-    let y = baseY + (warpCurveY + ambientCurveY + vanishingY * 0.55) * curveEase;
+    const layerCurve=layer.curveResponse;
+    let x =
+      baseX+
+      (
+        warpCurveX+
+        ambientCurveX+
+        vanishingX*.65
+      )*
+      curveEase*
+      layerCurve;
+
+    let y =
+      baseY+
+      (
+        warpCurveY+
+        ambientCurveY+
+        vanishingY*.55
+      )*
+      curveEase*
+      layerCurve;
 
     // Warp Curvature 4.0: restrained gravitational-style lensing.
     // It bends only the peripheral deep field and never the gameplay objects.
@@ -3571,8 +3750,19 @@ warpAmount * 0.18
 
     // Slight counter-parallax gives close particles more steering response
     // while far stars hold the curved route.
-    x += -bankYaw * 82 * nearLayer * 0.28;
-    y +=  bankPitch * 58 * nearLayer * 0.24;
+    x +=
+      -bankYaw*
+      82*
+      nearLayer*
+      .28*
+      layer.parallaxResponse;
+
+    y +=
+      bankPitch*
+      58*
+      nearLayer*
+      .24*
+      layer.parallaxResponse;
 
     // Distance from the center of the playfield
     const edge =
@@ -3583,25 +3773,26 @@ warpAmount * 0.18
 
     // Outer stars travel faster than center stars
     const edgeBoost =
-        1 +
-        edge *
-        warpAmount *
-        3.0;
+      1+
+      edge*
+      warpAmount*
+      3.0*
+      layer.edgeResponse;
 
-    let z =
-        pos.getZ(i)
-        +
-        speed *
-        dt *
-        speedMultiplier *
-        edgeBoost;
+    let z=
+      pos.getZ(i)+
+      speed*
+      dt*
+      layerSpeedMultiplier*
+      edgeBoost;
 
     if(z>90){
-
-        z =
-            -1150 -
-            Math.random()*250;
-
+      z=
+        layer.zFar-
+        Math.random()*Math.max(
+          80,
+          Math.abs(layer.zFar-layer.zNear)*.16
+        );
     }
 
     pos.setXYZ(
@@ -3719,21 +3910,51 @@ for(let i=0;i<colors.count;i++){
 }
 
 colors.needsUpdate = true;
-// Stretch stars into streaks
+// 5.9 depth presentation:
+// far stays fine and quiet, mid carries the core motion, near rushes past.
+const fluxSizeLift=
+  fluxBoostAmount*
+  (
+    layer.id==="near" ? 1.30 :
+    layer.id==="mid" ? .62 : .18
+  );
 
-// Warp Drive 2.1
+const warpSizeLift=
+  warpAmount*
+  (
+    layer.id==="near" ? 2.25 :
+    layer.id==="mid" ? 1.18 : .38
+  );
 
-const warpSize =
-1.3 +
-warpAmount * 5;
+s.material.size=
+  (
+    layer.baseSize+
+    warpSizeLift+
+    fluxSizeLift
+  )*
+  layerStretch;
 
-const warpOpacity =
-0.60 +
-warpAmount * 0.22;
+const warpOpacityLift=
+  warpAmount*
+  (
+    layer.id==="near" ? .12 :
+    layer.id==="mid" ? .14 : .08
+  );
 
-s.material.size = warpSize * stretch;
+const fluxOpacityLift=
+  fluxBoostAmount*
+  (
+    layer.id==="near" ? .18 :
+    layer.id==="mid" ? .10 : .035
+  );
 
-s.material.opacity = warpOpacity;});
+s.material.opacity=THREE.MathUtils.clamp(
+  layer.baseOpacity+
+  warpOpacityLift+
+  fluxOpacityLift,
+  .18,
+  layer.id==="near" ? .82 : .88
+);});
 
 // Apply Warp Banking 3.0 + Warp Curvature 4.0 after lookAt() establishes the base view.
 updateWarpBanking(dt);
