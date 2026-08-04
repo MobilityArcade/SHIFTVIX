@@ -776,14 +776,16 @@ function activateFluxBoost(reason){
 // keeping lane input fully responsive, then eases back into the prior warp.
 // =========================
 const CHRONO_DURATION_SECONDS=10;
-const CHRONO_MIN_DISTANCE=1500;
+const CHRONO_MIN_DISTANCE=1800;
 const CHRONO_WORLD_SCALE=.40;
+const CHRONO_COLOR=0xbff6ff;
+const CHRONO_GLOW_COLOR=0x45cfff;
 
 let chronoPendingReasons=[];
 let chronoOrbActive=false;
 let chronoTime=0;
 let chronoAmount=0;
-let chronoNextDistanceTrigger=1500+Math.random()*350;
+let chronoNextDistanceTrigger=2000+Math.random()*650;
 let chronoCooldownUntilDistance=0;
 let chronoCollectedThisRun=0;
 
@@ -806,33 +808,9 @@ function queueChronoOrb(reason){
 }
 
 function updateChronoEligibility(){
-
-  // Guarantee the first Chrono Orb during a strong run.
-  if(
-    chronoCollectedThisRun===0 &&
-    distance>=2600 &&
-    !chronoPendingReasons.length &&
-    !chronoOrbActive &&
-    !fluxOrbActive &&
-    !midasOrbActive &&
-    fluxBoostTime<=0 &&
-    midasTime<=0
-  ){
-    chronoPendingReasons.push("guaranteed_first_chrono");
-    return;
-  }
-
-  // Regular Chrono opportunities begin around 1,500m.
   if(distance>=chronoNextDistanceTrigger){
-
-    if(Math.random()<.88){
-      queueChronoOrb("high_speed_distance");
-    }
-
-    chronoNextDistanceTrigger=
-      distance+
-      900+
-      Math.random()*450;
+    if(Math.random()<.56)queueChronoOrb("high_speed_distance");
+    chronoNextDistanceTrigger=distance+1400+Math.random()*500;
   }
 }
 
@@ -3267,19 +3245,6 @@ function makeMidasOrb(){
 
 function makeLegendaryOrb(){
   const candidates=[];
-
-      const guaranteedChrono=
-    chronoPendingReasons.includes("guaranteed_first_chrono") &&
-    !chronoOrbActive &&
-    !fluxOrbActive &&
-    !midasOrbActive &&
-    fluxBoostTime<=0 &&
-    midasTime<=0 &&
-    distance>=chronoCooldownUntilDistance;
-
-  if(guaranteedChrono){
-    return makeChronoOrb();
-  }
 
   if(
     fluxPendingReasons.length>0&&
