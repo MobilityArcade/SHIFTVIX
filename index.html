@@ -1081,6 +1081,20 @@ function applyRendererResolution(){
 
 applyRendererResolution();
 document.body.appendChild(renderer.domElement);
+
+/* =========================
+   SHIFTVIX — PERMANENT CHRONO NEON HYPERSPACE
+   Exact full-strength Chrono world color grade.
+   This remains active during normal flight, Flux, Chrono, Midas, and warp.
+   ========================= */
+const SHIFTVIX_CHRONO_WORLD_FILTER =
+  "saturate(1.62) brightness(1.13) contrast(1.09)";
+
+function applyPermanentChronoWorldGrade(){
+  renderer.domElement.style.filter=SHIFTVIX_CHRONO_WORLD_FILTER;
+}
+
+applyPermanentChronoWorldGrade();
 const LANE_X=[-40,0,40], LANE_Y=[30,0,-30], FAR_Z=-920, NEAR_Z=72, SPEED_START=170, COLLECT_RADIUS=18, TRAIN_GAP=20, BREAK_GRACE=.72;
 const HERO_SECONDS = 15;
 let laneX=1,laneY=1,targetX=0,targetY=0,score=0,bestScore=Number(localStorage.getItem("sourceLaneBestScore")||0),bestDistance=Number(localStorage.getItem("sourceLaneBestDistance")||0),foundCount=0,combo=1,lastFoundAt=0,distance=0,speed=SPEED_START,spawnTimer=0,trainId=0,strikes=0,runStarted=false,gameStarted=false,gameOver=false,breakTimer=0,audioCtx=null;
@@ -1208,18 +1222,9 @@ function updateIonicThruster(dt){
   Legendary states also alter the universe's energy spectrum.
   This replaces full-screen particle density with restrained color response.
   */
-  if(fluxBoostTime>0){
-    renderer.domElement.style.filter=
-      `saturate(${1+fluxBoostAmount*.34}) brightness(${1+fluxBoostAmount*.08}) contrast(${1+fluxBoostAmount*.08}) sepia(${fluxBoostAmount*.07})`;
-  }else if(chronoAmount>.01){
-    renderer.domElement.style.filter=
-      `saturate(${1+chronoAmount*.62}) brightness(${1+chronoAmount*.13}) contrast(${1+chronoAmount*.09}) hue-rotate(${Math.sin(performance.now()*.00135)*chronoAmount*7}deg)`;
-  }else if(midasAmount>.01){
-    renderer.domElement.style.filter=
-      `saturate(${1+midasAmount*.15}) brightness(${1+midasAmount*.055}) contrast(${1+midasAmount*.035}) sepia(${midasAmount*.08})`;
-  }else{
-    renderer.domElement.style.filter="none";
-  }
+  // Permanent Chrono Neon Hyperspace color.
+  // Legendary abilities no longer replace the universe's color grade.
+  applyPermanentChronoWorldGrade();
 
   updateCenterReactor();
 }
@@ -4834,7 +4839,7 @@ vix.style.transform = "translateY(0)";
 
 title.style.transform = "translate(-50%,-50%)";
 
-const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");renderer.domElement.style.filter="none";playerX=0;playerY=0;
+const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");applyPermanentChronoWorldGrade();playerX=0;playerY=0;
 
 lastLevel = 1;strikes = 0;milestonesReached = {};lastWarpBreakthrough=0;starColorUpdateFrame=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();resetEnvironmentForRun();beginCurrentFlow();updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
 const title = document.getElementById("gameTitle");
