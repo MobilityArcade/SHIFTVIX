@@ -1038,7 +1038,35 @@ const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x000000,0.0011);
 const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.1,5000);camera.position.set(0,0,48);camera.lookAt(0,0,-500);
 let playerX=0,playerY=0;
 const PLAYER_Z=72;
-const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);document.body.appendChild(renderer.domElement);
+const renderer=new THREE.WebGLRenderer({
+  antialias:true,
+  powerPreference:"high-performance"
+});
+
+const SHIFTVIX_MOBILE_DEVICE =
+  /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+  (
+    navigator.maxTouchPoints>1 &&
+    Math.min(innerWidth,innerHeight)<1400
+  );
+
+const SHIFTVIX_DESKTOP_DPR_CAP=2;
+const SHIFTVIX_MOBILE_DPR_CAP=1.4;
+
+function applyRendererResolution(){
+  const cap=
+    SHIFTVIX_MOBILE_DEVICE
+      ? SHIFTVIX_MOBILE_DPR_CAP
+      : SHIFTVIX_DESKTOP_DPR_CAP;
+
+  renderer.setPixelRatio(
+    Math.min(window.devicePixelRatio||1,cap)
+  );
+  renderer.setSize(innerWidth,innerHeight,false);
+}
+
+applyRendererResolution();
+document.body.appendChild(renderer.domElement);
 const LANE_X=[-40,0,40], LANE_Y=[30,0,-30], FAR_Z=-920, NEAR_Z=72, SPEED_START=170, COLLECT_RADIUS=18, TRAIN_GAP=20, BREAK_GRACE=.72;
 const HERO_SECONDS = 15;
 let laneX=1,laneY=1,targetX=0,targetY=0,score=0,bestScore=Number(localStorage.getItem("sourceLaneBestScore")||0),bestDistance=Number(localStorage.getItem("sourceLaneBestDistance")||0),foundCount=0,combo=1,lastFoundAt=0,distance=0,speed=SPEED_START,spawnTimer=0,trainId=0,strikes=0,runStarted=false,gameStarted=false,gameOver=false,breakTimer=0,audioCtx=null;
@@ -1081,6 +1109,12 @@ const TARGET_CAMERA_Z=72;
 let warpAmount = 0;
 let launchSurge = 0;
 let lastWarpBreakthrough = 0;
+
+/* Star positions remain 60fps. Color interpolation is visually slow enough
+   to update less often on mobile without changing the look. */
+let starColorUpdateFrame=0;
+const STAR_COLOR_UPDATE_INTERVAL=
+  SHIFTVIX_MOBILE_DEVICE ? 4 : 2;
 
 // =========================
 // SHIFTVIX 5.8 — LEGENDARY ORB ENGINE
@@ -4070,13 +4104,111 @@ function makeLegendaryOrb(){
   return spawned;
 }
 
+// =========================
+// SHIFTVIX MOBILE PERFORMANCE 1.0
+// Shared collectible geometry + explicit GPU cleanup.
+// =========================
+const sharedBeaconGeometryCache=new Map();
+
+function getSharedBeaconGeometry(radius,segments=14){
+  const key=`${radius.toFixed(3)}:${segments}`;
+  let geometry=sharedBeaconGeometryCache.get(key);
+
+  if(!geometry){
+    geometry=new THREE.SphereGeometry(
+      radius,
+      segments,
+      segments
+    );
+    sharedBeaconGeometryCache.set(key,geometry);
+  }
+
+  return geometry;
+}
+
+function disposeBeaconObject(group){
+  if(!group)return;
+
+  scene.remove(group);
+
+  const sharedGeometry=
+    Boolean(group.userData&&group.userData.sharedGeometry);
+
+  group.traverse(child=>{
+    if(!child||!child.isMesh)return;
+
+    if(
+      !sharedGeometry &&
+      child.geometry &&
+      typeof child.geometry.dispose==="function"
+    ){
+      child.geometry.dispose();
+    }
+
+    const materials=
+      Array.isArray(child.material)
+        ? child.material
+        : [child.material];
+
+    materials.forEach(material=>{
+      if(
+        material &&
+        typeof material.dispose==="function"
+      ){
+        material.dispose();
+      }
+    });
+  });
+}
+
 function makeBeacon(tier,x,y,z,train){
  const group=new THREE.Group();
- const core=new THREE.Mesh(new THREE.SphereGeometry(tier.size,18,18),new THREE.MeshBasicMaterial({color:tier.color}));
- const glow=new THREE.Mesh(new THREE.SphereGeometry(tier.size*1.9,16,16),new THREE.MeshBasicMaterial({color:tier.color,transparent:true,opacity:.10,blending:THREE.AdditiveBlending,depthWrite:false}));
- group.add(glow);group.add(core);group.position.set(x,y,z);
- group.userData={core,glow,tier,value:tier.value,state:"active",fade:1,train,speedMult:1,roadX:x,roadY:y};
- group.scale.setScalar(introScale);scene.add(group);beacons.push(group);
+
+ // Shared geometry avoids hundreds/thousands of repeated GPU allocations
+ // during long mobile sessions.
+ const coreGeometry=
+   getSharedBeaconGeometry(tier.size,14);
+
+ const glowGeometry=
+   getSharedBeaconGeometry(tier.size*1.9,12);
+
+ const core=new THREE.Mesh(
+   coreGeometry,
+   new THREE.MeshBasicMaterial({color:tier.color})
+ );
+
+ const glow=new THREE.Mesh(
+   glowGeometry,
+   new THREE.MeshBasicMaterial({
+     color:tier.color,
+     transparent:true,
+     opacity:.10,
+     blending:THREE.AdditiveBlending,
+     depthWrite:false
+   })
+ );
+
+ group.add(glow);
+ group.add(core);
+ group.position.set(x,y,z);
+
+ group.userData={
+   core,
+   glow,
+   tier,
+   value:tier.value,
+   state:"active",
+   fade:1,
+   train,
+   speedMult:1,
+   roadX:x,
+   roadY:y,
+   sharedGeometry:true
+ };
+
+ group.scale.setScalar(introScale);
+ scene.add(group);
+ beacons.push(group);
 }
 function spawnTrain(){
  trainId++;
@@ -4688,9 +4820,9 @@ vix.style.transform = "translateY(0)";
 
 title.style.transform = "translate(-50%,-50%)";
 
-const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");renderer.domElement.style.filter="none";playerX=0;playerY=0;
+const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");renderer.domElement.style.filter="none";playerX=0;playerY=0;
 
-lastLevel = 1;strikes = 0;milestonesReached = {};lastWarpBreakthrough=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();resetEnvironmentForRun();beginCurrentFlow();updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
+lastLevel = 1;strikes = 0;milestonesReached = {};lastWarpBreakthrough=0;starColorUpdateFrame=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();resetEnvironmentForRun();beginCurrentFlow();updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
 const title = document.getElementById("gameTitle");
 const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
@@ -4761,6 +4893,7 @@ if(warpBoundary>lastWarpBreakthrough){
 
 updateChallenge();
 updateEnvironment(worldDt);
+starColorUpdateFrame=(starColorUpdateFrame+1)%1200;
 updateFluxDust(worldDt);
 spawnTimer-=worldDt;
 if(spawnTimer<=0){
@@ -4992,7 +5125,7 @@ b.lookAt(playerX,playerY,PLAYER_Z);const dz=Math.abs(b.position.z-PLAYER_Z),dxy=
 f * (
 0.09 +
 warpAmount * 0.18
-);b.scale.setScalar(Math.max(.001,f));}});for(let i=beacons.length-1;i>=0;i--){const b=beacons[i];if((b.userData.state==="collected"||b.userData.state==="missed")&&b.userData.fade<=0){scene.remove(b);beacons.splice(i,1);}};stars.forEach(s=>{const pos = s.geometry.attributes.position;const speedMultiplier =1 + warpAmount * 7;const stretch =1 + warpAmount * 5 * (1-chronoAmount*.72);for(let i=0;i<pos.count;i++){
+);b.scale.setScalar(Math.max(.001,f));}});for(let i=beacons.length-1;i>=0;i--){const b=beacons[i];if((b.userData.state==="collected"||b.userData.state==="missed")&&b.userData.fade<=0){disposeBeaconObject(b);beacons.splice(i,1);}};stars.forEach(s=>{const pos = s.geometry.attributes.position;const speedMultiplier =1 + warpAmount * 7;const stretch =1 + warpAmount * 5 * (1-chronoAmount*.72);for(let i=0;i<pos.count;i++){
 
     const baseXY = s.userData.baseXY;
     const baseX = baseXY ? baseXY[i*2] : pos.getX(i);
@@ -5061,7 +5194,13 @@ warpAmount * 0.18
     y,
     z
 );
-}pos.needsUpdate=true;const colors = s.geometry.attributes.color;
+}pos.needsUpdate=true;
+
+const updateStarColors=
+  (starColorUpdateFrame % STAR_COLOR_UPDATE_INTERVAL)===0;
+
+if(updateStarColors){
+const colors = s.geometry.attributes.color;
 
 const palettes = [
 
@@ -5170,6 +5309,7 @@ for(let i=0;i<colors.count;i++){
 }
 
 colors.needsUpdate = true;
+}
 // Stretch stars into streaks
 
 // Warp Drive 2.1
@@ -5324,8 +5464,12 @@ document.addEventListener("visibilitychange",()=>{
   if(document.hidden){
     saveFlowProgress();
     if(gameStarted&&!gameOver&&!paused)pauseGame("visibility_hidden");
-  }else if(gameStarted&&!musicStarted&&!paused){
-    startMusic();
+  }else{
+    clock.getDelta();
+
+    if(gameStarted&&!musicStarted&&!paused){
+      startMusic();
+    }
   }
 });
     
@@ -5340,7 +5484,11 @@ window.addEventListener("beforeunload",()=>{
     });
 
 });
-window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+window.addEventListener("resize",()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  applyRendererResolution();
+});
 
 makeStarField();makeFluxDustField();makeLaneGuides();resetEnvironmentForRun();updateStrikes();updateHUD();startGame();animate();
 </script>
