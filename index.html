@@ -175,17 +175,18 @@ canvas{display:block}
 .strikeDot.lifeLostPulse{
     animation:lifeLostPulse .55s ease-out forwards;
 }
-/* SHIFTVIX IONIC THRUSTER — permanent living center reactor */
+/* SHIFTVIX IONIC THRUSTER 2.0 — IRIDESCENT PLASMA TRAIL */
 #center{
     --reactor-color:210,245,255;
     --reactor-hot:255,255,255;
     --reactor-plume:105,225,255;
-    --reactor-plume-edge:70,150,255;
+    --reactor-plume-edge:145,95,255;
+    --reactor-accent:255,110,220;
     --reactor-scale:1;
     --thrust-angle:90deg;
     --thrust-power:0;
-    --thrust-length:26px;
-    --thrust-width:9px;
+    --trail-spacing:5px;
+    --trail-scale:1;
     position:absolute;
     left:50%;
     top:50%;
@@ -277,37 +278,71 @@ canvas{display:block}
     z-index:1;
 }
 
-/* Short ion cone. It appears only while the player is changing lanes. */
+/*
+  Ionic Thruster 2.0:
+  A short chain of translucent plasma spheres replaces the solid cone.
+  The entire chain rotates opposite the player's movement direction.
+*/
 #center .reactorPlume{
-    left:50%;
-    top:50%;
-    width:calc(var(--thrust-length) * (.42 + var(--thrust-power) * .58));
-    height:calc(var(--thrust-width) * (.72 + var(--thrust-power) * .28));
-    border-radius:999px 72% 72% 999px;
-    transform-origin:0 50%;
+    width:1px;
+    height:1px;
+    transform-origin:0 0;
     transform:
-        translate(7px,-50%)
-        rotate(var(--thrust-angle))
-        scaleX(calc(.74 + var(--thrust-power) * .26));
-    opacity:calc(var(--thrust-power) * .88);
-    background:linear-gradient(
-        90deg,
-        rgba(255,255,255,.98) 0%,
-        rgba(var(--reactor-hot),.92) 18%,
-        rgba(var(--reactor-plume),.72) 54%,
-        rgba(var(--reactor-plume-edge),.12) 100%
+        translate(7px,0)
+        rotate(var(--thrust-angle));
+    opacity:calc(var(--thrust-power) * .96);
+    z-index:-1;
+    transition:opacity .07s linear;
+}
+
+#center .plasmaOrb{
+    --orb-index:0;
+    position:absolute;
+    left:calc(var(--orb-index) * var(--trail-spacing));
+    top:0;
+    width:calc((11px - var(--orb-index) * .82px) * var(--trail-scale));
+    height:calc((11px - var(--orb-index) * .82px) * var(--trail-scale));
+    min-width:3.5px;
+    min-height:3.5px;
+    border-radius:50%;
+    transform:
+        translate(-10%,-50%)
+        scale(calc(.66 + var(--thrust-power) * .34));
+    opacity:calc(
+        var(--thrust-power) *
+        (1 - var(--orb-index) * .105)
     );
+    background:
+        radial-gradient(circle at 38% 34%,
+            rgba(255,255,255,.95) 0 16%,
+            rgba(var(--reactor-hot),.84) 27%,
+            rgba(var(--reactor-plume),.62) 48%,
+            rgba(var(--reactor-accent),.28) 70%,
+            rgba(var(--reactor-plume-edge),.05) 100%);
     box-shadow:
-        0 0 6px rgba(255,255,255,.86),
-        0 0 13px rgba(var(--reactor-plume),.64);
-    filter:blur(.25px);
+        0 0 5px rgba(255,255,255,.46),
+        0 0 10px rgba(var(--reactor-plume),.38);
+    filter:
+        saturate(1.18)
+        hue-rotate(calc(var(--orb-index) * 9deg));
     transition:
-        opacity .08s linear,
-        width .12s ease,
-        height .12s ease,
         background .22s ease,
         box-shadow .22s ease;
-    z-index:-1;
+    animation:plasmaOrbShimmer 1.15s ease-in-out infinite alternate;
+    animation-delay:calc(var(--orb-index) * -0.09s);
+}
+
+#center .plasmaOrb:nth-child(1){--orb-index:0}
+#center .plasmaOrb:nth-child(2){--orb-index:1}
+#center .plasmaOrb:nth-child(3){--orb-index:2}
+#center .plasmaOrb:nth-child(4){--orb-index:3}
+#center .plasmaOrb:nth-child(5){--orb-index:4}
+#center .plasmaOrb:nth-child(6){--orb-index:5}
+#center .plasmaOrb:nth-child(7){--orb-index:6}
+
+@keyframes plasmaOrbShimmer{
+    from{filter:saturate(1.08) brightness(.92) hue-rotate(calc(var(--orb-index) * 9deg))}
+    to{filter:saturate(1.34) brightness(1.16) hue-rotate(calc(var(--orb-index) * 9deg + 12deg))}
 }
 
 @keyframes ionicCoreIdle{
@@ -334,23 +369,27 @@ canvas{display:block}
     50%{transform:translate(-50%,-50%) scale(1.04);opacity:1}
 }
 
-/* Normal flight: cool white/cyan ion engine. */
+/* Normal flight: restrained white/cyan iridescent propulsion. */
 #center.reactorNormal{
     --reactor-color:205,242,255;
     --reactor-hot:255,255,255;
     --reactor-plume:105,225,255;
-    --reactor-plume-edge:75,135,255;
+    --reactor-plume-edge:95,120,255;
+    --reactor-accent:185,105,255;
+    --trail-spacing:4.3px;
+    --trail-scale:.84;
 }
 
-/* Flux: white-hot center, gold reactor heat, cyan ion exhaust. */
+/* Flux: energetic cyan, violet, magenta and white plasma. */
 #center.reactorFlux{
     --reactor-color:255,190,58;
-    --reactor-hot:255,238,168;
-    --reactor-plume:80,228,255;
-    --reactor-plume-edge:145,72,255;
+    --reactor-hot:255,245,190;
+    --reactor-plume:75,232,255;
+    --reactor-plume-edge:115,70,255;
+    --reactor-accent:255,78,205;
     --reactor-scale:1.08;
-    --thrust-length:32px;
-    --thrust-width:11px;
+    --trail-spacing:5.5px;
+    --trail-scale:1.08;
     border-color:#fffbea;
     box-shadow:
         0 0 13px rgba(255,255,255,.96),
@@ -382,15 +421,20 @@ canvas{display:block}
     animation-duration:.72s;
 }
 
-/* Chrono: compressed, cool, controlled plasma. */
+#center.reactorFlux .plasmaOrb{
+    animation-duration:.54s;
+}
+
+/* Chrono: icy, glass-like, compressed plasma trail. */
 #center.reactorChrono{
     --reactor-color:174,139,255;
     --reactor-hot:226,249,255;
     --reactor-plume:115,205,255;
-    --reactor-plume-edge:150,80,255;
+    --reactor-plume-edge:130,76,255;
+    --reactor-accent:208,155,255;
     --reactor-scale:.96;
-    --thrust-length:22px;
-    --thrust-width:8px;
+    --trail-spacing:3.8px;
+    --trail-scale:.72;
 }
 
 #center.reactorChrono .reactorCore{
@@ -411,15 +455,20 @@ canvas{display:block}
     animation-duration:2.45s;
 }
 
-/* Midas: smooth gold-white propulsion. */
+#center.reactorChrono .plasmaOrb{
+    animation-duration:2.1s;
+}
+
+/* Midas: warm gold, amber, white and subtle iridescence. */
 #center.reactorMidas{
     --reactor-color:255,195,65;
     --reactor-hot:255,250,210;
-    --reactor-plume:255,204,72;
+    --reactor-plume:255,207,78;
     --reactor-plume-edge:255,120,20;
+    --reactor-accent:255,90,170;
     --reactor-scale:1.03;
-    --thrust-length:28px;
-    --thrust-width:10px;
+    --trail-spacing:4.8px;
+    --trail-scale:.94;
 }
 
 #center.reactorMidas .reactorCore{
@@ -445,6 +494,7 @@ canvas{display:block}
     --reactor-hot:255,255,255;
     --reactor-plume:255,70,55;
     --reactor-plume-edge:180,0,0;
+    --reactor-accent:255,145,50;
     --reactor-scale:1.14;
     border-color:#fff;
     animation:reactorHit .42s ease-out;
@@ -468,7 +518,8 @@ canvas{display:block}
 
 @media(prefers-reduced-motion:reduce){
     #center .reactorOuter,
-    #center .reactorCore{animation:none}
+    #center .reactorCore,
+    #center .plasmaOrb{animation:none}
     #center .reactorPlume{display:none}
     #center.reactorDamage{animation:none}
 }
@@ -1012,7 +1063,20 @@ body.uiModalOpen #center{pointer-events:none}
 </div></div>
 <div style="display:none"><span id="world">Distance Run</span>
 <span id="found">0</span><span id="score">0</span><span id="bestScore">0</span><span id="combo">1x</span><div id="signal"></div></div></div>
-<div id="center" class="reactorNormal" aria-label="Pause"><span class="reactorPlume"></span><span class="reactorMiddle"></span><span class="reactorOuter"></span><span class="reactorCore"></span></div><div id="pauseText">PAUSED</div><div id="laneLabel">CENTER</div><div id="roundComplete"></div>
+<div id="center" class="reactorNormal" aria-label="Pause">
+  <span class="reactorPlume" aria-hidden="true">
+    <i class="plasmaOrb"></i>
+    <i class="plasmaOrb"></i>
+    <i class="plasmaOrb"></i>
+    <i class="plasmaOrb"></i>
+    <i class="plasmaOrb"></i>
+    <i class="plasmaOrb"></i>
+    <i class="plasmaOrb"></i>
+  </span>
+  <span class="reactorMiddle"></span>
+  <span class="reactorOuter"></span>
+  <span class="reactorCore"></span>
+</div><div id="pauseText">PAUSED</div><div id="laneLabel">CENTER</div><div id="roundComplete"></div>
 <div id="pauseMenu" aria-hidden="true">
   <div class="pausePanel" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
     <div class="pauseTitle" id="pauseTitle">PAUSED</div>
@@ -1130,8 +1194,8 @@ function updateIonicThruster(dt){
   if(!center)return;
 
   /*
-  The plume points opposite the player's actual on-screen motion.
-  It is intentionally short and appears only during lane transitions.
+  The iridescent plasma-orb trail points opposite the player's on-screen motion.
+  It stays compact, tapers from large to small, and fades after lane transitions.
   */
   const velocityX=targetX-playerX;
   const velocityY=targetY-playerY;
