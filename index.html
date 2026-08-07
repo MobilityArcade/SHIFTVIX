@@ -1144,10 +1144,10 @@ function updateIonicThruster(dt){
   const movement=THREE.MathUtils.clamp(magnitude/24,0,1);
 
   const stateReach=
-    fluxBoostTime>0 ? 42 :
-    midasTime>0 ? 36 :
-    chronoTime>0 ? 28 :
-    32;
+    fluxBoostTime>0 ? 58 :
+    midasTime>0 ? 50 :
+    chronoTime>0 ? 42 :
+    46;
 
   const targetOffsetX = magnitude>.001 ? (-dx/magnitude)*stateReach*movement : 0;
   const targetOffsetY = magnitude>.001 ? ( dy/magnitude)*stateReach*movement : 0;
@@ -1158,17 +1158,34 @@ function updateIonicThruster(dt){
   }
 
   // The first large plasma echo reacts quickly.
-  const headResponse=1-Math.exp(-dt*18);
+  const headResponse=1-Math.exp(-dt*14);
   ionicTrailPoints[0].x+=(targetOffsetX-ionicTrailPoints[0].x)*headResponse;
   ionicTrailPoints[0].y+=(targetOffsetY-ionicTrailPoints[0].y)*headResponse;
 
   // Every smaller echo follows the one before it with increasing delay.
   for(let i=1;i<ionicTrailPoints.length;i++){
-    const followRate=14-i*1.15;
-    const follow=1-Math.exp(-dt*Math.max(5.5,followRate));
-    ionicTrailPoints[i].x+=(ionicTrailPoints[i-1].x-ionicTrailPoints[i].x)*follow;
-    ionicTrailPoints[i].y+=(ionicTrailPoints[i-1].y-ionicTrailPoints[i].y)*follow;
-  }
+
+  /*
+    Each plume orb follows the one ahead of it
+    progressively slower.
+
+    This creates the tapered whip/comet shape
+    instead of a single puff.
+  */
+
+  const followRate = 8.5 - i * .72;
+
+  const follow =
+    1 - Math.exp(
+      -dt * Math.max(3.8, followRate)
+    );
+
+  ionicTrailPoints[i].x +=
+    (ionicTrailPoints[i-1].x - ionicTrailPoints[i].x) * follow;
+
+  ionicTrailPoints[i].y +=
+    (ionicTrailPoints[i-1].y - ionicTrailPoints[i].y) * follow;
+}
 
   const stateOpacity=
     fluxBoostTime>0 ? 1 :
