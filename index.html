@@ -220,98 +220,22 @@ canvas{display:block}
 #center .reactorMiddle,
 #center .reactorOuter,
 #center .reactorPlume{
-    position:absolute;
-    left:50%;
-    top:50%;
-    pointer-events:none;
-    box-sizing:border-box;
-}
-
-#center .reactorCore{
-    width:11px;
-    height:11px;
-    border-radius:50%;
-    transform:translate(-50%,-50%);
-    background:
-        radial-gradient(circle,
-            rgba(255,255,255,1) 0 20%,
-            rgba(var(--reactor-hot),.98) 32%,
-            rgba(var(--reactor-plume),.56) 58%,
-            transparent 76%);
-    box-shadow:
-        0 0 7px rgba(255,255,255,.96),
-        0 0 14px rgba(var(--reactor-plume),.72);
-    animation:ionicCoreIdle 1.25s ease-in-out infinite;
-    z-index:4;
-}
-
-#center .reactorMiddle,
-#center .reactorOuter{
-    border-radius:50%;
-    transform:translate(-50%,-50%);
-    transition:
-        width .3s ease,
-        height .3s ease,
-        border-color .24s ease,
-        box-shadow .24s ease,
-        opacity .24s ease;
-}
-
-#center .reactorMiddle{
-    width:43px;
-    height:43px;
-    border:1px solid rgba(255,255,255,.50);
-    box-shadow:
-        0 0 7px rgba(255,255,255,.13),
-        inset 0 0 6px rgba(var(--reactor-plume),.08);
-    z-index:2;
-}
-
-#center .reactorOuter{
-    width:64px;
-    height:64px;
-    border:2px solid rgba(var(--reactor-color),.88);
-    box-shadow:
-        0 0 10px rgba(var(--reactor-color),.48),
-        inset 0 0 8px rgba(var(--reactor-color),.12);
-    animation:reactorBreathe 1.8s ease-in-out infinite;
-    z-index:1;
-}
-
-/*
-  Ionic Thruster 2.0:
-  A short chain of translucent plasma spheres replaces the solid cone.
-  The entire chain rotates opposite the player's movement direction.
-*/
-#center .reactorPlume{
     width:1px;
     height:1px;
     transform-origin:0 0;
     transform:
         translate(7px,0)
         rotate(var(--thrust-angle));
-    opacity:calc(var(--thrust-power) * .96);
-    z-index:-1;
+    opacity:var(--thrust-power);
+    z-index:0;
     transition:opacity .07s linear;
 }
 
 #center .plasmaOrb{
-    --orb-index:0;
     position:absolute;
-    left:calc(var(--orb-index) * var(--trail-spacing));
     top:0;
-    width:calc((11px - var(--orb-index) * .82px) * var(--trail-scale));
-    height:calc((11px - var(--orb-index) * .82px) * var(--trail-scale));
-    min-width:3.5px;
-    min-height:3.5px;
     border-radius:50%;
-    transform:
-        translate(-10%,-50%)
-        scale(calc(.66 + var(--thrust-power) * .34));
-    opacity:calc(
-        var(--thrust-power) *
-        (1 - var(--orb-index) * .105)
-    );
+    transform:translate(-10%,-50%);
     background:
         radial-gradient(circle at 38% 34%,
             rgba(255,255,255,.95) 0 16%,
@@ -322,27 +246,25 @@ canvas{display:block}
     box-shadow:
         0 0 5px rgba(255,255,255,.46),
         0 0 10px rgba(var(--reactor-plume),.38);
-    filter:
-        saturate(1.18)
-        hue-rotate(calc(var(--orb-index) * 9deg));
+    filter:saturate(1.18);
     transition:
         background .22s ease,
         box-shadow .22s ease;
     animation:plasmaOrbShimmer 1.15s ease-in-out infinite alternate;
-    animation-delay:calc(var(--orb-index) * -0.09s);
 }
 
-#center .plasmaOrb:nth-child(1){--orb-index:0}
-#center .plasmaOrb:nth-child(2){--orb-index:1}
-#center .plasmaOrb:nth-child(3){--orb-index:2}
-#center .plasmaOrb:nth-child(4){--orb-index:3}
-#center .plasmaOrb:nth-child(5){--orb-index:4}
-#center .plasmaOrb:nth-child(6){--orb-index:5}
-#center .plasmaOrb:nth-child(7){--orb-index:6}
+/* Explicit positions/sizes avoid unsupported CSS multiplication inside calc(). */
+#center .plasmaOrb:nth-child(1){left:0px;width:11px;height:11px;opacity:.96;animation-delay:0s}
+#center .plasmaOrb:nth-child(2){left:5px;width:10px;height:10px;opacity:.84;animation-delay:-.09s}
+#center .plasmaOrb:nth-child(3){left:10px;width:9px;height:9px;opacity:.72;animation-delay:-.18s}
+#center .plasmaOrb:nth-child(4){left:15px;width:8px;height:8px;opacity:.60;animation-delay:-.27s}
+#center .plasmaOrb:nth-child(5){left:20px;width:7px;height:7px;opacity:.48;animation-delay:-.36s}
+#center .plasmaOrb:nth-child(6){left:25px;width:6px;height:6px;opacity:.36;animation-delay:-.45s}
+#center .plasmaOrb:nth-child(7){left:30px;width:5px;height:5px;opacity:.24;animation-delay:-.54s}
 
 @keyframes plasmaOrbShimmer{
-    from{filter:saturate(1.08) brightness(.92) hue-rotate(calc(var(--orb-index) * 9deg))}
-    to{filter:saturate(1.34) brightness(1.16) hue-rotate(calc(var(--orb-index) * 9deg + 12deg))}
+    from{filter:saturate(1.08) brightness(.92) hue-rotate(0deg)}
+    to{filter:saturate(1.34) brightness(1.16) hue-rotate(14deg)}
 }
 
 @keyframes ionicCoreIdle{
