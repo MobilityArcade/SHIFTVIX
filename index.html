@@ -175,7 +175,7 @@ canvas{display:block}
 .strikeDot.lifeLostPulse{
     animation:lifeLostPulse .55s ease-out forwards;
 }
-/* SHIFTVIX IONIC THRUSTER 2.1 — FRONT-FACING FOLLOW TRAIL */
+/* SHIFTVIX IONIC PLUME THRUSTER — MIDAS-STYLE ATTRACTION TRAIL */
 #center{
     --reactor-color:210,245,255;
     --reactor-hot:255,255,255;
@@ -243,22 +243,24 @@ canvas{display:block}
             rgba(var(--reactor-plume),.42) 48%,
             rgba(var(--reactor-accent),.20) 70%,
             rgba(var(--reactor-plume-edge),.03) 100%);
-    border:1px solid rgba(255,255,255,.18);
+    border:1px solid rgba(255,255,255,.12);
     box-shadow:
-        0 0 9px rgba(255,255,255,.22),
-        0 0 18px rgba(var(--reactor-plume),.20);
+        0 0 10px rgba(255,255,255,.18),
+        0 0 22px rgba(var(--reactor-plume),.18);
     mix-blend-mode:screen;
     will-change:transform,opacity;
 }
 
-/* Largest echo overlays the reactor; each following echo becomes smaller. */
-#center .plasmaOrb:nth-child(1){width:64px;height:64px;opacity:.34;z-index:1}
-#center .plasmaOrb:nth-child(2){width:54px;height:54px;opacity:.31;z-index:2}
-#center .plasmaOrb:nth-child(3){width:45px;height:45px;opacity:.28;z-index:3}
-#center .plasmaOrb:nth-child(4){width:37px;height:37px;opacity:.24;z-index:4}
-#center .plasmaOrb:nth-child(5){width:30px;height:30px;opacity:.20;z-index:5}
-#center .plasmaOrb:nth-child(6){width:23px;height:23px;opacity:.16;z-index:6}
-#center .plasmaOrb:nth-child(7){width:17px;height:17px;opacity:.12;z-index:7}
+/* Ionic Plume Upgrade — Midas-inspired visual scale.
+   The first plasma disc is intentionally large and striking.
+   Each following disc tapers rapidly into small trailing beads. */
+#center .plasmaOrb:nth-child(1){width:108px;height:108px;opacity:.30;z-index:1}
+#center .plasmaOrb:nth-child(2){width:88px;height:88px;opacity:.28;z-index:2}
+#center .plasmaOrb:nth-child(3){width:70px;height:70px;opacity:.25;z-index:3}
+#center .plasmaOrb:nth-child(4){width:54px;height:54px;opacity:.22;z-index:4}
+#center .plasmaOrb:nth-child(5){width:40px;height:40px;opacity:.19;z-index:5}
+#center .plasmaOrb:nth-child(6){width:28px;height:28px;opacity:.16;z-index:6}
+#center .plasmaOrb:nth-child(7){width:18px;height:18px;opacity:.13;z-index:7}
 
 #center .reactorCore{
     width:11px;
@@ -1133,82 +1135,107 @@ function updateIonicThruster(dt){
   if(!orbs.length)return;
 
   /*
-    The center reactor itself remains fixed.
-    We convert the player's current lane motion into a small screen-space offset.
-    Orb 1 follows immediately; each following orb chases the previous one.
-    At rest, all seven stack directly over the reactor and read as one front-facing plume.
+    IONIC PLUME THRUSTER UPGRADE
+
+    This deliberately borrows the motion principle from Midas:
+    every plasma layer is independently attracted toward the current
+    thrust target using a different pull strength.
+
+    The large front disc reacts first.
+    The smaller discs react progressively later.
+    That produces the same sweeping / bending / comet-like movement
+    seen when Midas bends collectible trains toward the player.
   */
   const dx=targetX-playerX;
   const dy=targetY-playerY;
   const magnitude=Math.hypot(dx,dy);
-  const movement=THREE.MathUtils.clamp(magnitude/24,0,1);
+  const movement=THREE.MathUtils.clamp(magnitude/22,0,1);
 
+  /*
+    Reach is intentionally much larger than the previous follower trail.
+    Straight flight keeps the stack centered.
+    A hard lane shift opens it into a visible Midas-scale plume.
+  */
   const stateReach=
-    fluxBoostTime>0 ? 58 :
-    midasTime>0 ? 50 :
-    chronoTime>0 ? 42 :
-    46;
+    fluxBoostTime>0 ? 104 :
+    midasTime>0 ? 92 :
+    chronoTime>0 ? 78 :
+    88;
 
-  const targetOffsetX = magnitude>.001 ? (-dx/magnitude)*stateReach*movement : 0;
-  const targetOffsetY = magnitude>.001 ? ( dy/magnitude)*stateReach*movement : 0;
+  const targetOffsetX=
+    magnitude>.001 ? (-dx/magnitude)*stateReach*movement : 0;
+
+  const targetOffsetY=
+    magnitude>.001 ? ( dy/magnitude)*stateReach*movement : 0;
 
   if(!ionicTrailInitialized){
     ionicTrailPoints.forEach(p=>{p.x=0;p.y=0;});
     ionicTrailInitialized=true;
   }
 
-  // The first large plasma echo reacts quickly.
-  const headResponse=1-Math.exp(-dt*14);
-  ionicTrailPoints[0].x+=(targetOffsetX-ionicTrailPoints[0].x)*headResponse;
-  ionicTrailPoints[0].y+=(targetOffsetY-ionicTrailPoints[0].y)*headResponse;
-
-  // Every smaller echo follows the one before it with increasing delay.
-  for(let i=1;i<ionicTrailPoints.length;i++){
-
   /*
-    Each plume orb follows the one ahead of it
-    progressively slower.
-
-    This creates the tapered whip/comet shape
-    instead of a single puff.
+    Midas-style attraction strengths.
+    The first / largest layer stays tightly connected to the reactor's thrust.
+    Every smaller layer has more inertia, creating the long taper.
   */
+  const plumePullStrength=[
+    18.0,
+    12.5,
+    8.8,
+    6.2,
+    4.4,
+    3.1,
+    2.2
+  ];
 
-  const followRate = 8.5 - i * .72;
+  for(let i=0;i<ionicTrailPoints.length;i++){
+    const p=ionicTrailPoints[i];
+    const pull=
+      1-Math.exp(
+        -dt*plumePullStrength[i]
+      );
 
-  const follow =
-    1 - Math.exp(
-      -dt * Math.max(3.8, followRate)
+    p.x=THREE.MathUtils.lerp(
+      p.x,
+      targetOffsetX,
+      pull
     );
 
-  ionicTrailPoints[i].x +=
-    (ionicTrailPoints[i-1].x - ionicTrailPoints[i].x) * follow;
-
-  ionicTrailPoints[i].y +=
-    (ionicTrailPoints[i-1].y - ionicTrailPoints[i].y) * follow;
-}
+    p.y=THREE.MathUtils.lerp(
+      p.y,
+      targetOffsetY,
+      pull
+    );
+  }
 
   const stateOpacity=
     fluxBoostTime>0 ? 1 :
-    midasTime>0 ? .88 :
-    chronoTime>0 ? .72 :
-    .62;
+    midasTime>0 ? .92 :
+    chronoTime>0 ? .76 :
+    .68;
 
   orbs.forEach((orb,i)=>{
     const p=ionicTrailPoints[i];
-    const movementVisibility=.20+movement*.80;
-    const opacity=stateOpacity*movementVisibility*(1-i*.075);
+
+    /*
+      At center the seven layers overlap and look like one energized aperture.
+      During a shift the larger layers become more visible and the tiny end
+      beads remain delicate, matching the visual rhythm of the Midas stream.
+    */
+    const baseOpacity=[.30,.28,.25,.22,.19,.16,.13][i];
+    const motionLift=.70+movement*.55;
+    const opacity=Math.min(.52,baseOpacity*stateOpacity*motionLift);
 
     orb.style.transform=
       `translate(calc(-50% + ${p.x.toFixed(2)}px),calc(-50% + ${p.y.toFixed(2)}px))`;
-    orb.style.opacity=String(Math.max(.06,opacity).toFixed(3));
+
+    orb.style.opacity=opacity.toFixed(3);
   });
 
   /*
-    Legendary states continue to alter the world color treatment.
-  */
-/*
-  Legendary states also alter the universe's energy spectrum.
-  This replaces full-screen particle density with restrained color response.
+    Legendary states continue to alter the universe's energy spectrum.
+    This keeps the plume behavior common to Normal, Flux, Chrono, and Midas,
+    while each state retains its own colors and world treatment.
   */
   if(fluxBoostTime>0){
     renderer.domElement.style.filter=
@@ -1225,7 +1252,6 @@ function updateIonicThruster(dt){
 
   updateCenterReactor();
 }
-
 function pulseCenterReactorDamage(){
   reactorDamageUntil=performance.now()+430;
   const center=document.getElementById("center");
@@ -4598,8 +4624,9 @@ ionicTrailInitialized=false;
 ionicTrailPoints.forEach(p=>{p.x=0;p.y=0;});
 if(center){
   center.querySelectorAll(".plasmaOrb").forEach((orb,i)=>{
+    const resetOpacity=[.30,.28,.25,.22,.19,.16,.13][i] ?? .10;
     orb.style.transform="translate(-50%,-50%)";
-    orb.style.opacity=String(Math.max(.06,.38-i*.045));
+    orb.style.opacity=String(resetOpacity);
   });
 }document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");renderer.domElement.style.filter="none";playerX=0;playerY=0;
 
