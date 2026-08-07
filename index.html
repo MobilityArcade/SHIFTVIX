@@ -1239,7 +1239,7 @@ function updateFluxBoost(dt){
   const target=fluxBoostTime>0?1:0;
   const response=1-Math.exp(-dt*(target?8.5:2.7));
   fluxBoostAmount+=(target-fluxBoostAmount)*response;
-  // Flux now changes pacing rather than adding particle or fog intensity.
+  // Flux pacing remains primary; the dedicated dust layer uses fluxBoostAmount with hard visual caps.
   const fx=document.getElementById("fluxFx");
   if(fx)fx.classList.remove("active");
   updateCenterReactor();
@@ -2040,6 +2040,17 @@ function resetWarpBanking(){
 
 let introScale=1.2;
 const clock=new THREE.Clock(), beacons=[], stars=[], laneGuides=[];
+
+/* SHIFTVIX FLUX DUST — capped acceleration cue.
+   This is a dedicated sparse layer that only becomes visible during Flux.
+   Its count, opacity, speed multiplier, and streak length all have hard ceilings,
+   so later game speed cannot make the effect increasingly aggressive. */
+const FLUX_DUST_COUNT = 72;
+const FLUX_DUST_MAX_OPACITY = .22;
+const FLUX_DUST_MAX_STREAK = 18;
+const FLUX_DUST_MAX_SPEED_MULT = 1.75;
+let fluxDust = null;
+let fluxDustVisualPower = 0;
 const TIERS=[{name:"WHITE",color:0xffffff,value:10,size:3.8,freq:880},{name:"BLUE",color:0x55ccff,value:25,size:4.3,freq:1046},{name:"GREEN",color:0x66ff66,value:50,size:4.8,freq:1174},{name:"PURPLE",color:0xcc66ff,value:75,size:5.1,freq:1240},{name:"ORANGE",color:0xff8800,value:100,size:5.4,freq:1318},{name:"RED",color:0xff4444,value:200,size:6.1,freq:1568}];
 function initAudio(){if(audioCtx){if(audioCtx.state!=="running")audioCtx.resume();return;}audioCtx=new (window.AudioContext||window.webkitAudioContext)();}
 function playCoin(tier){if(!audioCtx)return;const now=audioCtx.currentTime,osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type="square";osc.frequency.setValueAtTime(tier.freq,now);osc.frequency.exponentialRampToValueAtTime(tier.freq*1.55,now+.055);gain.gain.setValueAtTime(.0001,now);gain.gain.linearRampToValueAtTime(.018,now+.008);gain.gain.exponentialRampToValueAtTime(.0001,now+.105);osc.connect(gain).connect(audioCtx.destination);osc.start(now);osc.stop(now+.13);if(tier.value>=100){const osc2=audioCtx.createOscillator(),gain2=audioCtx.createGain();osc2.type="sine";osc2.frequency.setValueAtTime(tier.freq*2,now+.035);gain2.gain.setValueAtTime(.0001,now+.035);gain2.gain.linearRampToValueAtTime(.018,now+.045);gain2.gain.exponentialRampToValueAtTime(.0001,now+.16);osc2.connect(gain2).connect(audioCtx.destination);osc2.start(now+.035);osc2.stop(now+.18);}}
@@ -3631,6 +3642,140 @@ function introIsClear(){return distance >= 72;}
 function showModeBanner(text){const el=document.getElementById("modeBanner");if(!el)return;if(!introIsClear()){pendingModeBanner=text;return;}pendingModeBanner=null;el.textContent=text;el.classList.remove("show");void el.offsetWidth;el.classList.add("show");}
 function releasePendingModeBanner(){if(pendingModeBanner&&introIsClear())showModeBanner(pendingModeBanner);}
 function makeStarField(){const count=850,positions=new Float32Array(count*3),colors=new Float32Array(count*3),baseXY=new Float32Array(count*2),palette=[0xffffff,0x777777,0x55ccff,0xff66cc,0x5d3dff,0xff8800].map(c=>new THREE.Color(c));for(let i=0;i<count;i++){const x=(Math.random()*2-1)*260,y=(Math.random()*2-1)*180;positions[i*3]=x;positions[i*3+1]=y;positions[i*3+2]=-50-Math.random()*1200;baseXY[i*2]=x;baseXY[i*2+1]=y;const c=palette[Math.floor(Math.random()*palette.length)].clone().multiplyScalar(.35+Math.random()*.7);colors[i*3]=c.r;colors[i*3+1]=c.g;colors[i*3+2]=c.b;}const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.BufferAttribute(positions,3));geo.setAttribute("color",new THREE.BufferAttribute(colors,3));const mat=new THREE.PointsMaterial({size:1.3,sizeAttenuation:true,transparent:true,opacity:.72,vertexColors:true});const pts=new THREE.Points(geo,mat);pts.userData.baseXY=baseXY;scene.add(pts);stars.push(pts);}
+
+function makeFluxDustField(){
+    const positions=new Float32Array(FLUX_DUST_COUNT*2*3);
+    const colors=new Float32Array(FLUX_DUST_COUNT*2*3);
+    const anchors=new Float32Array(FLUX_DUST_COUNT*2);
+
+    const palette=[
+        new THREE.Color(0xffffff),
+        new THREE.Color(0xbfefff),
+        new THREE.Color(0x75ddff),
+        new THREE.Color(0xffd36a),
+        new THREE.Color(0xc58cff)
+    ];
+
+    for(let i=0;i<FLUX_DUST_COUNT;i++){
+        let x=(Math.random()*2-1)*250;
+        let y=(Math.random()*2-1)*175;
+
+        // Keep the center gameplay corridor calmer.
+        const r=Math.hypot(x,y);
+        if(r<62){
+            const a=Math.atan2(y||1,x||1);
+            const pushed=62+Math.random()*45;
+            x=Math.cos(a)*pushed;
+            y=Math.sin(a)*pushed;
+        }
+
+        const z=-120-Math.random()*1050;
+        anchors[i*2]=x;
+        anchors[i*2+1]=y;
+
+        const p=i*6;
+        positions[p]=x;positions[p+1]=y;positions[p+2]=z;
+        positions[p+3]=x;positions[p+4]=y;positions[p+5]=z-4;
+
+        const c=palette[Math.floor(Math.random()*palette.length)]
+            .clone()
+            .multiplyScalar(.58+Math.random()*.32);
+
+        colors[p]=c.r;colors[p+1]=c.g;colors[p+2]=c.b;
+        colors[p+3]=c.r;colors[p+4]=c.g;colors[p+5]=c.b;
+    }
+
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute("position",new THREE.BufferAttribute(positions,3));
+    geo.setAttribute("color",new THREE.BufferAttribute(colors,3));
+
+    const mat=new THREE.LineBasicMaterial({
+        vertexColors:true,
+        transparent:true,
+        opacity:0,
+        depthWrite:false,
+        blending:THREE.AdditiveBlending
+    });
+
+    fluxDust=new THREE.LineSegments(geo,mat);
+    fluxDust.frustumCulled=false;
+    fluxDust.userData.anchors=anchors;
+    scene.add(fluxDust);
+}
+
+function updateFluxDust(dt){
+    if(!fluxDust)return;
+
+    const reducedMotion=
+        window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const targetPower=
+        reducedMotion ? 0 :
+        THREE.MathUtils.clamp(fluxBoostAmount,0,1);
+
+    // Fast attack, gentle release. No blinking or pulsing.
+    const response=
+        1-Math.exp(-dt*(targetPower>fluxDustVisualPower?5.8:2.1));
+
+    fluxDustVisualPower+=
+        (targetPower-fluxDustVisualPower)*response;
+
+    const visualPower=
+        THREE.MathUtils.clamp(fluxDustVisualPower,0,1);
+
+    fluxDust.material.opacity=
+        THREE.MathUtils.lerp(
+            0,
+            FLUX_DUST_MAX_OPACITY,
+            visualPower
+        );
+
+    const streakLength=
+        THREE.MathUtils.lerp(
+            4,
+            FLUX_DUST_MAX_STREAK,
+            visualPower
+        );
+
+    const speedMult=
+        THREE.MathUtils.lerp(
+            1.05,
+            FLUX_DUST_MAX_SPEED_MULT,
+            visualPower
+        );
+
+    const pos=fluxDust.geometry.attributes.position;
+    const anchors=fluxDust.userData.anchors;
+
+    // Hard cap the visual travel rate even if gameplay speed rises later.
+    const cappedSpeed=Math.min(speed,330);
+
+    for(let i=0;i<FLUX_DUST_COUNT;i++){
+        const p=i*6;
+        const x=anchors[i*2];
+        const y=anchors[i*2+1];
+
+        let z=pos.array[p+2];
+        z+=cappedSpeed*dt*speedMult;
+
+        if(z>82){
+            z=-1050-Math.random()*280;
+        }
+
+        // Two points at different Z values form a short radial perspective streak.
+        pos.array[p]=x;
+        pos.array[p+1]=y;
+        pos.array[p+2]=z;
+
+        pos.array[p+3]=x;
+        pos.array[p+4]=y;
+        pos.array[p+5]=z-streakLength;
+    }
+
+    pos.needsUpdate=true;
+}
+
 function makeLaneGuides(){LANE_X.forEach(x=>{LANE_Y.forEach(y=>{const geo=new THREE.BufferGeometry(),positions=[];for(let i=0;i<52;i++)positions.push(x,y,-80-i*25);geo.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));const mat=new THREE.PointsMaterial({color:0xff66cc,size:.85,transparent:true,opacity:.0,sizeAttenuation:true,depthWrite:false});const pts=new THREE.Points(geo,mat);scene.add(pts);laneGuides.push(pts);});});}
 function chooseTier(){
 
@@ -4543,7 +4688,7 @@ vix.style.transform = "translateY(0)";
 
 title.style.transform = "translate(-50%,-50%)";
 
-const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");renderer.domElement.style.filter="none";playerX=0;playerY=0;
+const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(b=>scene.remove(b));beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");renderer.domElement.style.filter="none";playerX=0;playerY=0;
 
 lastLevel = 1;strikes = 0;milestonesReached = {};lastWarpBreakthrough=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();resetEnvironmentForRun();beginCurrentFlow();updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
 const title = document.getElementById("gameTitle");
@@ -4616,9 +4761,10 @@ if(warpBoundary>lastWarpBreakthrough){
 
 updateChallenge();
 updateEnvironment(worldDt);
+updateFluxDust(worldDt);
 spawnTimer-=worldDt;
 if(spawnTimer<=0){
-    // Flux increases incoming train frequency instead of increasing dust/stars.
+    // Flux increases incoming train frequency; a separate sparse capped dust layer adds the speed cue.
     const normalInterval=.54+Math.random()*.26;
     const fluxInterval=.22+Math.random()*.12;
     spawnTimer=THREE.MathUtils.lerp(normalInterval,fluxInterval,fluxBoostAmount);
@@ -4675,7 +4821,7 @@ if(cycleDistance >= WARP_BUILD_END){
 
 // Flux Drive temporarily intensifies the existing warp without changing lanes,
 // controls, collision radius, or obstacle logic.
-// Flux no longer adds warp particles or visual density.
+// Flux dust is handled separately and capped; warpAmount itself is not increased by Flux.
 
 // Atmosphere pacing follows the same capped visual distance so fog and color
 // do not keep escalating after the preferred 1050m-quality appearance.
@@ -5196,7 +5342,7 @@ window.addEventListener("beforeunload",()=>{
 });
 window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 
-makeStarField();makeLaneGuides();resetEnvironmentForRun();updateStrikes();updateHUD();startGame();animate();
+makeStarField();makeFluxDustField();makeLaneGuides();resetEnvironmentForRun();updateStrikes();updateHUD();startGame();animate();
 </script>
 </body>
 </html>
