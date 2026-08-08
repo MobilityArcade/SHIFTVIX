@@ -56,10 +56,12 @@ function track(eventName, data = {}) {
 html,body{margin:0;height:100%;overflow:hidden;background:#000;color:white;font-family:Arial,Helvetica,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 canvas{
   display:block;
-  position:fixed;
-  inset:0;
-  width:100vw;
-  height:100vh;
+  position:fixed !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  max-width:none !important;
+  max-height:none !important;
 }
 #gameTitle{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:20;pointer-events:none;text-align:center;line-height:.78;font-family:Arial Black,sans-serif;filter:none;}
 #shift{display:block;color:transparent;font-size:clamp(96px,13vw,132px);font-weight:900;letter-spacing:4px;-webkit-text-stroke:4px #ffd36a;}
@@ -1059,7 +1061,7 @@ const SHIFTVIX_MOBILE_DEVICE =
 const SHIFTVIX_DESKTOP_DPR_CAP=2;
 const SHIFTVIX_MOBILE_DPR_CAP=1.4;
 
-function applyRendererResolution(){
+function applyRendererResolution(width=window.innerWidth,height=window.innerHeight){
   const cap=
     SHIFTVIX_MOBILE_DEVICE
       ? SHIFTVIX_MOBILE_DPR_CAP
@@ -1068,18 +1070,63 @@ function applyRendererResolution(){
   renderer.setPixelRatio(
     Math.min(window.devicePixelRatio||1,cap)
   );
+
   /*
-    IMPORTANT:
-    updateStyle must remain TRUE here.
-    On Retina mobile devices, setSize(..., false) leaves the canvas CSS size
-    tied to its high-DPI drawing-buffer dimensions. That makes the WebGL
-    viewport larger than the visible screen, shifting the game's vanishing
-    point down/right while the HTML reactor/HUD remain correctly centered.
+    Keep the drawing buffer and CSS canvas synchronized to one stable viewport.
+    The width/height are supplied by the viewport-stability controller below.
   */
-  renderer.setSize(innerWidth,innerHeight,true);
+  renderer.setSize(width,height,true);
 }
 
-applyRendererResolution();
+let stableViewportWidth=window.innerWidth;
+let stableViewportHeight=window.innerHeight;
+let viewportResizeTimer=null;
+let viewportOrientation=
+  stableViewportWidth>=stableViewportHeight ? "landscape" : "portrait";
+
+function commitStableViewport(force=false){
+  const w=Math.max(1,window.innerWidth);
+  const h=Math.max(1,window.innerHeight);
+  const orientation=w>=h ? "landscape" : "portrait";
+
+  const widthDelta=Math.abs(w-stableViewportWidth);
+  const heightDelta=Math.abs(h-stableViewportHeight);
+  const orientationChanged=orientation!==viewportOrientation;
+
+  /*
+    iPhone/iPad Safari can emit resize events while browser chrome
+    expands/collapses. Those transient height changes should NOT rebuild the
+    game viewport during play.
+
+    Accept a resize only when:
+    - forced (initial load / orientationchange), or
+    - orientation changes, or
+    - width changes materially, or
+    - the page is not actively running gameplay.
+  */
+  const meaningfulWidthChange=widthDelta>=48;
+  const inactive=!gameStarted||gameOver||paused;
+
+  if(
+    SHIFTVIX_MOBILE_DEVICE &&
+    !force &&
+    !orientationChanged &&
+    !meaningfulWidthChange &&
+    !inactive
+  ){
+    return;
+  }
+
+  stableViewportWidth=w;
+  stableViewportHeight=h;
+  viewportOrientation=orientation;
+
+  camera.aspect=w/h;
+  camera.updateProjectionMatrix();
+  applyRendererResolution(w,h);
+}
+
+applyRendererResolution(stableViewportWidth,stableViewportHeight);
 document.body.appendChild(renderer.domElement);
 
 /* =========================
@@ -5486,6 +5533,10 @@ document.addEventListener("visibilitychange",()=>{
   }else{
     clock.getDelta();
 
+    setTimeout(()=>{
+      commitStableViewport(true);
+    },180);
+
     if(gameStarted&&!musicStarted&&!paused){
       startMusic();
     }
@@ -5504,10 +5555,43 @@ window.addEventListener("beforeunload",()=>{
 
 });
 window.addEventListener("resize",()=>{
-  camera.aspect=innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-  applyRendererResolution();
+  if(viewportResizeTimer){
+    clearTimeout(viewportResizeTimer);
+  }
+
+  viewportResizeTimer=setTimeout(()=>{
+    commitStableViewport(false);
+  },120);
 });
+
+window.addEventListener("orientationchange",()=>{
+  if(viewportResizeTimer){
+    clearTimeout(viewportResizeTimer);
+  }
+
+  viewportResizeTimer=setTimeout(()=>{
+    commitStableViewport(true);
+  },320);
+});
+
+/*
+  visualViewport can fire repeatedly while Safari's address/tool bars animate.
+  We intentionally do NOT resize the WebGL canvas from those events. We only
+  use it as a delayed sanity check when gameplay is not actively running.
+*/
+if(window.visualViewport){
+  window.visualViewport.addEventListener("resize",()=>{
+    if(gameStarted&&!gameOver&&!paused)return;
+
+    if(viewportResizeTimer){
+      clearTimeout(viewportResizeTimer);
+    }
+
+    viewportResizeTimer=setTimeout(()=>{
+      commitStableViewport(false);
+    },180);
+  });
+}
 
 makeStarField();makeFluxDustField();makeLaneGuides();resetEnvironmentForRun();updateStrikes();updateHUD();startGame();animate();
 </script>
