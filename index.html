@@ -57,9 +57,10 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;color:white;font-
 canvas{
   display:block;
   position:fixed !important;
-  inset:0 !important;
-  width:100% !important;
-  height:100% !important;
+  left:0;
+  top:0;
+  width:100%;
+  height:100%;
   max-width:none !important;
   max-height:none !important;
 }
@@ -1078,56 +1079,126 @@ function applyRendererResolution(width=window.innerWidth,height=window.innerHeig
   renderer.setSize(width,height,true);
 }
 
-let stableViewportWidth=window.innerWidth;
-let stableViewportHeight=window.innerHeight;
+/*
+  SHIFTVIX CROSS-BROWSER CENTER LOCK
+
+  Safari, Chrome, Firefox, and iPadOS do not always report the mobile viewport
+  from the same coordinate space. We therefore derive ONE authoritative game
+  rectangle and use it for:
+    - WebGL canvas placement
+    - renderer size
+    - camera aspect
+    - HTML reactor center
+
+  visualViewport is preferred when available because it describes the pixels
+  actually visible to the player. During active gameplay transient browser-bar
+  animations are ignored; legitimate orientation/width changes are committed.
+*/
+function readAuthoritativeViewport(){
+  const vv=window.visualViewport;
+
+  if(vv){
+    return {
+      left:Number.isFinite(vv.offsetLeft)?vv.offsetLeft:0,
+      top:Number.isFinite(vv.offsetTop)?vv.offsetTop:0,
+      width:Math.max(1,Math.round(vv.width)),
+      height:Math.max(1,Math.round(vv.height))
+    };
+  }
+
+  return {
+    left:0,
+    top:0,
+    width:Math.max(1,window.innerWidth),
+    height:Math.max(1,window.innerHeight)
+  };
+}
+
+let initialViewport=readAuthoritativeViewport();
+let stableViewportLeft=initialViewport.left;
+let stableViewportTop=initialViewport.top;
+let stableViewportWidth=initialViewport.width;
+let stableViewportHeight=initialViewport.height;
 let viewportResizeTimer=null;
 let viewportOrientation=
   stableViewportWidth>=stableViewportHeight ? "landscape" : "portrait";
 
-function commitStableViewport(force=false){
-  const w=Math.max(1,window.innerWidth);
-  const h=Math.max(1,window.innerHeight);
-  const orientation=w>=h ? "landscape" : "portrait";
+function applyAuthoritativeGameRect(left,top,width,height){
+  const canvas=renderer.domElement;
 
-  const widthDelta=Math.abs(w-stableViewportWidth);
-  const heightDelta=Math.abs(h-stableViewportHeight);
-  const orientationChanged=orientation!==viewportOrientation;
+  canvas.style.left=`${left}px`;
+  canvas.style.top=`${top}px`;
+  canvas.style.width=`${width}px`;
+  canvas.style.height=`${height}px`;
+
+  camera.aspect=width/height;
+  camera.updateProjectionMatrix();
+  applyRendererResolution(width,height);
 
   /*
-    iPhone/iPad Safari can emit resize events while browser chrome
-    expands/collapses. Those transient height changes should NOT rebuild the
-    game viewport during play.
-
-    Accept a resize only when:
-    - forced (initial load / orientationchange), or
-    - orientation changes, or
-    - width changes materially, or
-    - the page is not actively running gameplay.
+    The pause/reactor eye is positioned from the exact same rectangle as WebGL.
+    This removes browser-specific disagreement between CSS 50% and canvas 50%.
   */
-  const meaningfulWidthChange=widthDelta>=48;
+  const center=document.getElementById("center");
+  if(center){
+    center.style.left=`${left + width/2}px`;
+    center.style.top=`${top + height/2}px`;
+  }
+}
+
+function commitStableViewport(force=false){
+  const next=readAuthoritativeViewport();
+  const orientation=
+    next.width>=next.height ? "landscape" : "portrait";
+
+  const widthDelta=Math.abs(next.width-stableViewportWidth);
+  const heightDelta=Math.abs(next.height-stableViewportHeight);
+  const leftDelta=Math.abs(next.left-stableViewportLeft);
+  const topDelta=Math.abs(next.top-stableViewportTop);
+  const orientationChanged=orientation!==viewportOrientation;
+
+  const meaningfulWidthChange=widthDelta>=36;
+  const meaningfulHorizontalShift=leftDelta>=8;
   const inactive=!gameStarted||gameOver||paused;
 
+  /*
+    Ignore Safari/Firefox browser-chrome height-only animation while a run is
+    active. Accept true width/orientation changes, explicit forced syncs, and
+    inactive-state corrections.
+  */
   if(
     SHIFTVIX_MOBILE_DEVICE &&
     !force &&
     !orientationChanged &&
     !meaningfulWidthChange &&
+    !meaningfulHorizontalShift &&
     !inactive
   ){
     return;
   }
 
-  stableViewportWidth=w;
-  stableViewportHeight=h;
+  stableViewportLeft=next.left;
+  stableViewportTop=next.top;
+  stableViewportWidth=next.width;
+  stableViewportHeight=next.height;
   viewportOrientation=orientation;
 
-  camera.aspect=w/h;
-  camera.updateProjectionMatrix();
-  applyRendererResolution(w,h);
+  applyAuthoritativeGameRect(
+    stableViewportLeft,
+    stableViewportTop,
+    stableViewportWidth,
+    stableViewportHeight
+  );
 }
 
 applyRendererResolution(stableViewportWidth,stableViewportHeight);
 document.body.appendChild(renderer.domElement);
+applyAuthoritativeGameRect(
+  stableViewportLeft,
+  stableViewportTop,
+  stableViewportWidth,
+  stableViewportHeight
+);
 
 /* =========================
    SHIFTVIX — PERMANENT CHRONO NEON HYPERSPACE
@@ -4892,7 +4963,7 @@ title.style.transform = "translate(-50%,-50%)";
 
 const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");applyPermanentChronoWorldGrade();playerX=0;playerY=0;
 
-lastLevel = 1;strikes = 0;milestonesReached = {};lastWarpBreakthrough=0;starColorUpdateFrame=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();resetEnvironmentForRun();beginCurrentFlow();updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
+lastLevel = 1;strikes = 0;milestonesReached = {};lastWarpBreakthrough=0;starColorUpdateFrame=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();commitStableViewport(true);resetEnvironmentForRun();beginCurrentFlow();updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
 const title = document.getElementById("gameTitle");
 const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
@@ -5557,44 +5628,40 @@ window.addEventListener("beforeunload",()=>{
     });
 
 });
-window.addEventListener("resize",()=>{
+function scheduleViewportSync(force=false,delay=140){
   if(viewportResizeTimer){
     clearTimeout(viewportResizeTimer);
   }
 
   viewportResizeTimer=setTimeout(()=>{
-    commitStableViewport(false);
-  },120);
+    commitStableViewport(force);
+  },delay);
+}
+
+window.addEventListener("resize",()=>{
+  scheduleViewportSync(false,140);
 });
 
 window.addEventListener("orientationchange",()=>{
-  if(viewportResizeTimer){
-    clearTimeout(viewportResizeTimer);
-  }
-
-  viewportResizeTimer=setTimeout(()=>{
-    commitStableViewport(true);
-  },320);
+  scheduleViewportSync(true,340);
 });
 
-/*
-  visualViewport can fire repeatedly while Safari's address/tool bars animate.
-  We intentionally do NOT resize the WebGL canvas from those events. We only
-  use it as a delayed sanity check when gameplay is not actively running.
-*/
 if(window.visualViewport){
   window.visualViewport.addEventListener("resize",()=>{
-    if(gameStarted&&!gameOver&&!paused)return;
+    scheduleViewportSync(false,180);
+  });
 
-    if(viewportResizeTimer){
-      clearTimeout(viewportResizeTimer);
-    }
-
-    viewportResizeTimer=setTimeout(()=>{
-      commitStableViewport(false);
-    },180);
+  window.visualViewport.addEventListener("scroll",()=>{
+    // Some mobile browsers express browser-chrome movement as viewport offset.
+    // During gameplay we only accept meaningful horizontal movement; otherwise
+    // this resolves itself on the next stable/forced sync.
+    scheduleViewportSync(false,180);
   });
 }
+
+window.addEventListener("pageshow",()=>{
+  scheduleViewportSync(true,120);
+});
 
 makeStarField();makeFluxDustField();makeLaneGuides();resetEnvironmentForRun();updateStrikes();updateHUD();startGame();animate();
 </script>
