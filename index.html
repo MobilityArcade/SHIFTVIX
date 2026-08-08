@@ -2102,9 +2102,13 @@ function updateWarpBanking(dt){
   const ambientYaw = Math.sin(routePhase * 0.61 + 0.4) * warpAmount * THREE.MathUtils.degToRad(0.20);
   const ambientPitch = Math.sin(routePhase * 0.47 + 1.2) * warpAmount * THREE.MathUtils.degToRad(0.09);
 
+  /*
+    CENTER LOCK:
+    Preserve the arcade banking sensation as roll only.
+    Pitch/yaw used to push the lane convergence point away from the fixed
+    center reactor on mobile. Deep-field stars still receive curvature.
+  */
   camera.rotation.z = bankRoll + ambientRoll;
-  camera.rotation.x += bankPitch + ambientPitch;
-  camera.rotation.y += bankYaw + ambientYaw;
 
   stars.forEach((s,index)=>{
     const depthWeight = 0.78 + index * 0.12;
@@ -5073,9 +5077,16 @@ scene.fog.color.setHex(
 atmosphereColors[stage]
 );
 
+/*
+  CENTER LOCK:
+  The center reactor is fixed at 50% / 50% in the HTML layer.
+  The 3D camera must therefore look exactly through the player's current
+  lane center. Deep-field curvature may still move the stars, but it must
+  never move the gameplay vanishing point away from the reactor.
+*/
 camera.lookAt(
-playerX * 0.995 + vanishingX,
-playerY * 0.995 + vanishingY,
+playerX,
+playerY,
 -500
 );let targetFov =
 70
@@ -5398,20 +5409,12 @@ updateHUD();}if(gameStarted&&!gameOver){
 introScale += (1-introScale)*dt*0.6;beacons.forEach(b=>{if(b.userData.state==="active") b.scale.lerp(new THREE.Vector3(introScale,introScale,introScale),0.08);});
 introCameraZ += (TARGET_CAMERA_Z-introCameraZ)*dt*0.18;
 launchSurge*=Math.exp(-dt*7.5);
-camera.position.z=introCameraZ-launchSurge;camera.position.x +=
-(Math.random()-0.5)
-*
-warpAmount
-*
-0.12;
-
-camera.position.y +=
-(Math.random()-0.5)
-*
-warpAmount
-*
-0.12;
-
+/*
+  CENTER LOCK:
+  No post-lookAt X/Y camera shake. Any lateral camera translation after
+  lookAt makes the fixed HTML reactor and the 3D lane vanishing point diverge.
+  Keep acceleration depth movement on Z only.
+*/
 camera.position.z =
 introCameraZ
 -
