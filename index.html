@@ -51,7 +51,7 @@ function track(eventName, data = {}) {
 <meta name="apple-mobile-web-app-title" content="SHIFTVIX">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<!-- SHIFTVIX FOUR POWER ORBS / THREE TIERS BUILD -->
+<!-- SHIFTVIX POWER ORBS 2.0 — 50/32/18 + HIGHER FREQUENCY + LARGE LABELS -->
 <title>SHIFTVIX</title>
 <style>
 html,body{
@@ -507,6 +507,56 @@ canvas{
     #center .reactorCore{animation:none}
     #center .reactorPlume{display:none}
     #center.reactorDamage{animation:none}
+}
+
+/* SHIFTVIX POWER ANNOUNCEMENT 2.0 */
+#powerAnnouncement{
+  position:fixed;
+  left:50%;
+  top:29.5%;
+  transform:translate(-50%,-50%) scale(.90);
+  z-index:68;
+  pointer-events:none;
+  opacity:0;
+  white-space:nowrap;
+  text-align:center;
+  font-size:clamp(32px,9vw,58px);
+  font-weight:1000;
+  letter-spacing:3px;
+  color:#fff;
+  text-shadow:
+    0 0 8px rgba(255,255,255,.98),
+    0 0 24px rgba(100,220,255,.72),
+    0 0 46px rgba(160,90,255,.44);
+  transition:opacity .14s ease,transform .18s ease,filter .18s ease;
+}
+#powerAnnouncement.show{
+  opacity:1;
+  transform:translate(-50%,-50%) scale(1);
+}
+#powerAnnouncement.powerTier1{filter:brightness(1)}
+#powerAnnouncement.powerTier2{filter:brightness(1.12) saturate(1.12)}
+#powerAnnouncement.powerTier3{
+  filter:brightness(1.28) saturate(1.24);
+  text-shadow:
+    0 0 9px rgba(255,255,255,1),
+    0 0 28px rgba(95,225,255,.95),
+    0 0 58px rgba(175,90,255,.72);
+}
+@keyframes powerAnnouncementTier3{
+  0%{transform:translate(-50%,-50%) scale(.78)}
+  48%{transform:translate(-50%,-50%) scale(1.12)}
+  100%{transform:translate(-50%,-50%) scale(1)}
+}
+#powerAnnouncement.show.powerTier3{
+  animation:powerAnnouncementTier3 .30s ease-out;
+}
+@media(max-width:520px){
+  #powerAnnouncement{
+    top:28.5%;
+    font-size:clamp(32px,9.8vw,48px);
+    letter-spacing:2px;
+  }
 }
 #laneLabel{display:none}
 #startOverlay{position:absolute;inset:0;display:grid;place-items:center;text-align:center;z-index:80;background:radial-gradient(circle,rgba(255,102,204,.10),rgba(0,0,0,.92))}
@@ -1064,7 +1114,7 @@ body.uiModalOpen #center{pointer-events:none}
   </div>
 </div>
 <div id="challengeHud"><div id="challengeName">CURRENT FLOW</div><div id="challengeText">LOADING…</div><div id="challengeBar"><div id="challengeFill"></div></div></div>
-<div id="modeBanner"></div><div id="chronoMultiplier">×2 SCORE</div><div id="warpBurstFx"></div><div id="flowFx"></div><div id="fluxFx"></div><div id="chronoFx"></div><div id="midasFx"></div><div id="prismFx"></div><div id="pulseWaves"></div>
+<div id="powerAnnouncement" aria-live="polite"></div><div id="modeBanner"></div><div id="chronoMultiplier">×2 SCORE</div><div id="warpBurstFx"></div><div id="flowFx"></div><div id="fluxFx"></div><div id="chronoFx"></div><div id="midasFx"></div><div id="prismFx"></div><div id="pulseWaves"></div>
 <div id="flowArchive" aria-hidden="true"><div class="archiveCard" role="dialog" aria-modal="true" aria-labelledby="flowPathTitle"><div class="archiveHeader"><h2 id="flowPathTitle">FLOW PATH</h2><button class="archiveClose" id="archiveClose" type="button" aria-label="Close Flow Path">×</button></div><div id="archiveList"></div></div></div>
 
 <!-- SHIFTVIX CHRONO 2.0 — SLOW TIME + PRISM VISION + 2X SCORE -->
@@ -1431,9 +1481,30 @@ const CHRONO_SCORE_MULTIPLIER=2;
 // Tier III=  8%
 // Visual language: 1 / 2 / 3 concentric energy rings.
 // =========================
-const POWER_TIER_WEIGHTS=[.65,.27,.08];
+const POWER_TIER_WEIGHTS=[.50,.32,.18];
 const POWER_DURATIONS=[4,8,12];
 const WARP_DISTANCES=[500,1000,1500];
+
+// SHIFTVIX POWER ORB FREQUENCY 2.0
+// First opportunity: 180–300m.
+// Then another opportunity roughly every 260–430m.
+const POWER_ORB_FIRST_MIN=180;
+const POWER_ORB_FIRST_MAX=300;
+const POWER_ORB_GAP_MIN=260;
+const POWER_ORB_GAP_MAX=430;
+let nextPowerOrbOpportunity=
+  POWER_ORB_FIRST_MIN+
+  Math.random()*(POWER_ORB_FIRST_MAX-POWER_ORB_FIRST_MIN);
+
+function scheduleNextPowerOrbOpportunity(first=false){
+  const min=first?POWER_ORB_FIRST_MIN:POWER_ORB_GAP_MIN;
+  const max=first?POWER_ORB_FIRST_MAX:POWER_ORB_GAP_MAX;
+  nextPowerOrbOpportunity=
+    distance+
+    min+
+    Math.random()*(max-min);
+}
+
 
 function choosePowerTier(){
   const r=Math.random();
@@ -1579,6 +1650,23 @@ function playFluxSound(){
   shimmer.start(now+.08);shimmer.stop(now+.45);
 }
 
+
+let powerAnnouncementTimer=null;
+function showPowerAnnouncement(powerName,tier){
+  const el=document.getElementById("powerAnnouncement");
+  if(!el)return;
+  const safeTier=Math.max(1,Math.min(3,tier||1));
+  el.textContent=`${powerName} ${safeTier}`;
+  el.className=`powerTier${safeTier}`;
+  void el.offsetWidth;
+  el.classList.add("show");
+  if(powerAnnouncementTimer)clearTimeout(powerAnnouncementTimer);
+  const holdMs=safeTier===3?1550:safeTier===2?1400:1250;
+  powerAnnouncementTimer=setTimeout(()=>{
+    el.classList.remove("show");
+  },holdMs);
+}
+
 function activateFluxBoost(reason,tier=1){
   const duration=powerTierDuration(tier);
   chronoTime=0;midasTime=0;fluxBoostTime=duration;
@@ -1587,7 +1675,7 @@ function activateFluxBoost(reason,tier=1){
   fluxPendingReasons.length=0;
   playFluxSound();
   triggerWarpBreakthrough("flux");
-  showModeBanner(`FLUX ${"I".repeat(tier)} · ${duration}s`);
+  showPowerAnnouncement("FLUX",tier);
   if(navigator.vibrate)navigator.vibrate([18,22,35]);
   trackGame("flux_orb_collected",{
     trigger_reason:reason||"unknown",
@@ -1728,7 +1816,7 @@ function activateChrono(reason,tier=1){
   chronoPendingReasons.length=0;
 
   playChronoSound();
-  showModeBanner(`CHRONO ${"I".repeat(tier)} · ${duration}s`);
+  showPowerAnnouncement("CHRONO",tier);
 
   if(navigator.vibrate)navigator.vibrate([22,45,22]);
 
@@ -1905,7 +1993,7 @@ function activateMidas(reason,tier=1){
   );
 
   playMidasSound();
-  showModeBanner(`MIDAS ${"I".repeat(tier)} · ${duration}s`);
+  showPowerAnnouncement("MIDAS",tier);
 
   if(navigator.vibrate)navigator.vibrate([16,24,16,24,32]);
 
@@ -4375,7 +4463,7 @@ function activateWarp(reason,tier=1){
   playWarpOrbSound(tier);
   triggerWarpBreakthrough("warp");
   launchSurge=Math.max(launchSurge,16+tier*3);
-  showModeBanner(`WARP ${"I".repeat(tier)} · +${jump.toLocaleString()}m`);
+  showPowerAnnouncement("WARP",tier);
   updateHUD();
   updateChallenge();
 
@@ -5194,6 +5282,17 @@ function endRun(){
 
 }
 function resetRun(){
+scheduleNextPowerOrbOpportunity(true);
+const powerAnnouncement=document.getElementById("powerAnnouncement");
+if(powerAnnouncement){
+  powerAnnouncement.className="";
+  powerAnnouncement.textContent="";
+}
+if(powerAnnouncementTimer){
+  clearTimeout(powerAnnouncementTimer);
+  powerAnnouncementTimer=null;
+}
+
 
     // This function is reached when the player taps
     // the results screen after losing all three lives.
@@ -5295,6 +5394,21 @@ updateChallenge();
 updateEnvironment(worldDt);
 starColorUpdateFrame=(starColorUpdateFrame+1)%1200;
 updateFluxDust(worldDt);
+
+if(
+  distance>=nextPowerOrbOpportunity &&
+  !fluxOrbActive &&
+  !chronoOrbActive &&
+  !midasOrbActive &&
+  !warpOrbActive &&
+  fluxBoostTime<=0 &&
+  chronoTime<=0 &&
+  midasTime<=0
+){
+  makeLegendaryOrb();
+  scheduleNextPowerOrbOpportunity(false);
+}
+
 spawnTimer-=worldDt;
 if(spawnTimer<=0){
     // Flux increases incoming train frequency; a separate sparse capped dust layer adds the speed cue.
