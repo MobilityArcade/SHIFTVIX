@@ -51,7 +51,7 @@ function track(eventName, data = {}) {
 <meta name="apple-mobile-web-app-title" content="SHIFTVIX">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<!-- SHIFTVIX POWER ORBS 2.2 — THREE-COLUMN GAMEPLAY HUD: DISTANCE / LEVEL / SCORE -->
+<!-- SHIFTVIX POWER ORBS 2.3 — FLOW % + 10 SECTORS × 30 SEQUENTIAL FLOWS -->
 <title>SHIFTVIX</title>
 <style>
 html,body{
@@ -675,6 +675,36 @@ canvas{
 .pauseSelection{margin:18px 0 20px;padding:14px 12px;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.09)}
 .pauseFlowName{font-size:13px;font-weight:1000;letter-spacing:2px;color:#fff}
 .pauseFlowObjective{margin-top:7px;font-size:12px;line-height:1.35;letter-spacing:1px;color:rgba(255,255,255,.68)}
+.pauseFlowBar{
+  position:relative;
+  height:16px;
+  margin-top:12px;
+  border-radius:999px;
+  overflow:hidden;
+  background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,211,106,.24);
+  box-shadow:inset 0 0 8px rgba(0,0,0,.65)
+}
+.pauseFlowFill{
+  position:absolute;
+  inset:0 auto 0 0;
+  width:0%;
+  height:100%;
+  background:linear-gradient(90deg,#8f6a16,#ffd36a);
+  box-shadow:0 0 10px rgba(255,211,106,.58)
+}
+.pauseFlowPct{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  z-index:2;
+  font-size:9px;
+  font-weight:1000;
+  letter-spacing:1px;
+  color:#fff;
+  text-shadow:0 1px 4px #000
+}
 .pauseActions{display:grid;gap:10px}
 .pauseButton{min-height:48px;border-radius:14px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.045);color:#fff;font:900 13px Arial;letter-spacing:2.5px;cursor:pointer}
 .pauseButton.primary{border-color:rgba(255,211,106,.55);color:#ffd36a;background:rgba(255,211,106,.08);box-shadow:0 0 16px rgba(255,211,106,.10)}
@@ -688,13 +718,44 @@ canvas{
 #challengeHud{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:22;width:min(620px,92vw);text-align:center;color:#fff;font-weight:900;text-shadow:0 0 10px #000;cursor:pointer;pointer-events:auto}
 #challengeName{font-size:20px;letter-spacing:2.8px;color:#ffd36a;margin-bottom:9px;text-shadow:0 0 10px rgba(255,211,106,.5),0 0 24px rgba(255,211,106,.22)}
 #challengeText{font-size:clamp(17px,4.5vw,22px);line-height:1.18;letter-spacing:1.6px;color:#fff;white-space:normal;overflow:visible;text-overflow:clip;padding:0 8px}
-#challengeBar{margin:11px auto 0;width:min(430px,82vw);height:7px;border-radius:999px;background:rgba(255,255,255,.11);overflow:hidden;border:1px solid rgba(255,211,106,.28);box-shadow:inset 0 0 8px rgba(0,0,0,.7)}
-#challengeFill{height:100%;width:0%;background:linear-gradient(90deg,#8f6a16 0%,#d6aa38 45%,#ffd36a 100%);box-shadow:0 0 12px rgba(255,211,106,.82);transition:width .2s}
+#challengeBar{
+  position:relative;
+  margin:11px auto 0;
+  width:min(430px,82vw);
+  height:17px;
+  border-radius:999px;
+  background:rgba(255,255,255,.11);
+  overflow:hidden;
+  border:1px solid rgba(255,211,106,.28);
+  box-shadow:inset 0 0 8px rgba(0,0,0,.7)
+}
+#challengeFill{
+  position:absolute;
+  inset:0 auto 0 0;
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#8f6a16 0%,#d6aa38 45%,#ffd36a 100%);
+  box-shadow:0 0 12px rgba(255,211,106,.82);
+  transition:width .2s
+}
+#challengePct{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  z-index:2;
+  pointer-events:none;
+  font-size:10px;
+  font-weight:1000;
+  letter-spacing:1.1px;
+  color:#fff;
+  text-shadow:0 1px 4px rgba(0,0,0,.95),0 0 6px rgba(0,0,0,.9)
+}
 @media (max-width:768px){
   #challengeHud{bottom:24px;width:92vw}
   #challengeName{font-size:22px;margin-bottom:8px;letter-spacing:2.5px}
   #challengeText{font-size:19px;letter-spacing:1.3px}
-  #challengeBar{width:82vw;height:7px}
+  #challengeBar{width:82vw;height:17px}
 }
 #modeBanner{position:absolute;left:50%;top:31%;transform:translate(-50%,-50%);z-index:65;pointer-events:none;font-size:16px;font-weight:1000;letter-spacing:3px;opacity:0;color:#ffd36a;text-shadow:0 0 14px #ffd36a,0 0 42px #ff8800;white-space:nowrap}
 #modeBanner.show{animation:modeFlash 1.25s ease-out forwards}
@@ -836,8 +897,35 @@ canvas{
 .runFlowCategory{font-size:11px;font-weight:1000;letter-spacing:1.8px;color:#ffd36a}
 .runFlowObjective{margin-top:9px;font-size:13px;font-weight:900;line-height:1.35;letter-spacing:.7px;color:rgba(255,255,255,.88)}
 .runFlowProgressText{margin-top:10px;font-size:10px;font-weight:900;letter-spacing:1.1px;color:rgba(255,255,255,.56)}
-.runFlowBar{height:6px;margin-top:9px;border-radius:999px;overflow:hidden;background:rgba(255,255,255,.10);border:1px solid rgba(255,211,106,.20)}
-.runFlowFill{height:100%;border-radius:inherit;background:linear-gradient(90deg,#8f6a16,#ffd36a);box-shadow:0 0 10px rgba(255,211,106,.65)}
+.runFlowBar{
+  position:relative;
+  height:17px;
+  margin-top:9px;
+  border-radius:999px;
+  overflow:hidden;
+  background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,211,106,.20)
+}
+.runFlowFill{
+  position:absolute;
+  inset:0 auto 0 0;
+  height:100%;
+  border-radius:inherit;
+  background:linear-gradient(90deg,#8f6a16,#ffd36a);
+  box-shadow:0 0 10px rgba(255,211,106,.65)
+}
+.runFlowPct{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  z-index:2;
+  font-size:9px;
+  font-weight:1000;
+  letter-spacing:1px;
+  color:#fff;
+  text-shadow:0 1px 4px #000
+}
 .runArchiveProgress{margin:12px 0 16px;font-size:10px;font-weight:900;letter-spacing:1.4px;color:rgba(255,255,255,.48)}
 .runActions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .runAction{min-height:48px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.045);color:#fff;font:900 12px Arial;letter-spacing:2px;cursor:pointer;transition:transform .12s ease,border-color .15s ease,background .15s ease,box-shadow .15s ease}
@@ -1130,6 +1218,10 @@ body.uiModalOpen #center{pointer-events:none}
     <div class="pauseSelection">
       <div class="pauseFlowName" id="pauseFlowName">FLOW 1 · REACH</div>
       <div class="pauseFlowObjective" id="pauseFlowObjective">LOADING…</div>
+      <div class="pauseFlowBar" aria-label="Current Flow progress">
+        <div class="pauseFlowFill" id="pauseFlowFill"></div>
+        <div class="pauseFlowPct" id="pauseFlowPct">0%</div>
+      </div>
     </div>
     <div class="pauseActions">
       <button class="pauseButton primary" id="pauseResume" type="button">RESUME</button>
@@ -1138,7 +1230,7 @@ body.uiModalOpen #center{pointer-events:none}
     <div class="pauseHint">CENTER EYE OR ESC TO RESUME</div>
   </div>
 </div>
-<div id="challengeHud"><div id="challengeName">CURRENT FLOW</div><div id="challengeText">LOADING…</div><div id="challengeBar"><div id="challengeFill"></div></div></div>
+<div id="challengeHud"><div id="challengeName">CURRENT FLOW</div><div id="challengeText">LOADING…</div><div id="challengeBar"><div id="challengeFill"></div><div id="challengePct">0%</div></div></div>
 <div id="powerAnnouncement" aria-live="polite"></div><div id="modeBanner"></div><div id="chronoMultiplier">×2 SCORE</div><div id="warpBurstFx"></div><div id="flowFx"></div><div id="fluxFx"></div><div id="chronoFx"></div><div id="midasFx"></div><div id="prismFx"></div><div id="pulseWaves"></div>
 <div id="flowArchive" aria-hidden="true"><div class="archiveCard" role="dialog" aria-modal="true" aria-labelledby="flowPathTitle"><div class="archiveHeader"><h2 id="flowPathTitle">FLOW PATH</h2><button class="archiveClose" id="archiveClose" type="button" aria-label="Close Flow Path">×</button></div><div id="archiveList"></div></div></div>
 
@@ -3245,6 +3337,20 @@ function isFlowCompleted(index){
 }
 
 
+/*
+  SEQUENTIAL FLOW PATH:
+  Inside an unlocked Sector, only the current unfinished Flow is available.
+  Completed Flows stay visible/replayable. Future Flows stay visible but locked
+  until the current Flow is completed.
+*/
+function isFlowArchiveSelectable(index){
+    return (
+        index === currentFlowIndex ||
+        isFlowCompleted(index)
+    );
+}
+
+
 function blockIsComplete(blockNumber){
 
     if(
@@ -3669,6 +3775,8 @@ function updateChallenge(){
   updateFlowHeading();
   document.getElementById("challengeText").textContent=activeChallenge.label;
   document.getElementById("challengeFill").style.width=pct+"%";
+  const challengePct=document.getElementById("challengePct");
+  if(challengePct)challengePct.textContent=`${Math.floor(pct)}%`;
   if(!challengeAdvanceTimer && raw>=activeChallenge.target)completeCurrentFlow();
 }
 // SHIFTVIX v2.5 PATCH 8 — FLOW SELECTION
@@ -3679,15 +3787,14 @@ function renderFlowArchive(){
 
     let html = `
         <div class="archiveProgress">
-            <span>FLOWS COMPLETED</span>
-            <span>${Math.min(completedFlows,FLOW_TOTAL)} / ${FLOW_TOTAL}</span>
+            <span>SECTOR ${blockForFlow(currentFlowIndex)} · FLOW ${currentFlowIndex+1}</span>
+            <span>${Math.min(completedFlows,FLOW_TOTAL)} / ${FLOW_TOTAL} COMPLETE</span>
         </div>
 
         <div class="archiveLegend">
             <span>✓ COMPLETED</span>
             <span>▶ CURRENT</span>
-            <span>• AVAILABLE</span>
-            <span>🔒 LOCKED</span>
+            <span>🔒 NEXT / LOCKED</span>
         </div>
     `;
 
@@ -3702,7 +3809,7 @@ function renderFlowArchive(){
         html += `
             <section class="archiveBlock ${blockLocked ? "lockedBlock" : ""}" data-block="${blockNumber}">
                 <div class="archiveBlockLabel">
-                    <span>FLOWS ${blockStart + 1}–${blockEnd}</span>
+                    <span>SECTOR ${blockNumber} · FLOWS ${blockStart + 1}–${blockEnd}</span>
                     <span class="blockProgress">${blockLocked ? "🔒" : `${blockDone}/${blockEnd-blockStart}`}</span>
                 </div>
                 <div class="archiveGrid">
@@ -3712,13 +3819,12 @@ function renderFlowArchive(){
             const flowNumber = i + 1;
             const isCompleted = isFlowCompleted(i);
             const isCurrent = i === currentFlowIndex;
-            const isLocked = !isFlowUnlocked(i);
+            const isLocked = !isFlowArchiveSelectable(i);
             const flowType = createFlow(i).category;
-            let rowClass = "available selectable";
-            let status = "•";
+            let rowClass = "locked";
+            let status = "🔒";
 
-            if(isLocked){rowClass="locked";status="🔒";}
-            else if(isCurrent){rowClass="current selectable";status="▶";}
+            if(isCurrent){rowClass="current selectable";status="▶";}
             else if(isCompleted){rowClass="done selectable";status="✓";}
 
             html += `
@@ -3877,10 +3983,9 @@ function selectFlowFromArchive(flowIndex){
 
     if(
         !Number.isInteger(flowIndex) ||
-        !isFlowUnlocked(flowIndex)
+        !isFlowArchiveSelectable(flowIndex)
     ){
-        loadSelectedFlow(flowIndex);
-        return;
+        return false;
     }
 
     // Completed Flows automatically enter replay mode.
@@ -3913,8 +4018,15 @@ function updatePauseSelection(){
   const name=document.getElementById("pauseFlowName");
   const objective=document.getElementById("pauseFlowObjective");
   const flow=activeChallenge||createFlow(currentFlowIndex);
+  const raw=challengeValue(flow);
+  const value=Math.max(0,Math.min(flow.target,raw));
+  const pct=Math.max(0,Math.min(100,(value/flow.target)*100));
   if(name)name.textContent=`FLOW ${currentFlowIndex+1} · ${flow.category}`;
   if(objective)objective.textContent=flow.label;
+  const fill=document.getElementById("pauseFlowFill");
+  const pctLabel=document.getElementById("pauseFlowPct");
+  if(fill)fill.style.width=`${pct}%`;
+  if(pctLabel)pctLabel.textContent=`${Math.floor(pct)}%`;
 }
 
 function applyPauseVisuals(isPaused){
@@ -5278,6 +5390,7 @@ function endRun(){
     const runFlowRaw = challengeValue(runFlow);
     const runFlowValue = Math.max(0,Math.min(runFlow.target,runFlowRaw));
     const runFlowPct = Math.max(0,Math.min(100,(runFlowValue/runFlow.target)*100));
+    const runFlowPctWhole = Math.floor(runFlowPct);
     const runFlowProgress = formatRunFlowProgress(runFlow,runFlowValue);
 
     card.innerHTML = `
@@ -5307,8 +5420,9 @@ function endRun(){
         </div>
         <div class="runFlowObjective">${runFlow.label}</div>
         <div class="runFlowProgressText">${runFlowProgress}</div>
-        <div class="runFlowBar" aria-label="Flow progress">
+        <div class="runFlowBar" aria-label="Flow progress ${runFlowPctWhole}%">
             <div class="runFlowFill" style="width:${runFlowPct}%"></div>
+            <div class="runFlowPct">${runFlowPctWhole}%</div>
         </div>
     </div>
 
