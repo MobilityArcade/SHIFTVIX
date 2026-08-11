@@ -51,7 +51,7 @@ function track(eventName, data = {}) {
 <meta name="apple-mobile-web-app-title" content="SHIFTVIX">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<!-- SHIFTVIX 2.9.2 — UNIFORM ALTERNATING VOID SPIKES -->
+<!-- SHIFTVIX 2.9.3 — SIMPLE TUTORIAL + ONE-WAY VOID COLLISION -->
 <title>SHIFTVIX</title>
 <style>
 html,body{
@@ -779,16 +779,22 @@ canvas{
 #tutorialPrompt{
   position:fixed;
   left:50%;
-  top:23%;
-  transform:translate(-50%,-50%) scale(.94);
+  top:34%;
+  width:min(88vw,620px);
+  max-width:calc(100vw - 28px);
+  transform:translate(-50%,-50%) scale(.96);
   z-index:72;
   pointer-events:none;
   opacity:0;
+  box-sizing:border-box;
   white-space:nowrap;
+  overflow:hidden;
+  text-overflow:clip;
   text-align:center;
-  font-size:clamp(22px,5.6vw,40px);
+  font-size:clamp(18px,4.2vw,32px);
   font-weight:1000;
-  letter-spacing:2.4px;
+  line-height:1;
+  letter-spacing:1.7px;
   color:#fff;
   text-shadow:0 0 9px rgba(255,255,255,.98),0 0 30px rgba(125,249,255,.62);
   transition:opacity .16s ease,transform .18s ease
@@ -799,9 +805,18 @@ canvas{
 }
 @media(max-width:520px){
   #tutorialPrompt{
-    top:24%;
-    font-size:clamp(22px,6.7vw,34px);
-    letter-spacing:1.7px
+    top:34%;
+    width:92vw;
+    max-width:calc(100vw - 20px);
+    font-size:clamp(17px,5.2vw,25px);
+    letter-spacing:1.1px
+  }
+}
+@media(min-width:521px) and (max-width:1024px){
+  #tutorialPrompt{
+    top:33%;
+    width:86vw;
+    font-size:clamp(20px,3.8vw,30px)
   }
 }
 #modeBanner{position:absolute;left:50%;top:31%;transform:translate(-50%,-50%);z-index:65;pointer-events:none;font-size:16px;font-weight:1000;letter-spacing:3px;opacity:0;color:#ffd36a;text-shadow:0 0 14px #ffd36a,0 0 42px #ff8800;white-space:nowrap}
@@ -1871,14 +1886,14 @@ function updateSilentTutorial(){
   if(tutorialStage===0){
     tutorialStage=1;
     tutorialStageStartedAt=performance.now();
-    showTutorialPrompt("SHIFT TO COLLECT",1800);
+    showTutorialPrompt("SWIPE TO COLLECT",1650);
     return;
   }
 
   if(tutorialStage===1 && tutorialFirstCollectSeen){
     tutorialStage=2;
     tutorialStageStartedAt=performance.now();
-    showTutorialPrompt("SHIFT TO AVOID",1800);
+    showTutorialPrompt("DODGE THE VOID",1650);
 
     setTimeout(()=>{
       if(
@@ -1901,7 +1916,7 @@ function updateSilentTutorial(){
   ){
     tutorialStage=3;
     tutorialStageStartedAt=performance.now();
-    showTutorialPrompt("POWER ORBS CHANGE THE FLOW",2200);
+    showTutorialPrompt("GRAB POWER ORBS",1750);
 
     if(
       !fluxOrbActive &&
@@ -1918,7 +1933,7 @@ function updateSilentTutorial(){
   if(tutorialStage===3 && tutorialPowerSeen){
     tutorialStage=4;
     tutorialStageStartedAt=performance.now();
-    showTutorialPrompt("SURVIVE THE FLOW",1900);
+    showTutorialPrompt("SURVIVE THE FLOW",1750);
     setTimeout(finishSilentTutorial,2050);
   }
 }
@@ -6257,6 +6272,7 @@ if(midasTime>0&&isRegularCollectible){
   b.position.y=roadPoint.y;
 }
 
+const previousZ=b.position.z;
 b.position.z+=speed*worldDt*b.userData.speedMult;
 if(b.userData.isFlux){
   const paletteIndex=Math.floor(performance.now()/100)%FLUX_PALETTE.length;
@@ -6325,7 +6341,54 @@ if(b.userData.isMidas){
   const pulse=.98+blink*.12;b.scale.setScalar(introScale*pulse);
 }
 
-b.lookAt(playerX,playerY,PLAYER_Z);const dz=Math.abs(b.position.z-PLAYER_Z),dxy=Math.hypot(b.position.x-playerX,b.position.y-playerY);const midasAutoCollect=midasTime>0&&isRegularCollectible&&dz<58;if(midasAutoCollect||(dz<42&&dxy<(heroMode?COLLECT_RADIUS*1.45:COLLECT_RADIUS)))collectBeacon(b);if(b.position.z>NEAR_Z+60){
+b.lookAt(playerX,playerY,PLAYER_Z);
+const dz=Math.abs(b.position.z-PLAYER_Z);
+const dxy=Math.hypot(b.position.x-playerX,b.position.y-playerY);
+const midasAutoCollect=midasTime>0&&isRegularCollectible&&dz<58;
+
+const voidCrossedPlayer=
+  b.userData.isVoid &&
+  previousZ<=PLAYER_Z &&
+  b.position.z>PLAYER_Z;
+
+const voidInFrontHitWindow=
+  b.userData.isVoid &&
+  b.position.z<=PLAYER_Z &&
+  dz<42;
+
+const voidCanHit=
+  b.userData.isVoid &&
+  (voidInFrontHitWindow||voidCrossedPlayer);
+
+if(
+  midasAutoCollect ||
+  (
+    !b.userData.isVoid &&
+    dz<42 &&
+    dxy<(heroMode?COLLECT_RADIUS*1.45:COLLECT_RADIUS)
+  ) ||
+  (
+    voidCanHit &&
+    dxy<(heroMode?COLLECT_RADIUS*1.45:COLLECT_RADIUS)
+  )
+){
+  collectBeacon(b);
+}
+
+if(
+  b.userData.isVoid &&
+  b.userData.state==="active" &&
+  b.position.z>PLAYER_Z+4
+){
+  trackGame("void_avoided",{
+    distance:Math.floor(distance),
+    level,
+    flow_number:currentFlowIndex+1
+  });
+  b.userData.state="missed";
+}
+
+if(b.position.z>NEAR_Z+60){
   if(b.userData.isFlux){
     fluxOrbActive=false;
     trackGame("flux_orb_missed",{
@@ -6353,7 +6416,10 @@ b.lookAt(playerX,playerY,PLAYER_Z);const dz=Math.abs(b.position.z-PLAYER_Z),dxy=
     trackGame("warp_orb_missed",{trigger_reason:b.userData.warpReason,power_tier:b.userData.powerTier||1,distance:Math.floor(distance),flow_number:currentFlowIndex+1,warp_count_run:warpCollectedThisRun});
   }
 
-  if(b.userData.isVoid){
+  if(
+    b.userData.isVoid &&
+    b.userData.state==="active"
+  ){
     trackGame("void_avoided",{
       distance:Math.floor(distance),
       level,
