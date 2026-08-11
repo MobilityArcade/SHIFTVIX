@@ -51,7 +51,7 @@ function track(eventName, data = {}) {
 <meta name="apple-mobile-web-app-title" content="SHIFTVIX">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<!-- SHIFTVIX POWER ORBS 2.3 — FLOW % + 10 SECTORS × 30 SEQUENTIAL FLOWS -->
+<!-- SHIFTVIX 2.9.2 — UNIFORM ALTERNATING VOID SPIKES -->
 <title>SHIFTVIX</title>
 <style>
 html,body{
@@ -716,8 +716,25 @@ canvas{
    SHIFTVIX — FLOW SYSTEM
    ========================= */
 #challengeHud{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:22;width:min(620px,92vw);text-align:center;color:#fff;font-weight:900;text-shadow:0 0 10px #000;cursor:pointer;pointer-events:auto}
-#challengeName{font-size:20px;letter-spacing:2.8px;color:#ffd36a;margin-bottom:9px;text-shadow:0 0 10px rgba(255,211,106,.5),0 0 24px rgba(255,211,106,.22)}
-#challengeText{font-size:clamp(17px,4.5vw,22px);line-height:1.18;letter-spacing:1.6px;color:#fff;white-space:normal;overflow:visible;text-overflow:clip;padding:0 8px}
+#challengeName{
+  font-size:clamp(26px,6.1vw,48px);
+  letter-spacing:2.4px;
+  color:#ffd36a;
+  margin-bottom:9px;
+  line-height:1;
+  white-space:nowrap;
+  text-shadow:0 0 10px rgba(255,211,106,.66),0 0 24px rgba(255,211,106,.28)
+}
+#challengeText{
+  font-size:clamp(14px,3.5vw,20px);
+  line-height:1.18;
+  letter-spacing:1.35px;
+  color:#fff;
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  padding:0 8px
+}
 #challengeBar{
   position:relative;
   margin:11px auto 0;
@@ -753,9 +770,39 @@ canvas{
 }
 @media (max-width:768px){
   #challengeHud{bottom:24px;width:92vw}
-  #challengeName{font-size:22px;margin-bottom:8px;letter-spacing:2.5px}
+  #challengeName{font-size:clamp(25px,6.7vw,34px);margin-bottom:7px;letter-spacing:1.5px;white-space:nowrap}
   #challengeText{font-size:19px;letter-spacing:1.3px}
   #challengeBar{width:82vw;height:17px}
+}
+
+/* SHIFTVIX 2.4 — first-run silent tutorial */
+#tutorialPrompt{
+  position:fixed;
+  left:50%;
+  top:23%;
+  transform:translate(-50%,-50%) scale(.94);
+  z-index:72;
+  pointer-events:none;
+  opacity:0;
+  white-space:nowrap;
+  text-align:center;
+  font-size:clamp(22px,5.6vw,40px);
+  font-weight:1000;
+  letter-spacing:2.4px;
+  color:#fff;
+  text-shadow:0 0 9px rgba(255,255,255,.98),0 0 30px rgba(125,249,255,.62);
+  transition:opacity .16s ease,transform .18s ease
+}
+#tutorialPrompt.show{
+  opacity:1;
+  transform:translate(-50%,-50%) scale(1)
+}
+@media(max-width:520px){
+  #tutorialPrompt{
+    top:24%;
+    font-size:clamp(22px,6.7vw,34px);
+    letter-spacing:1.7px
+  }
 }
 #modeBanner{position:absolute;left:50%;top:31%;transform:translate(-50%,-50%);z-index:65;pointer-events:none;font-size:16px;font-weight:1000;letter-spacing:3px;opacity:0;color:#ffd36a;text-shadow:0 0 14px #ffd36a,0 0 42px #ff8800;white-space:nowrap}
 #modeBanner.show{animation:modeFlash 1.25s ease-out forwards}
@@ -1230,8 +1277,8 @@ body.uiModalOpen #center{pointer-events:none}
     <div class="pauseHint">CENTER EYE OR ESC TO RESUME</div>
   </div>
 </div>
-<div id="challengeHud"><div id="challengeName">CURRENT FLOW</div><div id="challengeText">LOADING…</div><div id="challengeBar"><div id="challengeFill"></div><div id="challengePct">0%</div></div></div>
-<div id="powerAnnouncement" aria-live="polite"></div><div id="modeBanner"></div><div id="chronoMultiplier">×2 SCORE</div><div id="warpBurstFx"></div><div id="flowFx"></div><div id="fluxFx"></div><div id="chronoFx"></div><div id="midasFx"></div><div id="prismFx"></div><div id="pulseWaves"></div>
+<div id="challengeHud"><div id="challengeName">SURVIVE THE FLOW</div><div id="challengeText">LOADING…</div><div id="challengeBar"><div id="challengeFill"></div><div id="challengePct">0%</div></div></div>
+<div id="tutorialPrompt" aria-live="polite"></div><div id="powerAnnouncement" aria-live="polite"></div><div id="modeBanner"></div><div id="chronoMultiplier">×2 SCORE</div><div id="warpBurstFx"></div><div id="flowFx"></div><div id="fluxFx"></div><div id="chronoFx"></div><div id="midasFx"></div><div id="prismFx"></div><div id="pulseWaves"></div>
 <div id="flowArchive" aria-hidden="true"><div class="archiveCard" role="dialog" aria-modal="true" aria-labelledby="flowPathTitle"><div class="archiveHeader"><h2 id="flowPathTitle">FLOW PATH</h2><button class="archiveClose" id="archiveClose" type="button" aria-label="Close Flow Path">×</button></div><div id="archiveList"></div></div></div>
 
 <!-- SHIFTVIX CHRONO 2.0 — SLOW TIME + PRISM VISION + 2X SCORE -->
@@ -1767,6 +1814,114 @@ function playFluxSound(){
   shimmer.start(now+.08);shimmer.stop(now+.45);
 }
 
+
+
+const SILENT_TUTORIAL_KEY="shiftvixSilentTutorialComplete";
+let silentTutorialComplete=
+  localStorage.getItem(SILENT_TUTORIAL_KEY)==="1";
+
+let tutorialStage=silentTutorialComplete?99:0;
+let tutorialPromptTimer=null;
+let tutorialStageStartedAt=0;
+let tutorialVoidIntroduced=false;
+let tutorialPowerSeen=false;
+let tutorialFirstCollectSeen=false;
+
+function showTutorialPrompt(text,hold=1600){
+  if(silentTutorialComplete)return;
+  const el=document.getElementById("tutorialPrompt");
+  if(!el)return;
+
+  el.textContent=text;
+  el.classList.add("show");
+
+  if(tutorialPromptTimer){
+    clearTimeout(tutorialPromptTimer);
+  }
+
+  tutorialPromptTimer=setTimeout(()=>{
+    el.classList.remove("show");
+  },hold);
+}
+
+function finishSilentTutorial(){
+  if(silentTutorialComplete)return;
+
+  silentTutorialComplete=true;
+  tutorialStage=99;
+  localStorage.setItem(SILENT_TUTORIAL_KEY,"1");
+
+  const el=document.getElementById("tutorialPrompt");
+  if(el)el.classList.remove("show");
+
+  trackGame("silent_tutorial_completed",{
+    distance:Math.floor(distance),
+    level
+  });
+}
+
+function updateSilentTutorial(){
+  if(
+    silentTutorialComplete ||
+    !gameStarted ||
+    gameOver ||
+    paused
+  )return;
+
+  if(tutorialStage===0){
+    tutorialStage=1;
+    tutorialStageStartedAt=performance.now();
+    showTutorialPrompt("SHIFT TO COLLECT",1800);
+    return;
+  }
+
+  if(tutorialStage===1 && tutorialFirstCollectSeen){
+    tutorialStage=2;
+    tutorialStageStartedAt=performance.now();
+    showTutorialPrompt("SHIFT TO AVOID",1800);
+
+    setTimeout(()=>{
+      if(
+        !silentTutorialComplete &&
+        tutorialStage===2 &&
+        !tutorialVoidIntroduced
+      ){
+        tutorialVoidIntroduced=
+          makeVoidHazard("tutorial");
+      }
+    },450);
+
+    return;
+  }
+
+  if(
+    tutorialStage===2 &&
+    tutorialVoidIntroduced &&
+    performance.now()-tutorialStageStartedAt>3400
+  ){
+    tutorialStage=3;
+    tutorialStageStartedAt=performance.now();
+    showTutorialPrompt("POWER ORBS CHANGE THE FLOW",2200);
+
+    if(
+      !fluxOrbActive &&
+      !chronoOrbActive &&
+      !midasOrbActive &&
+      !warpOrbActive
+    ){
+      makeLegendaryOrb();
+    }
+
+    return;
+  }
+
+  if(tutorialStage===3 && tutorialPowerSeen){
+    tutorialStage=4;
+    tutorialStageStartedAt=performance.now();
+    showTutorialPrompt("SURVIVE THE FLOW",1900);
+    setTimeout(finishSilentTutorial,2050);
+  }
+}
 
 let powerAnnouncementTimer=null;
 function showPowerAnnouncement(powerName,tier){
@@ -2408,7 +2563,7 @@ const environmentEngine={
   applyLaneGuides(){const rotation=this.current.getRotation();laneGuides.forEach(guide=>{guide.rotation.z=rotation;});}
 };
 
-function updateFlowHeading(){const heading=document.getElementById("challengeName");if(heading)heading.textContent=environmentEngine.current.name;}
+function updateFlowHeading(){const heading=document.getElementById("challengeName");if(heading)heading.textContent="SURVIVE THE FLOW";}
 function updateEnvironment(dt){environmentEngine.update(dt);}
 function resetEnvironmentForRun(){environmentEngine.resetForRun();}
 function environmentPoint(x,y){return environmentEngine.transformPoint(x,y);}
@@ -4582,6 +4737,302 @@ function makeMidasOrb(reason="random"){
 // Tier I +500m / Tier II +1000m / Tier III +1500m.
 // This is an instantaneous spatial jump, not a speed boost.
 // =========================
+
+// =========================
+// SHIFTVIX 2.4 — VOID HAZARD
+// A black O-ring threat that uses the same 3x3 lane language.
+// Touching one costs one strike.
+// =========================
+let voidSpawnCooldown=1.25;
+let voidCountRun=0;
+
+function makeVoidHazard(reason="normal",forcedLane=null){
+  const activeVoids=beacons.filter(
+    b=>b?.userData?.isVoid && b.userData.state==="active"
+  ).length;
+  if(activeVoids>=5)return false;
+
+  trainId++;
+
+  let xIndex;
+  let yIndex;
+
+  if(forcedLane && Number.isInteger(forcedLane.x) && Number.isInteger(forcedLane.y)){
+    xIndex=Math.max(0,Math.min(2,forcedLane.x));
+    yIndex=Math.max(0,Math.min(2,forcedLane.y));
+  }else{
+    xIndex=Math.floor(Math.random()*3);
+    yIndex=Math.floor(Math.random()*3);
+  }
+
+  const x=LANE_X[xIndex];
+  const y=LANE_Y[yIndex];
+
+  const group=new THREE.Group();
+
+  // SHIFTVIX 2.9 — VOID SPIKE METEOR
+  // Fully opaque pitch-black center.
+  const core=new THREE.Mesh(
+    new THREE.SphereGeometry(7.45,28,28),
+    new THREE.MeshBasicMaterial({
+      color:0x000000,
+      transparent:false,
+      opacity:1,
+      depthWrite:false
+    })
+  );
+
+  // Fiery orange ring.
+  const corona=new THREE.Mesh(
+    new THREE.TorusGeometry(8.30,1.30,12,56),
+    new THREE.MeshBasicMaterial({
+      color:0xff7100,
+      transparent:true,
+      opacity:.94,
+      blending:THREE.AdditiveBlending,
+      depthWrite:false
+    })
+  );
+
+  // Bright gold strike edge.
+  const ring=new THREE.Mesh(
+    new THREE.TorusGeometry(8.45,.60,10,56),
+    new THREE.MeshBasicMaterial({
+      color:0xffd34f,
+      transparent:true,
+      opacity:.98,
+      blending:THREE.AdditiveBlending,
+      depthWrite:false
+    })
+  );
+
+  // Red-orange heat ring.
+  const heat=new THREE.Mesh(
+    new THREE.TorusGeometry(9.30,1.20,10,52),
+    new THREE.MeshBasicMaterial({
+      color:0xff2800,
+      transparent:true,
+      opacity:.32,
+      blending:THREE.AdditiveBlending,
+      depthWrite:false
+    })
+  );
+
+  // Soft outer aura.
+  const aura=new THREE.Mesh(
+    new THREE.TorusGeometry(10.55,1.15,8,48),
+    new THREE.MeshBasicMaterial({
+      color:0xff4b00,
+      transparent:true,
+      opacity:.13,
+      blending:THREE.AdditiveBlending,
+      depthWrite:false
+    })
+  );
+
+  // SHIFTVIX 2.9.2 — UNIFORM ALTERNATING SPIKES
+  // Big spike, little spike, big spike, little spike...
+  // Every wide base is anchored to the outside of the fiery ring,
+  // and every sharp tip points AWAY from the meteor center.
+  const spikes=new THREE.Group();
+
+  const bigSpikeCount=8;
+  const totalSpikeCount=bigSpikeCount*2;
+
+  // Ring edge is ~9.3 units from center.
+  // ConeGeometry is centered on its local Y axis, so the spike center must
+  // sit half its length beyond the attachment point for the base to touch
+  // the ring cleanly.
+  const attachRadius=9.15;
+
+  for(let i=0;i<totalSpikeCount;i++){
+    const a=(i/totalSpikeCount)*Math.PI*2;
+    const isBig=(i%2===0);
+
+    const spikeLength=isBig?5.6:3.5;
+    const spikeBaseRadius=isBig?1.22:.78;
+
+    const spike=new THREE.Mesh(
+      new THREE.ConeGeometry(
+        spikeBaseRadius,
+        spikeLength,
+        12,
+        1,
+        false
+      ),
+      new THREE.MeshBasicMaterial({
+        color:isBig?0xff1e20:0xff3a28,
+        transparent:true,
+        opacity:.98,
+        blending:THREE.AdditiveBlending,
+        depthWrite:false
+      })
+    );
+
+    /*
+      ConeGeometry points along local +Y.
+      Rotate +Y so the cone tip points radially OUTWARD.
+      Because the geometry is centered, place the cone center at:
+      ring attachment radius + half spike length.
+      That puts the thick base directly against the ring.
+    */
+    spike.rotation.z = a - Math.PI/2;
+
+    const centerRadius=attachRadius + spikeLength*.5;
+
+    spike.position.set(
+      Math.cos(a)*centerRadius,
+      Math.sin(a)*centerRadius,
+      0
+    );
+
+    spikes.add(spike);
+  }
+
+group.add(aura);
+  group.add(heat);
+  group.add(spikes);
+  group.add(corona);
+  group.add(ring);
+  group.add(core);
+
+  group.position.set(x,y,FAR_Z+135);
+  group.scale.setScalar(introScale);
+
+  group.userData={
+    core,
+    corona,
+    heat,
+    ring,
+    aura,
+    glow:aura,
+    spikes,
+    isVoid:true,
+    state:"active",
+    fade:1,
+    train:trainId,
+    speedMult:1.78,
+    roadX:x,
+    roadY:y,
+    voidReason:reason,
+    voidBornAt:performance.now(),
+    meteorPhase:Math.random()*Math.PI*2,
+    meteorLaneX:xIndex,
+    meteorLaneY:yIndex
+  };
+
+  scene.add(group);
+  beacons.push(group);
+  voidCountRun++;
+
+  trackGame("void_spawned",{
+    trigger_reason:reason,
+    distance:Math.floor(distance),
+    level,
+    flow_number:currentFlowIndex+1,
+    lane_x:xIndex,
+    lane_y:yIndex,
+    void_count_run:voidCountRun
+  });
+
+  return true;
+}
+
+function spawnVoidVolley(reason="normal"){
+  const allLanes=[];
+  for(let y=0;y<3;y++){
+    for(let x=0;x<3;x++){
+      allLanes.push({x,y});
+    }
+  }
+
+  for(let i=allLanes.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [allLanes[i],allLanes[j]]=[allLanes[j],allLanes[i]];
+  }
+
+  let count=1;
+
+  if(reason!=="tutorial"){
+    const r=Math.random();
+    if(r>=.77)count=3;
+    else if(r>=.34)count=2;
+  }
+
+  let spawned=0;
+
+  for(let i=0;i<count;i++){
+    if(makeVoidHazard(
+      i===0?reason:(count===3?"meteor_triple":"meteor_pair"),
+      allLanes[i]
+    )){
+      spawned++;
+    }
+  }
+
+  return spawned;
+}
+
+function hitVoidHazard(b){
+  if(!b?.userData || b.userData.state!=="active")return;
+
+  b.userData.state="collected";
+  b.userData.fade=1;
+  fluxCollectionStreak=0;
+  breakTimer=0;
+  combo=1;
+
+  if(!heroMode){
+    strikes++;
+    lastStrikeDistance=distance;
+
+    if(environmentEngine?.current?.onStrike){
+      environmentEngine.current.onStrike();
+    }
+
+    track("strike",{
+      strike_number:strikes,
+      level,
+      distance:Math.floor(distance),
+      score,
+      source:"void"
+    });
+
+    trackGame("void_hit",{
+      distance:Math.floor(distance),
+      level,
+      strikes,
+      flow_number:currentFlowIndex+1
+    });
+
+    playStrike();
+    pulseCenterReactorDamage();
+
+    if(navigator.vibrate){
+      navigator.vibrate([30,40,30]);
+    }
+
+    if(strikes<3){
+      animateLostLife(strikes-1);
+    }else{
+      updateStrikes();
+    }
+
+    const signal=document.getElementById("signal");
+    if(signal)signal.textContent="Signal: break "+strikes+"/3";
+
+    if(strikes>=3){
+      endRun();
+    }
+  }else{
+    // During the opening grace period, the Void still teaches avoidance
+    // without ending a brand-new player's run.
+    playStrike();
+    pulseCenterReactorDamage();
+    if(navigator.vibrate)navigator.vibrate([18,24,18]);
+  }
+}
+
 const WARP_COLOR=0xd86cff;
 const WARP_CORE_COLOR=0xffffff;
 const WARP_GLOW_COLOR=0x7feaff;
@@ -5169,6 +5620,12 @@ function takeStrike(){
 
 }function collectBeacon(b){
  if(b.userData.state!=="active")return;
+
+ if(b.userData.isVoid){
+   hitVoidHazard(b);
+   return;
+ }
+
  b.userData.state="collected";b.userData.fade=1;
  if(!runStarted){runStarted=true;breakTimer=0;document.getElementById("signal").textContent="Signal: run started";}
  lastFoundAt=performance.now();breakTimer=0;
@@ -5208,12 +5665,16 @@ function takeStrike(){
 
    const powerTier=b.userData.powerTier||1;
    if(collectedType==="flux"){
+     if(!silentTutorialComplete)tutorialPowerSeen=true;
      activateFluxBoost(b.userData.fluxReason,powerTier);
    }else if(collectedType==="chrono"){
+     if(!silentTutorialComplete)tutorialPowerSeen=true;
      activateChrono(b.userData.chronoReason,powerTier);
    }else if(collectedType==="midas"){
+     if(!silentTutorialComplete)tutorialPowerSeen=true;
      activateMidas(b.userData.midasReason,powerTier);
    }else{
+     if(!silentTutorialComplete)tutorialPowerSeen=true;
      activateWarp(b.userData.warpReason,powerTier);
    }
 
@@ -5228,6 +5689,9 @@ function takeStrike(){
 
 score += gained;
 foundCount++;
+if(!silentTutorialComplete){
+  tutorialFirstCollectSeen=true;
+}
 if(midasTime>0)midasAbsorbedThisState++;
 fluxCollectionStreak++;
 if(fluxCollectionStreak>=FLUX_COLLECTION_STREAK_TARGET){
@@ -5450,6 +5914,22 @@ function endRun(){
 
 }
 function resetRun(){
+if(!silentTutorialComplete){
+  tutorialStage=0;
+  tutorialStageStartedAt=0;
+  tutorialVoidIntroduced=false;
+  tutorialPowerSeen=false;
+  tutorialFirstCollectSeen=false;
+
+  if(tutorialPromptTimer){
+    clearTimeout(tutorialPromptTimer);
+    tutorialPromptTimer=null;
+  }
+
+  const tutorialPrompt=document.getElementById("tutorialPrompt");
+  if(tutorialPrompt)tutorialPrompt.classList.remove("show");
+}
+
 scheduleNextPowerOrbOpportunity(true);
 const powerAnnouncement=document.getElementById("powerAnnouncement");
 if(powerAnnouncement){
@@ -5487,7 +5967,7 @@ vix.style.transform = "translateY(0)";
 
 title.style.transform = "translate(-50%,-50%)";
 
-const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;const hudScoreReset=document.getElementById("hudScore");if(hudScoreReset)hudScoreReset.textContent="0";tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
+const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;const hudScoreReset=document.getElementById("hudScore");if(hudScoreReset)hudScoreReset.textContent="0";tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;voidSpawnCooldown=1.25;voidCountRun=0;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
 
 lastLevel = 1;strikes = 0;milestonesReached = {};lastWarpBreakthrough=0;starColorUpdateFrame=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();applyFrozenGameViewport(stableViewportWidth,stableViewportHeight);resetEnvironmentForRun();beginCurrentFlow();updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
 const title = document.getElementById("gameTitle");
@@ -5559,6 +6039,7 @@ if(warpBoundary>lastWarpBreakthrough){
 }
 
 updateChallenge();
+updateSilentTutorial();
 updateEnvironment(worldDt);
 starColorUpdateFrame=(starColorUpdateFrame+1)%1200;
 updateFluxDust(worldDt);
@@ -5575,6 +6056,24 @@ if(
 ){
   makeLegendaryOrb();
   scheduleNextPowerOrbOpportunity(false);
+}
+
+if(silentTutorialComplete){
+  voidSpawnCooldown-=worldDt;
+
+  if(
+    voidSpawnCooldown<=0 &&
+    distance>=55
+  ){
+    const spawnedVoids=spawnVoidVolley("normal");
+
+    if(spawnedVoids>0){
+      const base=Math.max(1.25,2.15-level*.055);
+      voidSpawnCooldown=base+Math.random()*.90;
+    }else{
+      voidSpawnCooldown=.40;
+    }
+  }
 }
 
 spawnTimer-=worldDt;
@@ -5724,7 +6223,9 @@ const roadPoint=environmentPoint(b.userData.roadX,b.userData.roadY);
 const isRegularCollectible=
   !b.userData.isFlux&&
   !b.userData.isChrono&&
-  !b.userData.isMidas;
+  !b.userData.isMidas&&
+  !b.userData.isWarp&&
+  !b.userData.isVoid;
 
 if(midasTime>0&&isRegularCollectible){
   // Golden Touch bends every normal coin from all nine lanes toward the player.
@@ -5776,6 +6277,45 @@ if(b.userData.isChrono){
   b.scale.setScalar(introScale*pulse);
 }
 
+if(b.userData.isVoid){
+  const t=performance.now()*.012+b.userData.meteorPhase;
+  const pulse=.5+.5*Math.sin(t);
+
+  if(b.userData.corona)b.userData.corona.material.opacity=.72+pulse*.24;
+  if(b.userData.heat)b.userData.heat.material.opacity=.20+pulse*.20;
+  if(b.userData.ring)b.userData.ring.material.opacity=.84+pulse*.14;
+  if(b.userData.aura)b.userData.aura.material.opacity=.07+pulse*.09;
+
+  // Keep the VOID center absolutely pitch black.
+  if(b.userData.core){
+    b.userData.core.material.transparent=false;
+    b.userData.core.material.opacity=1;
+    b.userData.core.material.color.setHex(0x000000);
+  }
+
+  const approach=THREE.MathUtils.clamp(
+    1-(b.position.z-NEAR_Z)/(FAR_Z+135-NEAR_Z),
+    0,
+    1
+  );
+
+  const surgeScale=
+    introScale*
+    (1.00 + approach*.10)*
+    (1+pulse*.022);
+
+  b.scale.setScalar(surgeScale);
+
+  if(b.userData.ring){
+    b.userData.ring.rotation.z+=worldDt*.85;
+  }
+
+  // Slow counter-rotation makes the spikes feel alive and threatening.
+  if(b.userData.spikes){
+    b.userData.spikes.rotation.z-=worldDt*.38;
+  }
+}
+
 if(b.userData.isMidas){
   const blink=.5+.5*Math.sin(performance.now()*.022);
   const shimmer=.5+.5*Math.sin(performance.now()*.039+1.2);
@@ -5813,12 +6353,23 @@ b.lookAt(playerX,playerY,PLAYER_Z);const dz=Math.abs(b.position.z-PLAYER_Z),dxy=
     trackGame("warp_orb_missed",{trigger_reason:b.userData.warpReason,power_tier:b.userData.powerTier||1,distance:Math.floor(distance),flow_number:currentFlowIndex+1,warp_count_run:warpCollectedThisRun});
   }
 
+  if(b.userData.isVoid){
+    trackGame("void_avoided",{
+      distance:Math.floor(distance),
+      level,
+      flow_number:currentFlowIndex+1
+    });
+  }
+
   b.userData.state="missed";
-}}if(b.userData.state==="collected"||b.userData.state==="missed"){b.userData.fade-=dt*2.8;const f=Math.max(0,b.userData.fade);b.userData.core.material.transparent=true;b.userData.core.material.opacity=f;if(b.userData.shell)b.userData.shell.material.opacity=f*.58;b.userData.glow.material.opacity =
-f * (
-0.09 +
-warpAmount * 0.18
-);b.scale.setScalar(Math.max(.001,f));}});for(let i=beacons.length-1;i>=0;i--){const b=beacons[i];if((b.userData.state==="collected"||b.userData.state==="missed")&&b.userData.fade<=0){disposeBeaconObject(b);beacons.splice(i,1);}};stars.forEach(s=>{const pos = s.geometry.attributes.position;const speedMultiplier =1 + warpAmount * 7;const stretch =1 + warpAmount * 5 * (1-chronoAmount*.72);for(let i=0;i<pos.count;i++){
+}}if(b.userData.state==="collected"||b.userData.state==="missed"){b.userData.fade-=dt*2.8;const f=Math.max(0,b.userData.fade);b.userData.core.material.transparent=true;b.userData.core.material.opacity=f;if(b.userData.shell)b.userData.shell.material.opacity=f*.58;
+if(b.userData.glow&&b.userData.glow.material){
+  b.userData.glow.material.opacity =
+  f * (
+  0.09 +
+  warpAmount * 0.18
+  );
+}b.scale.setScalar(Math.max(.001,f));}});for(let i=beacons.length-1;i>=0;i--){const b=beacons[i];if((b.userData.state==="collected"||b.userData.state==="missed")&&b.userData.fade<=0){disposeBeaconObject(b);beacons.splice(i,1);}};stars.forEach(s=>{const pos = s.geometry.attributes.position;const speedMultiplier =1 + warpAmount * 7;const stretch =1 + warpAmount * 5 * (1-chronoAmount*.72);for(let i=0;i<pos.count;i++){
 
     const baseXY = s.userData.baseXY;
     const baseX = baseXY ? baseXY[i*2] : pos.getX(i);
