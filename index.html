@@ -1337,6 +1337,104 @@ body.uiModalOpen #center{pointer-events:none}
     font-size:clamp(44px,7vw,64px);
   }
 }
+
+/* =========================================================
+   SHIFTVIX 2.15 — MINIMAL FLOW UI STANDARD
+   Keep the large objective HUD. Hide the redundant bottom HUD.
+   ========================================================= */
+#challengeHud{
+  display:none !important;
+}
+
+#objectiveHudCondition{
+  min-height:15px;
+  margin-top:10px;
+  font-size:clamp(10px,1.8vw,13px);
+  line-height:1;
+  font-weight:900;
+  letter-spacing:1.8px;
+  color:rgba(255,255,255,.72);
+  text-transform:uppercase;
+  white-space:nowrap;
+  text-shadow:0 0 7px rgba(255,255,255,.28);
+}
+
+#objectiveHudCondition:empty{
+  display:none;
+}
+
+@media(max-width:520px){
+  #objectiveHudCondition{
+    margin-top:9px;
+    font-size:clamp(9px,2.8vw,11px);
+    letter-spacing:1.3px;
+  }
+}
+
+/* Minimal Run Complete: only the active Flow result matters. */
+.resultsCard.flowResults.minimalResults{
+  width:min(410px,84vw);
+  padding:30px 30px 26px;
+}
+
+.minimalResults .big{
+  margin-bottom:24px;
+}
+
+.runObjectiveOnly{
+  margin:0 0 18px;
+  padding:20px 16px 18px;
+  border-radius:18px;
+  background:rgba(125,249,255,.045);
+  border:1px solid rgba(125,249,255,.16);
+  box-shadow:inset 0 0 26px rgba(125,249,255,.02);
+}
+
+.runObjectiveLabel{
+  font-size:12px;
+  font-weight:1000;
+  letter-spacing:2.2px;
+  color:rgba(255,255,255,.72);
+  text-transform:uppercase;
+}
+
+.runObjectiveValue{
+  margin-top:10px;
+  font-size:clamp(30px,7vw,46px);
+  line-height:1;
+  font-weight:1000;
+  letter-spacing:-.8px;
+  color:#fff;
+  white-space:nowrap;
+  text-shadow:0 0 13px rgba(255,255,255,.42);
+}
+
+.runObjectiveCondition{
+  margin-top:13px;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:1.5px;
+  color:rgba(255,255,255,.58);
+  text-transform:uppercase;
+}
+
+.runObjectiveCondition:empty{
+  display:none;
+}
+
+.minimalResults .runArchiveProgress{
+  margin:6px 0 18px;
+}
+
+@media(max-width:600px){
+  .resultsCard.flowResults.minimalResults{
+    width:min(390px,86vw);
+    padding:27px 21px 23px;
+  }
+  .runObjectiveValue{
+    font-size:clamp(29px,9vw,40px);
+  }
+}
 </style>
 </head>
 <body>
@@ -1346,6 +1444,7 @@ body.uiModalOpen #center{pointer-events:none}
   <div id="objectiveHud" aria-live="polite">
     <div id="objectiveHudLabel">LEVEL</div>
     <div id="objectiveHudValue">1 / 4</div>
+    <div id="objectiveHudCondition"></div>
   </div>
 </div>
 <div style="display:none"><span id="world">Distance Run</span>
@@ -3838,8 +3937,7 @@ function applyFlowStrikeAllowance(flow,index){
 
   return {
     ...flow,
-    maxFlowStrikes:maxStrikes,
-    label:`${flow.label} WITH ${maxStrikes} STRIKE${maxStrikes===1?"":"S"} OR LESS`
+    maxFlowStrikes:maxStrikes
   };
 }
 
@@ -4017,7 +4115,7 @@ function beginCurrentFlow(){
 
     updateChallenge();
 }
-function challengeValue(ch){
+function challengeBaseValue(ch){
   if(!challengeStart)return 0;
 
   const totalOrbs=objectiveOrbsCollected;
@@ -4027,31 +4125,43 @@ function challengeValue(ch){
     (challengeStart.tierCounts[ch.color]||0)
   );
 
-  let value=0;
+  if(ch.metric==="level")return level;
+  if(ch.metric==="orbs")return totalOrbs;
+  if(ch.metric==="color")return colorOrbs;
+  if(ch.metric==="score")return Math.max(0,score-challengeStart.score);
+  if(ch.metric==="distance")return Math.max(0,distance-challengeStart.distance);
+  if(ch.metric==="rings")return Math.max(0,goldRingsPassed-(challengeStart.rings||0));
 
-  if(ch.metric==="level")value=level;
-  else if(ch.metric==="orbs")value=totalOrbs;
-  else if(ch.metric==="color")value=colorOrbs;
-  else if(ch.metric==="score")value=Math.max(0,score-challengeStart.score);
-  else if(ch.metric==="distance")value=Math.max(0,distance-challengeStart.distance);
-  else if(ch.metric==="rings")value=Math.max(0,goldRingsPassed-(challengeStart.rings||0));
+  return 0;
+}
 
-  /*
-    Strike allowances count only strikes taken during THIS Flow.
-    Earlier mistakes in the same run do not make a later Flow impossible.
-  */
-  if(Number.isFinite(ch.maxFlowStrikes)){
-    const flowStrikes=Math.max(
-      0,
-      strikes-challengeStart.strikes
-    );
+function flowStrikesUsed(){
+  if(!challengeStart)return 0;
+  return Math.max(0,strikes-challengeStart.strikes);
+}
 
-    if(flowStrikes>ch.maxFlowStrikes){
-      return 0;
-    }
-  }
+function flowConditionMet(ch){
+  if(!Number.isFinite(ch?.maxFlowStrikes))return true;
+  return flowStrikesUsed()<=ch.maxFlowStrikes;
+}
 
-  return value;
+function flowConditionText(ch){
+  if(!Number.isFinite(ch?.maxFlowStrikes))return "";
+
+  // Player starts with 3 lives.
+  // maxFlowStrikes 1 = must finish with at least 2 lives.
+  // maxFlowStrikes 2 = must finish with at least 1 life.
+  const livesRequired=Math.max(1,3-ch.maxFlowStrikes);
+
+  return livesRequired===1
+    ? "FINISH WITH 1+ LIFE"
+    : `FINISH WITH ${livesRequired}+ LIVES`;
+}
+
+function challengeValue(ch){
+  // Always return the real objective progress.
+  // Life restrictions are checked separately so the HUD never jumps back to 0.
+  return challengeBaseValue(ch);
 }
 function completeCurrentFlow(){
 
@@ -4264,7 +4374,13 @@ function updateChallenge(){
   document.getElementById("challengeFill").style.width=pct+"%";
   const challengePct=document.getElementById("challengePct");
   if(challengePct)challengePct.textContent=`${Math.floor(pct)}%`;
-  if(!challengeAdvanceTimer && raw>=activeChallenge.target)completeCurrentFlow();
+  if(
+    !challengeAdvanceTimer &&
+    raw>=activeChallenge.target &&
+    flowConditionMet(activeChallenge)
+  ){
+    completeCurrentFlow();
+  }
 }
 // SHIFTVIX v2.5 PATCH 8 — FLOW SELECTION
 function renderFlowArchive(){
@@ -6274,10 +6390,14 @@ function objectiveHudData(){
         };
     }
 
-    if(
-        activeChallenge.metric==="orbs" ||
-        activeChallenge.metric==="color"
-    ){
+    if(activeChallenge.metric==="color"){
+        return {
+            label:`${activeChallenge.color} ORBS`,
+            value:`${current.toLocaleString()} / ${target.toLocaleString()}`
+        };
+    }
+
+    if(activeChallenge.metric==="orbs"){
         return {
             label:"ORBS",
             value:`${current.toLocaleString()} / ${target.toLocaleString()}`
@@ -6297,12 +6417,22 @@ function updateHUD(){
     const valueEl=
         document.getElementById("objectiveHudValue");
 
+    const conditionEl=
+        document.getElementById("objectiveHudCondition");
+
     if(!labelEl || !valueEl)return;
 
     const hud=objectiveHudData();
 
     labelEl.textContent=hud.label;
     valueEl.textContent=hud.value;
+
+    if(conditionEl){
+        conditionEl.textContent=
+            activeChallenge
+                ? flowConditionText(activeChallenge)
+                : "";
+    }
 }
 
 function pulseObjectiveHud(){
@@ -6319,17 +6449,32 @@ function pulseObjectiveHud(){
         valueEl.classList.remove("objectivePulse");
     },380);
 }
+function flowDisplayLabel(flow){
+  if(!flow)return "PROGRESS";
+  if(flow.metric==="color")return `${flow.color} ORBS`;
+  if(flow.metric==="orbs")return "ORBS";
+  if(flow.metric==="rings")return "RINGS";
+  if(flow.metric==="distance")return "DISTANCE";
+  if(flow.metric==="score")return "SCORE";
+  if(flow.metric==="level")return "LEVEL";
+  return flow.category||"PROGRESS";
+}
+
 function formatRunFlowProgress(flow,value){
   const current=Math.max(0,Math.min(flow.target,value));
   const whole=Math.floor(current);
   const target=Math.floor(flow.target);
-  if(flow.metric==="distance")return `${whole.toLocaleString()} / ${target.toLocaleString()}m`;
-  if(flow.metric==="score"||flow.metric==="precision")return `${whole.toLocaleString()} / ${target.toLocaleString()} POINTS`;
-  if(flow.metric==="level"||flow.metric==="lives"||flow.metric==="maxStrikesLevel")return `LEVEL ${whole} / ${target}`;
-  if(flow.metric==="rings")return `${whole.toLocaleString()} / ${target.toLocaleString()} RINGS`;
-  return `${whole.toLocaleString()} / ${target.toLocaleString()} ORBS`;
-}
 
+  if(flow.metric==="distance"){
+    return `${whole.toLocaleString()}m / ${target.toLocaleString()}m`;
+  }
+
+  if(flow.metric==="level"){
+    return `${whole.toLocaleString()} / ${target.toLocaleString()}`;
+  }
+
+  return `${whole.toLocaleString()} / ${target.toLocaleString()}`;
+}
 function endRun(){
 
     gameOver = true;
@@ -6446,43 +6591,32 @@ function endRun(){
         document.getElementById("roundComplete");
 
     const runFlow = activeChallenge || createFlow(currentFlowIndex);
-    const runFlowRaw = challengeValue(runFlow);
-    const runFlowValue = Math.max(0,Math.min(runFlow.target,runFlowRaw));
-    const runFlowPct = Math.max(0,Math.min(100,(runFlowValue/runFlow.target)*100));
-    const runFlowPctWhole = Math.floor(runFlowPct);
-    const runFlowProgress = formatRunFlowProgress(runFlow,runFlowValue);
+
+    // Show the player's REAL progress even if a life-condition was missed.
+    const runFlowRaw = challengeBaseValue(runFlow);
+    const runFlowValue = Math.max(
+        0,
+        Math.min(runFlow.target,runFlowRaw)
+    );
+
+    const runFlowProgress =
+        formatRunFlowProgress(runFlow,runFlowValue);
+
+    const runFlowLabel =
+        flowDisplayLabel(runFlow);
+
+    const runFlowCondition =
+        flowConditionText(runFlow);
 
     card.innerHTML = `
-<div class="resultsCard flowResults">
+<div class="resultsCard flowResults minimalResults">
 
     <div class="big">RUN COMPLETE</div>
 
-    <div class="runSnapshot">
-        <div class="runMetric">
-            <div class="runMetricLabel">DISTANCE</div>
-            <div class="runMetricValue">${Math.floor(distance).toLocaleString()}m</div>
-        </div>
-        <div class="runMetric">
-            <div class="runMetricLabel">LEVEL</div>
-            <div class="runMetricValue">${level}</div>
-        </div>
-        <div class="runMetric">
-            <div class="runMetricLabel">SCORE</div>
-            <div class="runMetricValue">${score.toLocaleString()}</div>
-        </div>
-    </div>
-
-    <div class="runFlowPanel">
-        <div class="runFlowTop">
-            <span class="runFlowNumber">FLOW ${currentFlowIndex+1}</span>
-            <span class="runFlowCategory">${runFlow.category}</span>
-        </div>
-        <div class="runFlowObjective">${runFlow.label}</div>
-        <div class="runFlowProgressText">${runFlowProgress}</div>
-        <div class="runFlowBar" aria-label="Flow progress ${runFlowPctWhole}%">
-            <div class="runFlowFill" style="width:${runFlowPct}%"></div>
-            <div class="runFlowPct">${runFlowPctWhole}%</div>
-        </div>
+    <div class="runObjectiveOnly">
+        <div class="runObjectiveLabel">${runFlowLabel}</div>
+        <div class="runObjectiveValue">${runFlowProgress}</div>
+        <div class="runObjectiveCondition">${runFlowCondition}</div>
     </div>
 
     <div class="runArchiveProgress">
