@@ -1252,23 +1252,100 @@ body.uiModalOpen #center{pointer-events:none}
 @keyframes pulseShockwave{0%{opacity:.95;transform:translate(-50%,-50%) scale(.25)}65%{opacity:.34}100%{opacity:0;transform:translate(-50%,-50%) scale(18)}}
 #flowFx.reverse{opacity:.62;background:radial-gradient(circle at 50% 50%,transparent 30%,rgba(255,50,40,.08) 64%,rgba(255,0,120,.17) 100%);animation:reverseBreath 1.35s ease-in-out infinite alternate}
 @keyframes reverseBreath{from{filter:hue-rotate(0deg) brightness(.9)}to{filter:hue-rotate(22deg) brightness(1.25)}}
+
+/* =========================================================
+   SHIFTVIX 2.14 — SINGLE OBJECTIVE HUD
+   One Flow. One metric. One target.
+   ========================================================= */
+#hud{
+  position:absolute;
+  top:108px;
+  left:50%;
+  transform:translateX(-50%);
+  width:min(680px,92vw);
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  z-index:20;
+  pointer-events:none;
+  text-align:center;
+}
+
+#objectiveHud{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  max-width:92vw;
+}
+
+#objectiveHudLabel{
+  font-size:clamp(15px,2.4vw,22px);
+  font-weight:900;
+  letter-spacing:2.4px;
+  line-height:1;
+  color:#fff;
+  white-space:nowrap;
+  text-transform:uppercase;
+  text-shadow:0 0 8px rgba(255,255,255,.48);
+}
+
+#objectiveHudValue{
+  margin-top:8px;
+  font-size:clamp(42px,7vw,68px);
+  font-weight:1000;
+  letter-spacing:-1.2px;
+  line-height:.96;
+  color:#fff;
+  white-space:nowrap;
+  text-shadow:
+    0 0 10px rgba(255,255,255,.72),
+    0 0 22px rgba(255,255,255,.18);
+  transform:scale(1);
+}
+
+#objectiveHudValue.objectivePulse{
+  animation:objectiveHudPulse .34s ease-out;
+}
+
+@keyframes objectiveHudPulse{
+  0%{transform:scale(1)}
+  45%{transform:scale(1.12)}
+  100%{transform:scale(1)}
+}
+
+@media(max-width:520px){
+  #hud{
+    top:108px;
+    width:94vw;
+  }
+  #objectiveHudLabel{
+    font-size:clamp(14px,4vw,18px);
+    letter-spacing:1.8px;
+  }
+  #objectiveHudValue{
+    margin-top:7px;
+    font-size:clamp(38px,10.5vw,54px);
+  }
+}
+
+@media(min-width:521px) and (max-width:1024px){
+  #hud{
+    top:112px;
+  }
+  #objectiveHudValue{
+    font-size:clamp(44px,7vw,64px);
+  }
+}
 </style>
 </head>
 <body>
 <div id="gameTitle"><span id="shift">SHIFT</span><span id="vix">VIX</span></div>
 <div id="strikes"><div class="strikeDot" id="s0"></div><div class="strikeDot" id="s1"></div><div class="strikeDot" id="s2"></div></div>
 <div id="hud">
-  <div class="hudBlock">
-    <div class="hudLabel">DISTANCE</div>
-    <div class="hudValue"><span id="distance">0</span>m</div>
-  </div>
-  <div class="hudBlock">
-    <div class="hudLabel">LEVEL</div>
-    <div class="hudValue"><span id="level" class="levelNumber">1</span></div>
-  </div>
-  <div class="hudBlock">
-    <div class="hudLabel">SCORE</div>
-    <div class="hudValue"><span id="hudScore">0</span></div>
+  <div id="objectiveHud" aria-live="polite">
+    <div id="objectiveHudLabel">LEVEL</div>
+    <div id="objectiveHudValue">1 / 4</div>
   </div>
 </div>
 <div style="display:none"><span id="world">Distance Run</span>
@@ -3982,6 +4059,8 @@ function completeCurrentFlow(){
         return;
     }
 
+    pulseObjectiveHud();
+
     const finished = activeChallenge;
     const finishedFlowIndex =
         currentFlowIndex;
@@ -4169,9 +4248,11 @@ if(replayReturnFlowIndex !== null){
         },650);
 }
 function updateChallenge(){
+  updateHUD();
   if(!activeChallenge){
     activeChallenge=createFlow(currentFlowIndex);
-    challengeStart={found:foundCount,score,distance,strikes,tierCounts:{...tierCounts}};
+    challengeStart={found:foundCount,score,distance,strikes,rings:goldRingsPassed,tierCounts:{...tierCounts}};
+    updateHUD();
   }
   const raw=challengeValue(activeChallenge);
   const value=Math.max(0,Math.min(activeChallenge.target,raw));
@@ -5920,14 +6001,12 @@ function showMultiplierPopup(multiplier){
 }
 function animateLevelNumber(){
 
-    const levelElement =
-        document.getElementById("level");
-
-    levelElement.classList.remove("levelPulse");
-
-    void levelElement.offsetWidth;
-
-    levelElement.classList.add("levelPulse");
+    if(
+        activeChallenge &&
+        activeChallenge.metric==="level"
+    ){
+        pulseObjectiveHud();
+    }
 
     if(audioCtx){
 
@@ -6144,19 +6223,101 @@ tierCounts[b.userData.tier.name] =
  updateHUD();updateChallenge();
  if(navigator.vibrate)navigator.vibrate(4);
 }
-function updateHUD(){
-
-    document.getElementById("distance").textContent =
-        Math.floor(distance);
-
-    document.getElementById("level").textContent =
-        level;
-
-    const hudScore = document.getElementById("hudScore");
-    if(hudScore){
-        hudScore.textContent = Math.floor(score).toLocaleString();
+function objectiveHudData(){
+    if(!activeChallenge){
+        return {
+            label:"DISTANCE",
+            value:`${Math.floor(distance).toLocaleString()}m`
+        };
     }
 
+    const target=Math.max(
+        1,
+        Math.floor(Number(activeChallenge.target)||1)
+    );
+
+    const raw=Math.max(
+        0,
+        challengeValue(activeChallenge)
+    );
+
+    const current=Math.min(
+        target,
+        Math.floor(raw)
+    );
+
+    if(activeChallenge.metric==="level"){
+        return {
+            label:"LEVEL",
+            value:`${Math.min(level,target).toLocaleString()} / ${target.toLocaleString()}`
+        };
+    }
+
+    if(activeChallenge.metric==="score"){
+        return {
+            label:"SCORE",
+            value:`${current.toLocaleString()} / ${target.toLocaleString()}`
+        };
+    }
+
+    if(activeChallenge.metric==="distance"){
+        return {
+            label:"DISTANCE",
+            value:`${current.toLocaleString()}m / ${target.toLocaleString()}m`
+        };
+    }
+
+    if(activeChallenge.metric==="rings"){
+        return {
+            label:"RINGS",
+            value:`${current.toLocaleString()} / ${target.toLocaleString()}`
+        };
+    }
+
+    if(
+        activeChallenge.metric==="orbs" ||
+        activeChallenge.metric==="color"
+    ){
+        return {
+            label:"ORBS",
+            value:`${current.toLocaleString()} / ${target.toLocaleString()}`
+        };
+    }
+
+    return {
+        label:"PROGRESS",
+        value:`${current.toLocaleString()} / ${target.toLocaleString()}`
+    };
+}
+
+function updateHUD(){
+    const labelEl=
+        document.getElementById("objectiveHudLabel");
+
+    const valueEl=
+        document.getElementById("objectiveHudValue");
+
+    if(!labelEl || !valueEl)return;
+
+    const hud=objectiveHudData();
+
+    labelEl.textContent=hud.label;
+    valueEl.textContent=hud.value;
+}
+
+function pulseObjectiveHud(){
+    const valueEl=
+        document.getElementById("objectiveHudValue");
+
+    if(!valueEl)return;
+
+    valueEl.classList.remove("objectivePulse");
+    void valueEl.offsetWidth;
+    valueEl.classList.add("objectivePulse");
+
+    setTimeout(()=>{
+        valueEl.classList.remove("objectivePulse");
+    },380);
 }
 function formatRunFlowProgress(flow,value){
   const current=Math.max(0,Math.min(flow.target,value));
@@ -6402,7 +6563,7 @@ vix.style.transform = "translateY(0)";
 
 title.style.transform = "translate(-50%,-50%)";
 
-const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;const hudScoreReset=document.getElementById("hudScore");if(hudScoreReset)hudScoreReset.textContent="0";tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
+const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
 
 lastLevel = 1;strikes = 0;milestonesReached = {};lastWarpBreakthrough=0;starColorUpdateFrame=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();applyFrozenGameViewport(stableViewportWidth,stableViewportHeight);resetEnvironmentForRun();beginCurrentFlow();updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
 const title = document.getElementById("gameTitle");
