@@ -1682,6 +1682,8 @@ let goldRingSpawnCooldown=2.5;
 let goldRingSpawnedThisRun=0;
 let goldRingSequenceRemaining=0;
 let goldRingSequenceDelay=0;
+let goldRingLastLane=null;
+let goldRingSequenceAnchor=null;
 const GOLD_RING_PASS_RADIUS=16;
 
 let heroMode = true;
@@ -4218,7 +4220,7 @@ function completeCurrentFlow(){
         queueFluxOrb("ring_flow_complete");
     }else if(
         distance>=CHRONO_MIN_DISTANCE&&
-        Math.random()<.34
+        Math.random()<.46
     ){
         queueChronoOrb("flow_complete");
     }else if(Math.random()<.70){
@@ -5192,6 +5194,104 @@ let voidSpawnCooldown=1.25;
 let voidCountRun=0;
 
 
+function nearestRingLaneIndex(value,laneValues){
+  let best=0;
+  let bestDistance=Infinity;
+  laneValues.forEach((laneValue,index)=>{
+    const d=Math.abs(value-laneValue);
+    if(d<bestDistance){
+      bestDistance=d;
+      best=index;
+    }
+  });
+  return best;
+}
+
+function ringLaneDistance(a,b){
+  if(!a||!b)return 0;
+  return Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y));
+}
+
+function chooseReachableGoldRingLane(reason="ambient"){
+  const playerLane={
+    x:nearestRingLaneIndex(playerX,LANE_X),
+    y:nearestRingLaneIndex(playerY,LANE_Y)
+  };
+
+  // A sequence continues from the previous ring; a single starts from the
+  // player's present lane. This turns rings into a readable flight path.
+  const anchor=(
+    reason==="ring_sequence" && goldRingSequenceAnchor
+  ) ? goldRingSequenceAnchor : playerLane;
+
+  const candidates=[];
+  for(let y=0;y<3;y++){
+    for(let x=0;x<3;x++){
+      const laneX=LANE_X[x];
+      const laneY=LANE_Y[y];
+
+      // Never deliberately place a required ring into an active VOID corridor.
+      const blocked=beacons.some(b=>
+        b?.userData?.isVoid &&
+        b.userData.state==="active" &&
+        Math.abs(b.userData.roadX-laneX)<1 &&
+        Math.abs(b.userData.roadY-laneY)<1 &&
+        b.position.z<(FAR_Z+350)
+      );
+      if(blocked)continue;
+
+      const lane={x,y};
+      const fromAnchor=ringLaneDistance(lane,anchor);
+      const fromPlayer=ringLaneDistance(lane,playerLane);
+
+      // No dead-space / impossible objective rings: even the rare challenge
+      // placement must remain within two lane steps of the player's position.
+      if(fromPlayer>2)continue;
+
+      candidates.push({x,y,fromAnchor,fromPlayer});
+    }
+  }
+
+  if(!candidates.length)return null;
+
+  const ringObjective=activeChallenge?.metric==="rings";
+  const roll=Math.random();
+
+  // 70% readable: same lane or one neighboring lane.
+  // 20% steering: one lane step from the flight-path anchor.
+  // 10% challenge: up to two lane steps, but still verified reachable.
+  let minStep=0,maxStep=1;
+  if(ringObjective){
+    if(roll<.70){ minStep=0; maxStep=1; }
+    else if(roll<.90){ minStep=1; maxStep=1; }
+    else { minStep=1; maxStep=2; }
+  }else{
+    // Ambient rings stay especially friendly because they are visual bonuses.
+    minStep=0; maxStep=1;
+  }
+
+  let pool=candidates.filter(c=>
+    c.fromAnchor>=minStep && c.fromAnchor<=maxStep
+  );
+
+  if(!pool.length){
+    pool=candidates
+      .slice()
+      .sort((a,b)=>a.fromAnchor-b.fromAnchor)
+      .slice(0,Math.min(4,candidates.length));
+  }
+
+  // Avoid repeating the exact same lane when another equally safe choice exists.
+  if(goldRingLastLane && pool.length>1){
+    const varied=pool.filter(c=>
+      c.x!==goldRingLastLane.x || c.y!==goldRingLastLane.y
+    );
+    if(varied.length)pool=varied;
+  }
+
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
 function makeGoldRing(reason="ambient"){
   const activeRings=beacons.filter(
     b=>b?.userData?.isGoldRing && b.userData.state==="active"
@@ -5200,30 +5300,9 @@ function makeGoldRing(reason="ambient"){
 
   trainId++;
 
-  // Prefer lanes not currently occupied by an active VOID at a similar depth.
-  const candidates=[];
-  for(let y=0;y<3;y++){
-    for(let x=0;x<3;x++){
-      const laneX=LANE_X[x];
-      const laneY=LANE_Y[y];
-      const blocked=beacons.some(b=>
-        b?.userData?.isVoid &&
-        b.userData.state==="active" &&
-        Math.abs(b.userData.roadX-laneX)<1 &&
-        Math.abs(b.userData.roadY-laneY)<1 &&
-        b.position.z<(FAR_Z+350)
-      );
-      if(!blocked)candidates.push({x,y});
-    }
-  }
+  const chosen=chooseReachableGoldRingLane(reason);
+  if(!chosen)return false;
 
-  const pool=candidates.length?candidates:[
-    {x:0,y:0},{x:1,y:0},{x:2,y:0},
-    {x:0,y:1},{x:1,y:1},{x:2,y:1},
-    {x:0,y:2},{x:1,y:2},{x:2,y:2}
-  ];
-
-  const chosen=pool[Math.floor(Math.random()*pool.length)];
   const x=LANE_X[chosen.x];
   const y=LANE_Y[chosen.y];
 
@@ -5302,6 +5381,13 @@ function makeGoldRing(reason="ambient"){
     ringLaneY:chosen.y
   };
 
+  goldRingLastLane={x:chosen.x,y:chosen.y};
+  if(reason==="ring_sequence"){
+    goldRingSequenceAnchor={x:chosen.x,y:chosen.y};
+  }else{
+    goldRingSequenceAnchor={x:chosen.x,y:chosen.y};
+  }
+
   scene.add(group);
   beacons.push(group);
   goldRingSpawnedThisRun++;
@@ -5317,7 +5403,6 @@ function makeGoldRing(reason="ambient"){
 
   return true;
 }
-
 
 function startGoldRingSequence(){
   /*
@@ -5345,7 +5430,7 @@ function updateGoldRingSequence(worldDt){
   if(goldRingSequenceDelay<=0){
     if(makeGoldRing("ring_sequence")){
       goldRingSequenceRemaining--;
-      goldRingSequenceDelay=.42+Math.random()*.34;
+      goldRingSequenceDelay=.48+Math.random()*.30;
     }else{
       goldRingSequenceDelay=.18;
     }
@@ -6697,7 +6782,7 @@ vix.style.transform = "translateY(0)";
 
 title.style.transform = "translate(-50%,-50%)";
 
-const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
+const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;goldRingLastLane=null;goldRingSequenceAnchor=null;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
 
 lastLevel = 1;strikes = 0;milestonesReached = {};lastWarpBreakthrough=0;starColorUpdateFrame=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();applyFrozenGameViewport(stableViewportWidth,stableViewportHeight);resetEnvironmentForRun();beginCurrentFlow();updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
 const title = document.getElementById("gameTitle");
@@ -6833,13 +6918,13 @@ if(silentTutorialComplete){
         */
         if(
           goldRingSequenceRemaining<=0 &&
-          Math.random()<.34
+          Math.random()<.46
         ){
           startGoldRingSequence();
         }
 
         goldRingSpawnCooldown=
-          .72 + Math.random()*.62;
+          .62 + Math.random()*.48;
       }else{
         // Outside Ring objectives, rings remain an occasional visual bonus.
         goldRingSpawnCooldown=
