@@ -39,6 +39,7 @@ function track(eventName, data = {}) {
 }
 </script>
 <head>
+<!-- SHIFTVIX 2.17 — RING + POWER ORB UNIVERSAL SCORING -->
 <meta charset="utf-8">
 <link rel="icon" type="image/png" href="icon-512.png">
 
@@ -1853,6 +1854,10 @@ const POWER_TIER_WEIGHTS=[.50,.32,.18];
 const POWER_DURATIONS=[4,8,12];
 const WARP_DISTANCES=[500,1000,1500];
 
+// SHIFTVIX 2.17 — every optional risk has permanent score value.
+const POWER_ORB_SCORE_VALUES=[25,50,100];
+const GOLD_RING_SCORE_VALUE=250;
+
 // SHIFTVIX POWER ORB FREQUENCY 2.0
 // First opportunity: 180–300m.
 // Then another opportunity roughly every 260–430m.
@@ -1887,6 +1892,42 @@ function powerTierDuration(tier){
 
 function warpTierDistance(tier){
   return WARP_DISTANCES[Math.max(0,Math.min(2,(tier||1)-1))];
+}
+
+function powerOrbScoreValue(tier){
+  return POWER_ORB_SCORE_VALUES[
+    Math.max(0,Math.min(2,(tier||1)-1))
+  ];
+}
+
+function awardBonusScore(points,source,tier=null){
+  const safePoints=Math.max(0,Math.floor(Number(points)||0));
+  if(!safePoints)return 0;
+
+  score+=safePoints;
+
+  if(score>bestScore){
+    bestScore=score;
+    localStorage.setItem(
+      "sourceLaneBestScore",
+      String(bestScore)
+    );
+  }
+
+  showScorePopup("+"+safePoints,false);
+  updateHUD();
+
+  trackGame("bonus_score_awarded",{
+    bonus_source:source,
+    points_awarded:safePoints,
+    power_tier:tier||0,
+    score_after:Math.floor(score),
+    distance:Math.floor(distance),
+    level,
+    flow_number:currentFlowIndex+1
+  });
+
+  return safePoints;
 }
 
 function addPowerTierRings(group,tier,color){
@@ -5444,8 +5485,14 @@ function passGoldRing(b){
   b.userData.fade=1;
   goldRingsPassed++;
 
+  const ringPoints=
+    awardBonusScore(
+      GOLD_RING_SCORE_VALUE,
+      "gold_ring"
+    );
+
   playRingPass();
-  showModeBanner("RING PASSED +1");
+  showModeBanner(`RING +${ringPoints}`);
 
   if(navigator.vibrate){
     navigator.vibrate([10,22,10]);
@@ -5455,7 +5502,9 @@ function passGoldRing(b){
     distance:Math.floor(distance),
     level,
     flow_number:currentFlowIndex+1,
-    rings_passed_run:goldRingsPassed
+    rings_passed_run:goldRingsPassed,
+    points_awarded:ringPoints,
+    score_after:Math.floor(score)
   });
 
   updateChallenge();
@@ -6360,23 +6409,34 @@ function takeStrike(){
    if(b.userData.isMidas)midasOrbActive=false;
    if(b.userData.isWarp)warpOrbActive=false;
 
+   const powerTier=b.userData.powerTier||1;
+   const powerPoints=
+     awardBonusScore(
+       powerOrbScoreValue(powerTier),
+       `${collectedType}_orb`,
+       powerTier
+     );
+
    const activeEffect=currentLegendaryEffect();
 
    if(activeEffect){
-     // The orb is consumed, but the effect already in use continues unchanged.
+     // The orb's effect is consumed, but its Tier score is ALWAYS earned.
      trackGame("legendary_orb_ignored_during_active_effect",{
        collected_type:collectedType,
        active_effect:activeEffect,
        distance:Math.floor(distance),
-       flow_number:currentFlowIndex+1
+       flow_number:currentFlowIndex+1,
+       power_tier:powerTier,
+       points_awarded:powerPoints,
+       score_after:Math.floor(score)
      });
 
      playCoin(TIERS[0]);
+     updateChallenge();
      if(navigator.vibrate)navigator.vibrate(8);
      return;
    }
 
-   const powerTier=b.userData.powerTier||1;
    if(collectedType==="flux"){
      if(!silentTutorialComplete)tutorialPowerSeen=true;
      activateFluxBoost(b.userData.fluxReason,powerTier);
@@ -6391,6 +6451,8 @@ function takeStrike(){
      activateWarp(b.userData.warpReason,powerTier);
    }
 
+   // Bonus score is part of the universal score economy and can complete SCORE Flows.
+   updateChallenge();
    return;
  }
 
