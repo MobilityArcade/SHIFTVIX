@@ -39,7 +39,7 @@ function track(eventName, data = {}) {
 }
 </script>
 <head>
-<!-- SHIFTVIX 2.17 — RING + POWER ORB UNIVERSAL SCORING -->
+<!-- SHIFTVIX 2.21 — SHIFT REBALANCE + TUTORIAL REFINEMENT -->
 <meta charset="utf-8">
 <link rel="icon" type="image/png" href="icon-512.png">
 
@@ -1676,6 +1676,22 @@ let tierCounts = {WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};
 let runStartStrikes = 0;
 
 // =========================
+// SHIFTVIX 2.18 — SHIFT + RUSH
+// SHIFT = agility objective (successful lane changes).
+// RUSH = 60-second performance Flow layered over existing actions.
+// =========================
+let shiftCountRun=0;
+let shiftArrivalTimer=null;
+let shiftLastArrivalLane="1:1";
+let shiftPreviousArrivalLane=null;
+
+let rushNextWarpDistance=Infinity;
+const RUSH_WARP_FIRST_GAP_MIN=70;
+const RUSH_WARP_FIRST_GAP_MAX=140;
+const RUSH_WARP_GAP_MIN=90;
+const RUSH_WARP_GAP_MAX=180;
+
+// =========================
 // SHIFTVIX 2.11 — GOLD RING ACCURACY SYSTEM
 // =========================
 let goldRingsPassed=0;
@@ -2117,7 +2133,7 @@ function updateSilentTutorial(){
   if(tutorialStage===0){
     tutorialStage=1;
     tutorialStageStartedAt=performance.now();
-    showTutorialPrompt("SWIPE TO COLLECT",1650);
+    showTutorialPrompt("SWIPE TO SHIFT",1650);
     return;
   }
 
@@ -2169,7 +2185,7 @@ function updateSilentTutorial(){
   ){
     tutorialStage=4;
     tutorialStageStartedAt=performance.now();
-    showTutorialPrompt("GRAB POWER ORBS",1750);
+    showTutorialPrompt("GRAB POWER-UPS",1750);
 
     if(
       !fluxOrbActive &&
@@ -3928,13 +3944,20 @@ function flowStageFor(index){
   return FLOW_STAGES.find(stage=>n<=stage.end)||FLOW_STAGES[FLOW_STAGES.length-1];
 }
 function flowCategoryForIndex(index){
-  // SHIFTVIX 2.11: 300 Flows split evenly across five objective types.
-  // 60 REACH, 60 COLLECT, 60 TRAVEL, 60 SCORE, 60 RINGS.
-  return ["REACH","COLLECT","TRAVEL","SCORE","RINGS"][index%5];
+  // SHIFTVIX 2.19 — six meanings, fifty Flows each.
+  return [
+    "COLLECT",
+    "TRAVEL",
+    "SCORE",
+    "RINGS",
+    "SHIFT",
+    "RUSH"
+  ][index%6];
 }
 
 function flowStrikeAllowance(index,category){
   const n=index+1;
+
 
   /*
     SHIFTVIX 2.10 — 300 FLOW DIFFICULTY PHILOSOPHY
@@ -3953,7 +3976,9 @@ function flowStrikeAllowance(index,category){
   const longObjective=
     category==="COLLECT" ||
     category==="TRAVEL" ||
-    category==="RINGS";
+    category==="RINGS" ||
+    category==="SHIFT" ||
+    category==="RUSH";
 
   if(n<=100){
     return ((n-31)%6===0)?2:null;
@@ -3986,41 +4011,32 @@ function applyFlowStrikeAllowance(flow,index){
 
 function createFlow(index){
   const n=index+1;
-  const group=Math.floor(index/5);
   const category=flowCategoryForIndex(index);
+  const categoryStep=Math.floor(index/6); // 0..49 within each family
   const name="CURRENT FLOW";
 
   /*
-    Core rhythm across all 300:
-    REACH → COLLECT → TRAVEL → SCORE → RINGS
+    SHIFTVIX 2.19 — THE SIX FLOW SYSTEM
+    300 Flows = 50 of each:
 
-    Target scaling stays the same as the current game.
-    Only the punishment philosophy changes:
-    mandatory progression never requires a perfect/no-strike run.
+    COLLECT = collection
+    TRAVEL  = endurance / distance
+    SCORE   = performance / value
+    RINGS   = accuracy / navigation
+    SHIFT   = agility / lane arrival
+    RUSH    = acceleration / Warp activation
+
+    REACH / LEVEL has been removed as an objective family.
+    Level still exists visually in the game world, but is no longer a Flow target.
   */
 
   let flow;
 
-  if(category==="REACH"){
-    const target=4+Math.floor(group/3);
-
-    flow={
-      id:`reach_${n}`,
-      name,
-      category,
-      label:`REACH LEVEL ${target}`,
-      target,
-      metric:"level"
-    };
-
-    return applyFlowStrikeAllowance(flow,index);
-  }
-
   if(category==="COLLECT"){
-    const variant=group%4;
+    const variant=categoryStep%4;
 
-    if(variant===0){
-      const target=600+group*55;
+    if(variant===0 || variant===3){
+      const target=600+categoryStep*70;
 
       flow={
         id:`collect_${n}`,
@@ -4035,7 +4051,8 @@ function createFlow(index){
     }
 
     const colors=["BLUE","GREEN","PURPLE","ORANGE","RED"];
-    const color=colors[group%colors.length];
+    const color=colors[categoryStep%colors.length];
+
     const base={
       BLUE:500,
       GREEN:450,
@@ -4043,29 +4060,16 @@ function createFlow(index){
       ORANGE:200,
       RED:120
     }[color];
+
     const growth={
-      BLUE:28,
-      GREEN:25,
-      PURPLE:18,
-      ORANGE:12,
-      RED:8
+      BLUE:32,
+      GREEN:29,
+      PURPLE:21,
+      ORANGE:14,
+      RED:10
     }[color];
-    const target=base+group*growth;
 
-    if(variant===3){
-      const totalTarget=700+group*60;
-
-      flow={
-        id:`collect_total_${n}`,
-        name,
-        category,
-        label:`COLLECT ${totalTarget.toLocaleString()} ORBS`,
-        target:totalTarget,
-        metric:"orbs"
-      };
-
-      return applyFlowStrikeAllowance(flow,index);
-    }
+    const target=base+categoryStep*growth;
 
     flow={
       id:`collect_${color.toLowerCase()}_${n}`,
@@ -4081,7 +4085,7 @@ function createFlow(index){
   }
 
   if(category==="TRAVEL"){
-    const target=1500+group*275;
+    const target=1500+categoryStep*350;
 
     flow={
       id:`travel_${n}`,
@@ -4095,20 +4099,25 @@ function createFlow(index){
     return applyFlowStrikeAllowance(flow,index);
   }
 
+  if(category==="SCORE"){
+    const target=15000+categoryStep*5200;
+
+    flow={
+      id:`score_${n}`,
+      name,
+      category,
+      label:`SCORE ${target.toLocaleString()} POINTS`,
+      target,
+      metric:"score"
+    };
+
+    return applyFlowStrikeAllowance(flow,index);
+  }
+
   if(category==="RINGS"){
-    /*
-      Accuracy objective.
-      Starts at 5 rings and gradually rises to the high 40s by the end
-      of the 300-Flow path. Missing a ring does NOT cost a life.
-    */
-    /*
-      SHIFTVIX 2.13 — GOLD RING OBJECTIVE SCALE
-      Early Ring Flows should feel like a real objective, not a quick bonus.
-      Starts at 12 rings and climbs steadily toward 60.
-    */
     const target=Math.min(
-      60,
-      12 + Math.floor(group*1.0)
+      70,
+      12+Math.floor(categoryStep*1.2)
     );
 
     flow={
@@ -4123,37 +4132,70 @@ function createFlow(index){
     return applyFlowStrikeAllowance(flow,index);
   }
 
-  const target=15000+group*4200;
+  if(category==="SHIFT"){
+    // Start substantial. SHIFT measures ARRIVAL at a distinct lane,
+    // not raw swipe/input events.
+    const target=
+      100 + categoryStep*25;
+
+    flow={
+      id:`shift_${n}`,
+      name,
+      category,
+      label:`SHIFT ${target.toLocaleString()} LANES`,
+      target,
+      metric:"shift"
+    };
+
+    return applyFlowStrikeAllowance(flow,index);
+  }
+
+  // RUSH replaces REACH.
+  // One Rush = one successfully activated Warp orb, regardless of Warp tier.
+  // Warp's 500/1000/1500m jump still happens normally; the Flow simply counts
+  // the acceleration event as 1.
+  const target=Math.min(
+    20,
+    5+Math.floor(categoryStep/3)
+  );
 
   flow={
-    id:`score_${n}`,
+    id:`rush_${n}`,
     name,
-    category,
-    label:`SCORE ${target.toLocaleString()} POINTS`,
+    category:"RUSH",
+    label:`RUSH ${target.toLocaleString()} TIMES`,
     target,
-    metric:"score"
+    metric:"rush"
   };
 
   return applyFlowStrikeAllowance(flow,index);
 }
 function beginCurrentFlow(){
 
-    activeChallenge = createFlow(currentFlowIndex);
+    activeChallenge=createFlow(currentFlowIndex);
 
-    objectiveOrbsCollected = 0;
+    objectiveOrbsCollected=0;
 
-    challengeStart = {
-        found: foundCount,
+    challengeStart={
+        found:foundCount,
         score,
         distance,
         strikes,
-        rings: goldRingsPassed,
-        tierCounts: {...tierCounts}
+        rings:goldRingsPassed,
+        shifts:shiftCountRun,
+        rushes:warpCollectedThisRun,
+        tierCounts:{...tierCounts}
     };
 
-    // Ring objectives should begin presenting targets quickly.
     if(activeChallenge.metric==="rings"){
         goldRingSpawnCooldown=Math.min(goldRingSpawnCooldown,.35);
+    }
+
+    if(activeChallenge.metric==="rush"){
+        scheduleRushWarp(true);
+        showModeBanner("RUSH");
+    }else{
+        rushNextWarpDistance=Infinity;
     }
 
     updateChallenge();
@@ -4174,6 +4216,8 @@ function challengeBaseValue(ch){
   if(ch.metric==="score")return Math.max(0,score-challengeStart.score);
   if(ch.metric==="distance")return Math.max(0,distance-challengeStart.distance);
   if(ch.metric==="rings")return Math.max(0,goldRingsPassed-(challengeStart.rings||0));
+  if(ch.metric==="shift")return Math.max(0,shiftCountRun-(challengeStart.shifts||0));
+  if(ch.metric==="rush")return Math.max(0,warpCollectedThisRun-(challengeStart.rushes||0));
 
   return 0;
 }
@@ -4325,11 +4369,14 @@ if(replayReturnFlowIndex !== null){
 
     objectiveOrbsCollected = 0;
 
-    challengeStart = {
+        challengeStart = {
         found:foundCount,
         score,
         distance,
         strikes,
+        rings:goldRingsPassed,
+        shifts:shiftCountRun,
+        rushes:warpCollectedThisRun,
         tierCounts:{...tierCounts}
     };
 
@@ -4375,11 +4422,14 @@ if(replayReturnFlowIndex !== null){
     activeChallenge =
         createFlow(currentFlowIndex);
 
-    challengeStart = {
+        challengeStart = {
         found:foundCount,
         score,
         distance,
         strikes,
+        rings:goldRingsPassed,
+        shifts:shiftCountRun,
+        rushes:warpCollectedThisRun,
         tierCounts:{...tierCounts}
     };
 
@@ -4404,7 +4454,7 @@ function updateChallenge(){
   updateHUD();
   if(!activeChallenge){
     activeChallenge=createFlow(currentFlowIndex);
-    challengeStart={found:foundCount,score,distance,strikes,rings:goldRingsPassed,tierCounts:{...tierCounts}};
+    challengeStart={found:foundCount,score,distance,strikes,rings:goldRingsPassed,shifts:shiftCountRun,rushes:warpCollectedThisRun,tierCounts:{...tierCounts}};
     updateHUD();
   }
   const raw=challengeValue(activeChallenge);
@@ -5820,6 +5870,43 @@ function playWarpOrbSound(tier=1){
   osc.start(now);osc.stop(now+.5);
 }
 
+function isRushFlowActive(){
+  return activeChallenge?.metric==="rush";
+}
+
+function scheduleRushWarp(first=false){
+  if(!isRushFlowActive()){
+    rushNextWarpDistance=Infinity;
+    return;
+  }
+
+  const min=first?RUSH_WARP_FIRST_GAP_MIN:RUSH_WARP_GAP_MIN;
+  const max=first?RUSH_WARP_FIRST_GAP_MAX:RUSH_WARP_GAP_MAX;
+
+  rushNextWarpDistance=
+    distance+
+    min+
+    Math.random()*(max-min);
+
+  warpCooldownUntilDistance=Math.min(
+    warpCooldownUntilDistance,
+    rushNextWarpDistance
+  );
+}
+
+function updateRushWarpOpportunity(){
+  if(!isRushFlowActive())return;
+  if(warpOrbActive)return;
+  if(distance<rushNextWarpDistance)return;
+  if(distance<warpCooldownUntilDistance)return;
+
+  if(makeWarpOrb("rush_flow")){
+    rushNextWarpDistance=Infinity;
+  }else{
+    rushNextWarpDistance=distance+35;
+  }
+}
+
 function activateWarp(reason,tier=1){
   const jump=warpTierDistance(tier);
   const before=distance;
@@ -5834,7 +5921,18 @@ function activateWarp(reason,tier=1){
   lastWarpBreakthrough=Math.floor(distance/3000);
 
   warpCollectedThisRun++;
-  warpCooldownUntilDistance=distance+700+Math.random()*250;
+
+  if(isRushFlowActive()){
+    warpCooldownUntilDistance=
+      distance+
+      RUSH_WARP_GAP_MIN+
+      Math.random()*(RUSH_WARP_GAP_MAX-RUSH_WARP_GAP_MIN);
+
+    rushNextWarpDistance=warpCooldownUntilDistance;
+  }else{
+    warpCooldownUntilDistance=
+      distance+700+Math.random()*250;
+  }
 
   playWarpOrbSound(tier);
   triggerWarpBreakthrough("warp");
@@ -5855,7 +5953,11 @@ function activateWarp(reason,tier=1){
     distance_after:Math.floor(distance),
     level_after:level,
     flow_number:currentFlowIndex+1,
-    warp_count_run:warpCollectedThisRun
+    warp_count_run:warpCollectedThisRun,
+    rush_progress:
+      activeChallenge?.metric==="rush"
+        ? challengeBaseValue(activeChallenge)
+        : 0
   });
 }
 
@@ -6097,7 +6199,91 @@ function spawnWave(){
   }
 }
 
-function moveLane(dx,dy){if(!gameStarted||gameOver||paused)return;laneX=Math.max(0,Math.min(2,laneX+dx));laneY=Math.max(0,Math.min(2,laneY+dy));environmentEngine.updatePlayerTarget();addWarpBank(dx,dy);const namesY=["UP","CENTER","DOWN"],namesX=["LEFT","CENTER","RIGHT"];document.getElementById("laneLabel").textContent=namesY[laneY]+" "+namesX[laneX];if(navigator.vibrate)navigator.vibrate(10);}
+function registerShiftArrival(){
+  const laneKey=`${laneX}:${laneY}`;
+
+  if(laneKey===shiftLastArrivalLane)return;
+
+  // Reject immediate reversals. This prevents LEFT↔RIGHT, UP↔DOWN,
+  // or the same diagonal bounce from farming the SHIFT objective.
+  const countsAsPatternShift=
+    laneKey!==shiftPreviousArrivalLane;
+
+  const fromLane=shiftLastArrivalLane;
+
+  // Update route history whether or not this arrival scores.
+  shiftPreviousArrivalLane=shiftLastArrivalLane;
+  shiftLastArrivalLane=laneKey;
+
+  if(!countsAsPatternShift){
+    trackGame("lane_shift_repeat_rejected",{
+      from_lane:fromLane,
+      to_lane:laneKey,
+      shift_count_run:shiftCountRun,
+      flow_number:currentFlowIndex+1
+    });
+    return;
+  }
+
+  shiftCountRun++;
+
+  trackGame("lane_shift",{
+    shift_count_run:shiftCountRun,
+    from_lane:fromLane,
+    to_lane:laneKey,
+    flow_number:currentFlowIndex+1,
+    flow_category:activeChallenge?.category||"none"
+  });
+
+  if(activeChallenge?.metric==="shift"){
+    updateChallenge();
+  }
+}
+
+function scheduleShiftArrival(){
+  if(shiftArrivalTimer){
+    clearTimeout(shiftArrivalTimer);
+  }
+
+  // Rapid swipes may pass through intermediate lanes.
+  // Only the destination the player actually arrives/settles on counts.
+  shiftArrivalTimer=setTimeout(()=>{
+    shiftArrivalTimer=null;
+
+    if(!gameStarted||gameOver||paused)return;
+
+    registerShiftArrival();
+  },95);
+}
+
+function moveLane(dx,dy){
+  if(!gameStarted||gameOver||paused)return;
+
+  const oldLaneX=laneX;
+  const oldLaneY=laneY;
+
+  laneX=Math.max(0,Math.min(2,laneX+dx));
+  laneY=Math.max(0,Math.min(2,laneY+dy));
+
+  const changed=
+    laneX!==oldLaneX ||
+    laneY!==oldLaneY;
+
+  if(changed){
+    scheduleShiftArrival();
+  }
+
+  environmentEngine.updatePlayerTarget();
+  addWarpBank(dx,dy);
+
+  const namesY=["UP","CENTER","DOWN"];
+  const namesX=["LEFT","CENTER","RIGHT"];
+
+  document.getElementById("laneLabel").textContent=
+    namesY[laneY]+" "+namesX[laneX];
+
+  if(navigator.vibrate&&changed)navigator.vibrate(10);
+}
 function moveLaneFromInput(dx,dy){const mapped=environmentLaneInput(dx,dy);moveLane(mapped.x,mapped.y);}
 let downX=0,downY=0;
 
@@ -6419,7 +6605,11 @@ function takeStrike(){
 
    const activeEffect=currentLegendaryEffect();
 
-   if(activeEffect){
+   const rushWarpOverride=
+     collectedType==="warp" &&
+     isRushFlowActive();
+
+   if(activeEffect && !rushWarpOverride){
      // The orb's effect is consumed, but its Tier score is ALWAYS earned.
      trackGame("legendary_orb_ignored_during_active_effect",{
        collected_type:collectedType,
@@ -6537,6 +6727,20 @@ function objectiveHudData(){
         };
     }
 
+    if(activeChallenge.metric==="shift"){
+        return {
+            label:"SHIFT",
+            value:`${current.toLocaleString()} / ${target.toLocaleString()}`
+        };
+    }
+
+    if(activeChallenge.metric==="rush"){
+        return {
+            label:"RUSH",
+            value:`${current.toLocaleString()} / ${target.toLocaleString()}`
+        };
+    }
+
     if(activeChallenge.metric==="color"){
         return {
             label:`${activeChallenge.color} ORBS`,
@@ -6601,6 +6805,8 @@ function flowDisplayLabel(flow){
   if(flow.metric==="color")return `${flow.color} ORBS`;
   if(flow.metric==="orbs")return "ORBS";
   if(flow.metric==="rings")return "RINGS";
+  if(flow.metric==="shift")return "SHIFT";
+  if(flow.metric==="rush")return "RUSH";
   if(flow.metric==="distance")return "DISTANCE";
   if(flow.metric==="score")return "SCORE";
   if(flow.metric==="level")return "LEVEL";
@@ -6740,13 +6946,14 @@ function endRun(){
     const runFlow = activeChallenge || createFlow(currentFlowIndex);
 
     // Show the player's REAL progress even if a life-condition was missed.
-    const runFlowRaw = challengeBaseValue(runFlow);
-    const runFlowValue = Math.max(
+    const runFlowRaw=challengeBaseValue(runFlow);
+
+    const runFlowValue=Math.max(
         0,
         Math.min(runFlow.target,runFlowRaw)
     );
 
-    const runFlowProgress =
+    const runFlowProgress=
         formatRunFlowProgress(runFlow,runFlowValue);
 
     const runFlowLabel =
@@ -6844,7 +7051,7 @@ vix.style.transform = "translateY(0)";
 
 title.style.transform = "translate(-50%,-50%)";
 
-const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;goldRingLastLane=null;goldRingSequenceAnchor=null;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
+const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;shiftCountRun=0;shiftLastArrivalLane=`${laneX}:${laneY}`;shiftPreviousArrivalLane=null;rushNextWarpDistance=Infinity;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;goldRingLastLane=null;goldRingSequenceAnchor=null;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
 
 lastLevel = 1;strikes = 0;milestonesReached = {};lastWarpBreakthrough=0;starColorUpdateFrame=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();applyFrozenGameViewport(stableViewportWidth,stableViewportHeight);resetEnvironmentForRun();beginCurrentFlow();updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
 const title = document.getElementById("gameTitle");
@@ -6920,6 +7127,9 @@ updateSilentTutorial();
 updateEnvironment(worldDt);
 starColorUpdateFrame=(starColorUpdateFrame+1)%1200;
 updateFluxDust(worldDt);
+
+updateRushWarpOpportunity();
+
 
 if(
   distance>=nextPowerOrbOpportunity &&
@@ -7367,7 +7577,19 @@ if(b.position.z>NEAR_Z+60){
   }
   if(b.userData.isWarp){
     warpOrbActive=false;
-    trackGame("warp_orb_missed",{trigger_reason:b.userData.warpReason,power_tier:b.userData.powerTier||1,distance:Math.floor(distance),flow_number:currentFlowIndex+1,warp_count_run:warpCollectedThisRun});
+
+    if(isRushFlowActive()){
+      scheduleRushWarp(false);
+    }
+
+    trackGame("warp_orb_missed",{
+      trigger_reason:b.userData.warpReason,
+      power_tier:b.userData.powerTier||1,
+      distance:Math.floor(distance),
+      flow_number:currentFlowIndex+1,
+      warp_count_run:warpCollectedThisRun,
+      rush_flow:isRushFlowActive()
+    });
   }
 
   if(
