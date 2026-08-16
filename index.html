@@ -39,7 +39,7 @@ function track(eventName, data = {}) {
 }
 </script>
 <head>
-<!-- SHIFTVIX 2.21 — SHIFT REBALANCE + TUTORIAL REFINEMENT -->
+<!-- SHIFTVIX 2.22 — SHIFT PROGRESSION 50–200 -->
 <meta charset="utf-8">
 <link rel="icon" type="image/png" href="icon-512.png">
 
@@ -4135,8 +4135,10 @@ function createFlow(index){
   if(category==="SHIFT"){
     // Start substantial. SHIFT measures ARRIVAL at a distinct lane,
     // not raw swipe/input events.
-    const target=
-      100 + categoryStep*25;
+    const target=Math.min(
+      200,
+      50 + categoryStep*5
+    );
 
     flow={
       id:`shift_${n}`,
