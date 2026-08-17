@@ -39,7 +39,7 @@ function track(eventName, data = {}) {
 }
 </script>
 <head>
-<!-- SHIFTVIX 2.29 — FREE-CHOICE CYCLES + LARGE RUN COMPLETE -->
+<!-- SHIFTVIX 2.30 — UNIFIED FLOW HUB + SIX NEON IDENTITIES -->
 <meta charset="utf-8">
 <link rel="icon" type="image/png" href="icon-512.png">
 
@@ -2184,8 +2184,8 @@ body.uiModalOpen #center{pointer-events:none}
       box-shadow .15s ease;
 }
 
-.sixFlowName:hover,
-.sixFlowName:focus-visible{
+.sixFlowName.__retiredHover,
+.sixFlowName.__retiredFocus{
     outline:none;
     transform:translateY(-1px);
     border-color:rgba(255,211,106,.62) !important;
@@ -2396,6 +2396,402 @@ body.uiModalOpen #center{pointer-events:none}
 
   .runCycleHint{
       font-size:9px;
+  }
+}
+
+
+/* ============================================================
+   SHIFTVIX 2.30 — UNIFIED FLOW HUB
+   ============================================================ */
+
+/* Retire duplicate menu screens. */
+#roundComplete,
+#pauseMenu{
+  display:none !important;
+}
+
+/* Hub uses nearly the full useful viewport while remaining readable. */
+#flowArchive{
+  place-items:center;
+  padding:
+    max(8px,env(safe-area-inset-top))
+    8px
+    max(8px,env(safe-area-inset-bottom));
+}
+
+#flowArchive .archiveCard{
+  width:min(1120px,94vw);
+  max-height:92vh;
+  min-height:0;
+  padding:clamp(24px,2.5vw,38px);
+  border-radius:28px;
+  overflow:hidden;
+}
+
+#flowArchive .archiveHeader{
+  margin-bottom:16px;
+}
+
+#flowArchive .archiveHeader h2{
+  font-size:clamp(34px,4vw,54px);
+  letter-spacing:5px;
+}
+
+#archiveList{
+  max-height:calc(92vh - 110px);
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:0 8px 14px 0;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+
+/* Context block: pause / death / objective complete. */
+.hubStatus{
+  margin-bottom:16px;
+  padding:18px 20px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:20px;
+  text-align:center;
+  background:rgba(255,255,255,.025);
+}
+
+.hubStatusRun{
+  border-color:rgba(78,221,225,.26);
+}
+
+.hubStatusComplete{
+  border-color:rgba(255,211,106,.30);
+  background:rgba(255,211,106,.035);
+}
+
+.hubStatusPaused{
+  border-color:rgba(255,211,106,.22);
+}
+
+.hubStatusEyebrow{
+  font-size:11px;
+  font-weight:950;
+  letter-spacing:2.6px;
+  color:#ffd36a;
+}
+
+.hubStatusLabel{
+  margin-top:8px;
+  font-size:clamp(18px,2vw,28px);
+  font-weight:950;
+  letter-spacing:1.6px;
+  color:#fff;
+}
+
+.hubStatusValue{
+  margin-top:6px;
+  font-size:clamp(34px,4vw,58px);
+  font-weight:950;
+  color:#fff;
+  text-shadow:0 0 16px rgba(255,255,255,.22);
+}
+
+.hubStatusMessage{
+  margin-top:8px;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:1.3px;
+  color:rgba(255,255,255,.52);
+}
+
+.hubResumeButton{
+  width:100%;
+  min-height:54px;
+  margin-top:14px;
+  border-radius:15px;
+  border:1px solid rgba(255,211,106,.45);
+  background:rgba(255,211,106,.075);
+  color:#ffd36a;
+  font:950 13px Arial,sans-serif;
+  letter-spacing:2px;
+}
+
+/* Today's Pick remains gold-framed, but borrows the recommended Flow color. */
+.todayPickCard{
+  margin-bottom:18px;
+  padding:20px;
+  border-radius:22px;
+  border:1px solid rgba(255,211,106,.30);
+  background:
+    radial-gradient(
+      circle at 12% 0%,
+      var(--flow-glow),
+      transparent 44%
+    ),
+    rgba(255,211,106,.025);
+}
+
+.todayPickTop{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  font-size:11px;
+  font-weight:950;
+  letter-spacing:1.8px;
+  color:#ffd36a;
+}
+
+.todayPickTop span:last-child{
+  color:rgba(255,255,255,.52);
+}
+
+.todayPickName{
+  margin-top:12px;
+  font-size:clamp(25px,2.5vw,36px);
+  font-weight:950;
+  letter-spacing:1.4px;
+  color:var(--flow-color);
+  text-shadow:0 0 18px var(--flow-glow);
+}
+
+.todayPickObjective{
+  margin-top:6px;
+  font-size:clamp(14px,1.35vw,19px);
+  font-weight:850;
+  letter-spacing:.7px;
+  color:rgba(255,255,255,.72);
+}
+
+.todayPickButton{
+  width:100%;
+  min-height:58px;
+  margin-top:16px;
+  border-radius:16px;
+  border:1px solid var(--flow-color);
+  background:rgba(0,0,0,.38);
+  color:var(--flow-color);
+  font:950 13px Arial,sans-serif;
+  letter-spacing:1.8px;
+  box-shadow:
+    inset 0 0 18px var(--flow-glow),
+    0 0 14px rgba(0,0,0,.26);
+}
+
+.hubChooseHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:end;
+  gap:12px;
+  margin:18px 2px 10px;
+}
+
+.hubChooseHeader span{
+  font-size:14px;
+  font-weight:950;
+  letter-spacing:2px;
+  color:#ffd36a;
+}
+
+.hubChooseHeader small{
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:1.1px;
+  color:rgba(255,255,255,.38);
+}
+
+/* Six Flow cards: dark transparent glass, no white fill. */
+.hubFlowGrid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+
+.flowChoiceCard{
+  appearance:none;
+  -webkit-appearance:none;
+  min-height:116px;
+  padding:16px;
+  border-radius:18px;
+  border:1px solid color-mix(in srgb,var(--flow-color) 58%,transparent);
+  background:
+    radial-gradient(
+      circle at 20% 0%,
+      var(--flow-glow),
+      transparent 54%
+    ),
+    rgba(0,0,0,.48);
+  color:#fff;
+  text-align:left;
+  cursor:pointer;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.018),
+    0 0 15px rgba(0,0,0,.28);
+  transition:
+    transform .12s ease,
+    box-shadow .15s ease,
+    border-color .15s ease;
+}
+
+.flowChoiceCard:hover,
+.flowChoiceCard:focus-visible{
+  outline:none;
+  transform:translateY(-2px);
+  border-color:var(--flow-color);
+  box-shadow:
+    inset 0 0 22px var(--flow-glow),
+    0 0 18px var(--flow-glow);
+}
+
+.flowChoiceCard.active{
+  border-color:var(--flow-color);
+  box-shadow:
+    inset 0 0 20px var(--flow-glow),
+    0 0 15px var(--flow-glow);
+}
+
+.flowChoiceTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.flowChoiceName{
+  font-size:clamp(15px,1.5vw,21px);
+  font-weight:950;
+  letter-spacing:1.6px;
+  color:var(--flow-color);
+  text-shadow:0 0 14px var(--flow-glow);
+}
+
+.flowChoiceStep{
+  font-size:10px;
+  font-weight:950;
+  color:rgba(255,255,255,.34);
+}
+
+.flowChoiceObjective{
+  margin-top:10px;
+  font-size:clamp(11px,1vw,14px);
+  font-weight:850;
+  line-height:1.35;
+  letter-spacing:.45px;
+  color:rgba(255,255,255,.70);
+}
+
+/* Six record chips remain secondary. */
+.hubRecords{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:8px;
+  margin-top:16px;
+}
+
+.hubRecord{
+  min-height:58px;
+  padding:9px 7px;
+  border-radius:13px;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.015);
+  text-align:center;
+}
+
+.hubRecord span{
+  display:block;
+  font-size:7px;
+  font-weight:950;
+  letter-spacing:.9px;
+  color:var(--flow-color);
+}
+
+.hubRecord strong{
+  display:block;
+  margin-top:5px;
+  font-size:13px;
+  color:#fff;
+}
+
+/* Mobile / narrow tablet */
+@media(max-width:699px){
+  #flowArchive .archiveCard{
+    width:96vw;
+    max-height:92vh;
+    padding:20px 15px;
+    border-radius:25px;
+  }
+
+  #flowArchive .archiveHeader h2{
+    font-size:36px;
+  }
+
+  #archiveList{
+    max-height:calc(92vh - 95px);
+    padding-right:4px;
+  }
+
+  .hubStatus{
+    padding:15px 13px;
+  }
+
+  .todayPickCard{
+    padding:16px 14px;
+  }
+
+  .todayPickTop{
+    font-size:9px;
+  }
+
+  .todayPickName{
+    font-size:26px;
+  }
+
+  .todayPickObjective{
+    font-size:14px;
+  }
+
+  .todayPickButton{
+    min-height:52px;
+    font-size:12px;
+  }
+
+  .hubChooseHeader{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:4px;
+  }
+
+  .hubFlowGrid{
+    grid-template-columns:repeat(2,1fr);
+    gap:9px;
+  }
+
+  .flowChoiceCard{
+    min-height:112px;
+    padding:13px 11px;
+  }
+
+  .flowChoiceName{
+    font-size:15px;
+  }
+
+  .flowChoiceObjective{
+    font-size:11px;
+  }
+
+  .hubRecords{
+    grid-template-columns:repeat(3,1fr);
+    gap:7px;
+  }
+}
+
+/* Tablet */
+@media(min-width:700px) and (max-width:1100px){
+  #flowArchive .archiveCard{
+    width:90vw;
+  }
+
+  .hubFlowGrid{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .hubRecords{
+    grid-template-columns:repeat(3,1fr);
   }
 }
 
@@ -4370,6 +4766,213 @@ const FLOW_TOTAL = 300;
 const FLOW_TYPES=["COLLECT","TRAVEL","SCORE","RINGS","SHIFT","WARP"];
 const FLOWS_PER_CYCLE=6;
 const TOTAL_CYCLES=Math.ceil(FLOW_TOTAL/FLOWS_PER_CYCLE);
+const FLOW_COLOR_MAP={
+  COLLECT:"#39ff88",
+  TRAVEL:"#45b7ff",
+  SCORE:"#c86bff",
+  RINGS:"#ffd34e",
+  SHIFT:"#ff5f6d",
+  WARP:"#35f2ff"
+};
+
+const FLOW_GLOW_MAP={
+  COLLECT:"rgba(57,255,136,.22)",
+  TRAVEL:"rgba(69,183,255,.22)",
+  SCORE:"rgba(200,107,255,.22)",
+  RINGS:"rgba(255,211,78,.22)",
+  SHIFT:"rgba(255,95,109,.22)",
+  WARP:"rgba(53,242,255,.22)"
+};
+
+function flowFamilyOffset(category){
+  return FLOW_TYPES.indexOf(category);
+}
+
+function authoredIndexesForCategory(category){
+  const offset=flowFamilyOffset(category);
+  if(offset<0)return [];
+
+  const indexes=[];
+  for(
+    let index=offset;
+    index<FLOW_TOTAL;
+    index+=FLOWS_PER_CYCLE
+  ){
+    indexes.push(index);
+  }
+  return indexes;
+}
+
+function currentFamilyFlowIndex(category){
+  const indexes=authoredIndexesForCategory(category);
+  if(!indexes.length)return 0;
+
+  const unfinished=indexes.find(
+    index=>!completedFlowIndexes.has(index)
+  );
+
+  if(Number.isInteger(unfinished)){
+    return unfinished;
+  }
+
+  // Mastery mode: once this family has exhausted its authored queue,
+  // keep it alive by selecting from the same tuned challenge library.
+  const seed=
+    Math.floor(Date.now()/86400000) +
+    flowFamilyOffset(category)*17 +
+    Math.floor(Math.random()*indexes.length);
+
+  return indexes[
+    Math.abs(seed)%indexes.length
+  ];
+}
+
+function currentSixFlowIndexes(){
+  return FLOW_TYPES.map(
+    category=>currentFamilyFlowIndex(category)
+  );
+}
+
+function familyCompletedCount(category){
+  return authoredIndexesForCategory(category)
+    .filter(index=>completedFlowIndexes.has(index))
+    .length;
+}
+
+function familyMastered(category){
+  const indexes=authoredIndexesForCategory(category);
+  return indexes.length>0 &&
+    indexes.every(index=>completedFlowIndexes.has(index));
+}
+
+function familyProgressLabel(category){
+  const total=authoredIndexesForCategory(category).length;
+  const complete=familyCompletedCount(category);
+
+  if(total && complete>=total){
+    return "MASTERY";
+  }
+
+  return `${complete+1}`;
+}
+
+function flowCardHtml(category){
+  const flowIndex=currentFamilyFlowIndex(category);
+  const flow=createFlow(flowIndex);
+  const active=
+    activeChallenge?.category===category &&
+    !gameOver;
+  const mastered=familyMastered(category);
+
+  return `
+    <button
+      class="flowChoiceCard flow-${category.toLowerCase()} ${active?"active":""}"
+      type="button"
+      data-family-flow="${category}"
+      data-flow-index="${flowIndex}"
+      style="
+        --flow-color:${FLOW_COLOR_MAP[category]};
+        --flow-glow:${FLOW_GLOW_MAP[category]};
+      "
+      aria-label="${category}: ${flow.label}"
+    >
+      <div class="flowChoiceTop">
+        <span class="flowChoiceName">${category}</span>
+        <span class="flowChoiceStep">${
+          mastered
+            ?"∞"
+            :familyProgressLabel(category)
+        }</span>
+      </div>
+      <div class="flowChoiceObjective">${flow.label}</div>
+    </button>
+  `;
+}
+
+function sixIndependentFlowCardsHtml(){
+  return `
+    <div class="hubFlowGrid">
+      ${FLOW_TYPES.map(flowCardHtml).join("")}
+    </div>
+  `;
+}
+
+function chooseFlowFamily(category,source="flow_hub"){
+  if(!FLOW_TYPES.includes(category))return false;
+
+  const flowIndex=
+    currentFamilyFlowIndex(category);
+
+  trackGame("flow_family_selected",{
+    category,
+    flow_number:flowIndex+1,
+    source,
+    family_completed:
+      familyCompletedCount(category),
+    family_mastery:
+      familyMastered(category)
+  });
+
+  currentFlowIndex=flowIndex;
+  replayReturnFlowIndex=null;
+
+  saveFlowProgress();
+
+  if(gameOver){
+    const archive=
+      document.getElementById("flowArchive");
+
+    archive?.classList.remove("show");
+    archive?.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+    document.body.classList.remove(
+      "uiModalOpen"
+    );
+
+    resetRun();
+    return true;
+  }
+
+  loadSelectedFlow(
+    flowIndex,
+    {
+      replay:false,
+      announce:false
+    }
+  );
+
+  // loadSelectedFlow closes the hub. If this was a pause,
+  // closeFlowArchive resumes the run.
+  return true;
+}
+
+let flowHubContext={
+  mode:"browse",
+  message:"",
+  resultLabel:"",
+  resultValue:""
+};
+
+function setFlowHubContext(
+  mode="browse",
+  {
+    message="",
+    resultLabel="",
+    resultValue=""
+  }={}
+){
+  flowHubContext={
+    mode,
+    message,
+    resultLabel,
+    resultValue
+  };
+}
+
+
 
 function cycleNumberForFlow(index=currentFlowIndex){
   return Math.floor(Math.max(0,index)/FLOWS_PER_CYCLE)+1;
@@ -4610,16 +5213,7 @@ function hashDateKey(key){
 }
 
 function selectableDailyFlowIndexes(){
-  const indexes=activeCycleIndexes();
-
-  // Prefer unfinished choices so Today's Flow helps move the current Cycle.
-  const unfinished=indexes.filter(
-    index=>!completedFlowIndexes.has(index)
-  );
-
-  return unfinished.length
-    ? unfinished
-    : indexes;
+  return currentSixFlowIndexes();
 }
 
 function loadTodayVector(){
@@ -4658,6 +5252,28 @@ let todayVector=null;
 
 function refreshTodayVector(){
   todayVector=loadTodayVector();
+
+  if(todayVector){
+    const savedFlow=createFlow(
+      Math.max(
+        0,
+        Math.min(
+          FLOW_TOTAL-1,
+          Number(todayVector.flowIndex)||0
+        )
+      )
+    );
+
+    const currentIndex=
+      currentFamilyFlowIndex(
+        savedFlow.category
+      );
+
+    // Keep the daily category stable for the day,
+    // while allowing that family's objective to advance.
+    todayVector.flowIndex=currentIndex;
+  }
+
   return todayVector;
 }
 
@@ -4665,7 +5281,14 @@ function markTodayVectorComplete(flowIndex){
   refreshTodayVector();
 
   if(!todayVector || todayVector.completed)return;
-  if(flowIndex!==todayVector.flowIndex)return;
+
+  const finishedCategory=
+    createFlow(flowIndex).category;
+
+  const dailyCategory=
+    createFlow(todayVector.flowIndex).category;
+
+  if(finishedCategory!==dailyCategory)return;
 
   todayVector.completed=true;
 
@@ -4676,10 +5299,8 @@ function markTodayVectorComplete(flowIndex){
 
   trackGame("today_vector_completed",{
     flow_number:flowIndex+1,
-    category:createFlow(flowIndex).category
+    category:finishedCategory
   });
-
-  showModeBanner("TODAY'S FLOW COMPLETE");
 }
 
 function retentionJourneyHtml(){
@@ -5070,17 +5691,11 @@ function isBlockUnlocked(blockNumber){
 
 
 function isFlowUnlocked(index){
-
-    if(index < 0 || index >= FLOW_TOTAL){
-        return false;
-    }
-
-    // Player-facing progression is six-choice Cycles.
-    // Completed hidden objectives remain replayable.
-    return (
-      isCurrentCycleFlow(index) ||
-      isFlowCompleted(index)
-    );
+  return (
+    Number.isInteger(index) &&
+    index>=0 &&
+    index<FLOW_TOTAL
+  );
 }
 
 
@@ -5097,10 +5712,7 @@ function isFlowCompleted(index){
   until the current Flow is completed.
 */
 function isFlowArchiveSelectable(index){
-    return (
-        isCurrentCycleFlow(index) ||
-        isFlowCompleted(index)
-    );
+  return isFlowUnlocked(index);
 }
 
 
@@ -5685,11 +6297,47 @@ function completeCurrentFlow(){
             finishedFlowIndex + 1
     });
 
-    showModeBanner(
-        cycleCompletedNow
-          ? "CYCLE COMPLETE"
-          : `${finished.category} COMPLETE`
+    const nextFamilyIndex=
+        currentFamilyFlowIndex(
+            finished.category
+        );
+
+    currentFlowIndex=
+        nextFamilyIndex;
+
+    saveFlowProgress();
+
+    activeChallenge=
+        createFlow(currentFlowIndex);
+
+    setFlowHubContext(
+      "flow_complete",
+      {
+        resultLabel:
+          `${finished.category} COMPLETE ✓`,
+        message:
+          `NEXT ${finished.category} CHALLENGE READY`
+      }
     );
+
+    paused=true;
+    applyPauseVisuals(false);
+
+    openFlowArchive(
+      "flow_complete"
+    );
+
+    trackGame(
+      "flow_hub_after_completion",
+      {
+        completed_category:
+          finished.category,
+        next_flow_number:
+          currentFlowIndex+1
+      }
+    );
+
+    return;
 
 if(replayReturnFlowIndex !== null){
 
@@ -5870,114 +6518,173 @@ function wireCycleChoiceButtons(root,source){
     });
 }
 
-function renderRetentionArchiveCards(){
+function flowHubStatusHtml(){
+  const context=flowHubContext||{mode:"browse"};
+
+  if(context.mode==="run_complete"){
+    return `
+      <div class="hubStatus hubStatusRun">
+        <div class="hubStatusEyebrow">RUN COMPLETE</div>
+        <div class="hubStatusLabel">${context.resultLabel||""}</div>
+        <div class="hubStatusValue">${context.resultValue||""}</div>
+        <div class="hubStatusMessage">
+          ${context.message||"PICK ANY FLOW AND GO AGAIN"}
+        </div>
+      </div>
+    `;
+  }
+
+  if(context.mode==="flow_complete"){
+    return `
+      <div class="hubStatus hubStatusComplete">
+        <div class="hubStatusEyebrow">FLOW COMPLETE</div>
+        <div class="hubStatusLabel">${context.resultLabel||""}</div>
+        <div class="hubStatusMessage">
+          ${context.message||"YOUR NEXT CHALLENGE IS READY"}
+        </div>
+      </div>
+    `;
+  }
+
+  if(context.mode==="paused"){
+    const flow=
+      activeChallenge||
+      createFlow(currentFlowIndex);
+
+    return `
+      <div class="hubStatus hubStatusPaused">
+        <div class="hubStatusEyebrow">PAUSED</div>
+        <div class="hubStatusLabel">${flow.category}</div>
+        <div class="hubStatusMessage">${flow.label}</div>
+        <button
+          class="hubResumeButton"
+          id="hubResumeButton"
+          type="button"
+        >RESUME</button>
+      </div>
+    `;
+  }
+
+  return "";
+}
+
+function todayPickHtml(){
   refreshTodayVector();
 
-  const info=nextVectorInfo();
-  const stage=vectorStageForCompleted();
-  const dailyFlow=createFlow(todayVector.flowIndex);
+  const flow=createFlow(
+    Number(todayVector?.flowIndex)||0
+  );
 
-  const recordsHtml=[
-    "COLLECT",
-    "TRAVEL",
-    "SCORE",
-    "RINGS",
-    "SHIFT",
-    "WARP"
-  ].map(category=>`
-    <div class="recordChip">
-      <div class="recordChipLabel">${category}</div>
-      <div class="recordChipValue">${
-        formatVectorRecord(
-          category,
-          vectorRecords[category]
-        )
-      }</div>
-    </div>
-  `).join("");
+  const category=flow.category;
+  const color=FLOW_COLOR_MAP[category];
 
   return `
-    <div class="archiveRetention">
+    <div
+      class="todayPickCard"
+      style="
+        --flow-color:${color};
+        --flow-glow:${FLOW_GLOW_MAP[category]};
+      "
+    >
+      <div class="todayPickTop">
+        <span>TODAY'S PICK</span>
+        <span>${
+          todayVector?.completed
+            ?"COMPLETE ✓"
+            :"RECOMMENDED"
+        }</span>
+      </div>
 
-      <div class="todayVectorCard">
-        <div class="todayVectorTop">
-          <span class="todayVectorName">TODAY'S FLOW</span>
-          <span class="todayVectorStatus">${
-            todayVector.completed
-              ?"COMPLETE"
-              :"AVAILABLE"
-          }</span>
-        </div>
+      <div class="todayPickName">${category}</div>
+      <div class="todayPickObjective">${flow.label}</div>
 
-        <div class="todayVectorFlow">
-          ${dailyFlow.category}
-        </div>
-
-        <div class="todayVectorObjective">
-          ${dailyFlow.label}
-        </div>
-
-        <button
-          class="todayVectorAction"
-          id="todayVectorPlay"
-          type="button"
-        >${
-          todayVector.completed
+      <button
+        class="todayPickButton"
+        id="todayVectorPlay"
+        type="button"
+        data-family-flow="${category}"
+      >
+        ${
+          todayVector?.completed
             ?"PLAY AGAIN"
-            :"PLAY TODAY'S FLOW"
-        }</button>
-        <div class="nextDailyNote">${
-          todayVector.completed
-            ?"TODAY COMPLETE · KEEP FLYING OR COME BACK TOMORROW"
-            :"DAILY PICK · ALL SIX FLOWS ARE PLAYABLE"
-        }</div>
-      </div>
+            :"PLAY TODAY'S PICK"
+        }
+      </button>
+    </div>
+  `;
+}
 
-      <div class="personalRecords">
-        ${recordsHtml}
-      </div>
-
+function flowRecordsHtml(){
+  return `
+    <div class="hubRecords">
+      ${FLOW_TYPES.map(category=>`
+        <div
+          class="hubRecord"
+          style="
+            --flow-color:${FLOW_COLOR_MAP[category]};
+          "
+        >
+          <span>${category}</span>
+          <strong>${
+            formatVectorRecord(
+              category,
+              vectorRecords[category]
+            )
+          }</strong>
+        </div>
+      `).join("")}
     </div>
   `;
 }
 
 function renderFlowArchive(){
 
-    const list =
-        document.getElementById("archiveList");
+  const list=
+    document.getElementById("archiveList");
 
-    if(!list)return;
+  if(!list)return;
 
-    /*
-      Player-facing SHIFTVIX has SIX FLOWS.
-      The full 300-objective progression remains intact underneath
-      for difficulty, daily selection, analytics, and tuning.
-      It is intentionally never rendered on this screen.
-    */
-    list.innerHTML = `
-        ${sixFlowCycleHtml()}
-        ${renderRetentionArchiveCards()}
-    `;
+  list.innerHTML=`
+    ${flowHubStatusHtml()}
 
-    wireCycleChoiceButtons(
-      list,
-      "flows_screen"
-    );
+    ${todayPickHtml()}
 
-    document
-      .getElementById("todayVectorPlay")
-      ?.addEventListener("click",event=>{
+    <div class="hubChooseHeader">
+      <span>CHOOSE A FLOW</span>
+      <small>ALL SIX ARE ALWAYS OPEN</small>
+    </div>
 
+    ${sixIndependentFlowCardsHtml()}
+
+    ${flowRecordsHtml()}
+  `;
+
+  list
+    .querySelectorAll("[data-family-flow]")
+    .forEach(button=>{
+      button.addEventListener("click",event=>{
         event.stopPropagation();
-        refreshTodayVector();
 
-        activateCycleFlow(
-          Number(todayVector.flowIndex),
-          "today_flow"
+        const category=
+          button.dataset.familyFlow;
+
+        chooseFlowFamily(
+          category,
+          button.id==="todayVectorPlay"
+            ?"today_pick"
+            :"flow_hub"
         );
       });
+    });
 
-    list.scrollTop=0;
+  document
+    .getElementById("hubResumeButton")
+    ?.addEventListener("click",event=>{
+      event.stopPropagation();
+      closeFlowArchive();
+    });
+
+  list.scrollTop=0;
 }
 
 function loadSelectedFlow(
@@ -6181,13 +6888,31 @@ function resumeMusicAfterPause(){
 
 function pauseGame(source="center"){
   if(gameOver||paused)return;
+
   paused=true;
   pauseStartedAt=performance.now();
   pausePreviouslyFocused=document.activeElement;
+
   pauseMusicOnly();
-  applyPauseVisuals(true);
-  requestAnimationFrame(()=>document.getElementById("pauseResume")?.focus());
-  trackGame("game_paused",{source,flow_number:currentFlowIndex+1});
+
+  // One hub only: no separate pause card.
+  applyPauseVisuals(false);
+
+  setFlowHubContext(
+    "paused",
+    {
+      message:
+        activeChallenge?.label||
+        createFlow(currentFlowIndex).label
+    }
+  );
+
+  openFlowArchive("pause");
+
+  trackGame("game_paused",{
+    source,
+    flow_number:currentFlowIndex+1
+  });
 }
 
 function resumeGame(source="resume"){
@@ -6214,41 +6939,88 @@ function togglePause(source="center"){
 }
 
 function openFlowArchive(source="hud"){
-  const archive=document.getElementById("flowArchive");
-  if(!archive||archive.classList.contains("show"))return;
+  const archive=
+    document.getElementById("flowArchive");
+
+  if(
+    !archive ||
+    archive.classList.contains("show")
+  )return;
+
   archiveOpenedFromPause=paused;
   archiveWasPaused=paused;
-  if(!paused)pauseGame("flow_path");
-  archiveScrollTop=0;
+
+  if(!paused && !gameOver){
+    paused=true;
+    pauseStartedAt=performance.now();
+    pauseMusicOnly();
+  }
+
+  if(
+    source==="hud" ||
+    source==="pause_menu"
+  ){
+    setFlowHubContext(
+      paused
+        ?"paused"
+        :"browse"
+    );
+  }
+
+  applyPauseVisuals(false);
+
   renderFlowArchive();
+
   archive.classList.add("show");
-  archive.setAttribute("aria-hidden","false");
-  document.getElementById("pauseMenu")?.classList.remove("show");
-  document.body.classList.add("uiModalOpen");
+  archive.setAttribute(
+    "aria-hidden",
+    "false"
+  );
+
+  document.body.classList.add(
+    "uiModalOpen"
+  );
+
   requestAnimationFrame(()=>{
     (
+      document.getElementById("hubResumeButton") ||
       document.getElementById("todayVectorPlay") ||
       document.getElementById("archiveClose")
     )?.focus();
   });
-  trackGame("pause_flow_path_opened",{source,opened_while_paused:archiveOpenedFromPause,flow_number:currentFlowIndex+1});
+
+  trackGame("flow_hub_opened",{
+    source,
+    flow_number:currentFlowIndex+1,
+    game_over:gameOver
+  });
 }
 
 function closeFlowArchive(){
-  const archive=document.getElementById("flowArchive");
-  if(!archive||!archive.classList.contains("show"))return;
-  const list=document.getElementById("archiveList");
-  archiveScrollTop=0;
+  const archive=
+    document.getElementById("flowArchive");
+
+  if(
+    !archive ||
+    !archive.classList.contains("show")
+  )return;
+
   archive.classList.remove("show");
-  archive.setAttribute("aria-hidden","true");
-  if(paused){
-    applyPauseVisuals(true);
-    updatePauseSelection();
-    requestAnimationFrame(()=>document.getElementById("pauseFlowPath")?.focus());
-  }else{
-    document.body.classList.remove("uiModalOpen");
-  }
+  archive.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+
+  archiveScrollTop=0;
   archiveOpenedFromPause=false;
+
+  document.body.classList.remove(
+    "uiModalOpen"
+  );
+
+  if(paused && !gameOver){
+    resumeGame("flow_hub_close");
+  }
 }
 document.getElementById("challengeHud").addEventListener("click",()=>openFlowArchive("hud"));
 document.getElementById("archiveClose").addEventListener("click",closeFlowArchive);
@@ -8487,74 +9259,55 @@ function endRun(){
     const finalBestSources =
         Math.max(foundCount, bestSources);
 
-    const card =
-        document.getElementById("roundComplete");
+    const runFlow =
+        activeChallenge ||
+        createFlow(currentFlowIndex);
 
-    const runFlow = activeChallenge || createFlow(currentFlowIndex);
+    const runFlowRaw=
+        challengeBaseValue(runFlow);
 
-    // Show the player's REAL progress even if a life-condition was missed.
-    const runFlowRaw=challengeBaseValue(runFlow);
-
-    const runFlowValue=Math.max(
-        0,
-        Math.min(runFlow.target,runFlowRaw)
-    );
+    const runFlowValue=
+        Math.max(
+          0,
+          Math.min(
+            runFlow.target,
+            runFlowRaw
+          )
+        );
 
     const runFlowProgress=
-        formatRunFlowProgress(runFlow,runFlowValue);
+        formatRunFlowProgress(
+          runFlow,
+          runFlowValue
+        );
 
-    const runFlowLabel =
+    const runFlowLabel=
         flowDisplayLabel(runFlow);
 
-    const runFlowCondition =
-        flowConditionText(runFlow);
+    // Separate Run Complete screen is retired.
+    const oldCard=
+        document.getElementById(
+          "roundComplete"
+        );
 
-    card.innerHTML = `
-<div class="resultsCard flowResults minimalResults">
+    if(oldCard){
+      oldCard.style.display="none";
+      oldCard.innerHTML="";
+    }
 
-    <div class="big">RUN COMPLETE</div>
-
-    <div class="runObjectiveOnly">
-        <div class="runObjectiveLabel">${runFlowLabel}</div>
-        <div class="runObjectiveValue">${runFlowProgress}</div>
-        <div class="runObjectiveCondition">${runFlowCondition}</div>
-    </div>
-
-    ${sixFlowCycleHtml()}
-
-    <div class="nextDailyNote">${
-      todayVector?.completed
-        ?"TODAY'S FLOW COMPLETE · KEEP PLAYING OR RETURN TOMORROW"
-        :"TODAY'S FLOW AVAILABLE · ALL SIX FLOWS ARE OPEN"
-    }</div>
-
-    <div class="runCycleHint">
-      CHOOSE ANY FLOW ABOVE · OR PLAY AGAIN
-    </div>
-
-    <div class="runActions">
-        <button class="runAction primary" id="runPlayAgain" type="button">PLAY AGAIN</button>
-        <button class="runAction" id="runFlowPath" type="button">FLOWS</button>
-    </div>
-
-</div>
-`;
-    card.style.display = "grid";
-    card.onclick = null;
-
-    wireCycleChoiceButtons(
-      card,
-      "run_complete"
+    setFlowHubContext(
+      "run_complete",
+      {
+        resultLabel:runFlowLabel,
+        resultValue:runFlowProgress,
+        message:
+          "PICK ANY FLOW AND GO AGAIN"
+      }
     );
 
-    document.getElementById("runPlayAgain")?.addEventListener("click",event=>{
-        event.stopPropagation();
-        resetRun();
-    });
-    document.getElementById("runFlowPath")?.addEventListener("click",event=>{
-        event.stopPropagation();
-        openFlowArchive("run_complete");
-    });
+    openFlowArchive(
+      "run_complete"
+    );
 
 }
 function resetRun(){
