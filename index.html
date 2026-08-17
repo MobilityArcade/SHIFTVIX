@@ -39,7 +39,7 @@ function track(eventName, data = {}) {
 }
 </script>
 <head>
-<!-- SHIFTVIX 2.23 — VECTOR RETENTION LAYER -->
+<!-- SHIFTVIX 2.25 — WARP FLOW + RING ROUTE CHOICES -->
 <meta charset="utf-8">
 <link rel="icon" type="image/png" href="icon-512.png">
 
@@ -1471,6 +1471,16 @@ body.uiModalOpen #center{pointer-events:none}
     font-size:clamp(29px,9vw,40px);
   }
 }
+
+/* SHIFTVIX 2.24 — Six Flows / Cycles */
+.sixFlowSummary{margin:14px 0 16px;padding:13px 14px;border:1px solid rgba(255,211,106,.24);border-radius:16px;background:rgba(255,211,106,.03)}
+.sixFlowSummaryTop{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:9px;font-weight:950;letter-spacing:1.2px;color:rgba(255,255,255,.56)}
+.sixFlowSummaryTop strong{color:#ffd36a;letter-spacing:1.45px}
+.sixFlowNames{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:10px}
+.sixFlowName{padding:5px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.09);font-size:7px;font-weight:950;letter-spacing:.75px;color:rgba(255,255,255,.46)}
+.sixFlowName.done{border-color:rgba(255,211,106,.32);color:#ffd36a;background:rgba(255,211,106,.06)}
+.sixFlowName.current{border-color:rgba(255,255,255,.25);color:#fff}
+.nextDailyNote{margin-top:8px;text-align:center;font-size:8px;font-weight:900;letter-spacing:1px;color:rgba(255,255,255,.42)}
 </style>
 </head>
 <body>
@@ -1711,7 +1721,7 @@ let tierCounts = {WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};
 let runStartStrikes = 0;
 
 // =========================
-// SHIFTVIX 2.18 — SHIFT + RUSH
+// SHIFTVIX 2.18 — SHIFT + WARP
 // SHIFT = agility objective (successful lane changes).
 // RUSH = 60-second performance Flow layered over existing actions.
 // =========================
@@ -1720,11 +1730,11 @@ let shiftArrivalTimer=null;
 let shiftLastArrivalLane="1:1";
 let shiftPreviousArrivalLane=null;
 
-let rushNextWarpDistance=Infinity;
-const RUSH_WARP_FIRST_GAP_MIN=70;
-const RUSH_WARP_FIRST_GAP_MAX=140;
-const RUSH_WARP_GAP_MIN=90;
-const RUSH_WARP_GAP_MAX=180;
+let warpFlowNextWarpDistance=Infinity;
+const WARP_FLOW_FIRST_GAP_MIN=45;
+const WARP_FLOW_FIRST_GAP_MAX=90;
+const WARP_FLOW_GAP_MIN=60;
+const WARP_FLOW_GAP_MAX=120;
 
 // =========================
 // SHIFTVIX 2.11 — GOLD RING ACCURACY SYSTEM
@@ -3439,6 +3449,39 @@ function startMusic(){
 }
 
 const FLOW_TOTAL = 300;
+const FLOW_TYPES=["COLLECT","TRAVEL","SCORE","RINGS","SHIFT","WARP"];
+const FLOWS_PER_CYCLE=6;
+const TOTAL_CYCLES=Math.ceil(FLOW_TOTAL/FLOWS_PER_CYCLE);
+
+function cycleNumberForFlow(index=currentFlowIndex){
+  return Math.floor(Math.max(0,index)/FLOWS_PER_CYCLE)+1;
+}
+function cycleStartIndex(index=currentFlowIndex){
+  return Math.floor(Math.max(0,index)/FLOWS_PER_CYCLE)*FLOWS_PER_CYCLE;
+}
+function cycleProgress(index=currentFlowIndex){
+  const start=cycleStartIndex(index);
+  const completed=new Set();
+  for(let i=0;i<FLOWS_PER_CYCLE;i++){
+    const fi=start+i;
+    if(fi>=FLOW_TOTAL)break;
+    if(completedFlowIndexes.has(fi)) completed.add(createFlow(fi).category);
+  }
+  return {cycle:cycleNumberForFlow(index),completed,count:completed.size};
+}
+function sixFlowCycleHtml(index=currentFlowIndex){
+  const p=cycleProgress(index);
+  const current=createFlow(index).category;
+  const chips=FLOW_TYPES.map(type=>{
+    const cls=p.completed.has(type)?"done":type===current?"current":"";
+    return `<span class="sixFlowName ${cls}">${type}</span>`;
+  }).join("");
+  return `<div class="sixFlowSummary">
+    <div class="sixFlowSummaryTop"><strong>CYCLE ${p.cycle}</strong><span>${p.count} / 6 FLOWS</span></div>
+    <div class="sixFlowNames">${chips}</div>
+  </div>`;
+}
+
 
 const FLOWS_PER_BLOCK = 30;
 
@@ -3510,10 +3553,10 @@ function loadVectorRecords(){
       SCORE:Number(raw.SCORE)||0,
       RINGS:Number(raw.RINGS)||0,
       SHIFT:Number(raw.SHIFT)||0,
-      RUSH:Number(raw.RUSH)||0
+      WARP:Number(raw.WARP)||Number(raw.RUSH)||0
     };
   }catch(e){
-    return {COLLECT:0,TRAVEL:0,SCORE:0,RINGS:0,SHIFT:0,RUSH:0};
+    return {COLLECT:0,TRAVEL:0,SCORE:0,RINGS:0,SHIFT:0,WARP:0};
   }
 }
 
@@ -3641,7 +3684,7 @@ function markTodayVectorComplete(flowIndex){
     category:createFlow(flowIndex).category
   });
 
-  showModeBanner("TODAY'S VECTOR COMPLETE");
+  showModeBanner("TODAY'S FLOW COMPLETE");
 }
 
 function retentionJourneyHtml(){
@@ -4195,7 +4238,7 @@ function flowCategoryForIndex(index){
     "SCORE",
     "RINGS",
     "SHIFT",
-    "RUSH"
+    "WARP"
   ][index%6];
 }
 
@@ -4222,7 +4265,7 @@ function flowStrikeAllowance(index,category){
     category==="TRAVEL" ||
     category==="RINGS" ||
     category==="SHIFT" ||
-    category==="RUSH";
+    category==="WARP";
 
   if(n<=100){
     return ((n-31)%6===0)?2:null;
@@ -4268,7 +4311,7 @@ function createFlow(index){
     SCORE   = performance / value
     RINGS   = accuracy / navigation
     SHIFT   = agility / lane arrival
-    RUSH    = acceleration / Warp activation
+    WARP    = acceleration / Warp activation
 
     REACH / LEVEL has been removed as an objective family.
     Level still exists visually in the game world, but is no longer a Flow target.
@@ -4360,8 +4403,8 @@ function createFlow(index){
 
   if(category==="RINGS"){
     const target=Math.min(
-      70,
-      12+Math.floor(categoryStep*1.2)
+      80,
+      20+Math.floor(categoryStep*1.3)
     );
 
     flow={
@@ -4396,22 +4439,22 @@ function createFlow(index){
     return applyFlowStrikeAllowance(flow,index);
   }
 
-  // RUSH replaces REACH.
-  // One Rush = one successfully activated Warp orb, regardless of Warp tier.
-  // Warp's 500/1000/1500m jump still happens normally; the Flow simply counts
-  // the acceleration event as 1.
+  // WARP = acceleration / space-jump mastery.
+  // One successfully activated Warp orb counts as one WARP,
+  // regardless of Tier I / II / III. The 500 / 1000 / 1500m
+  // jump still happens normally.
   const target=Math.min(
-    20,
-    5+Math.floor(categoryStep/3)
+    24,
+    8+Math.floor(categoryStep/3)
   );
 
   flow={
-    id:`rush_${n}`,
+    id:`warp_${n}`,
     name,
-    category:"RUSH",
-    label:`RUSH ${target.toLocaleString()} TIMES`,
+    category:"WARP",
+    label:`HIT ${target.toLocaleString()} WARPS`,
     target,
-    metric:"rush"
+    metric:"warp"
   };
 
   return applyFlowStrikeAllowance(flow,index);
@@ -4430,7 +4473,7 @@ function beginCurrentFlow(){
         strikes,
         rings:goldRingsPassed,
         shifts:shiftCountRun,
-        rushes:warpCollectedThisRun,
+        warps:warpCollectedThisRun,
         tierCounts:{...tierCounts}
     };
 
@@ -4438,11 +4481,11 @@ function beginCurrentFlow(){
         goldRingSpawnCooldown=Math.min(goldRingSpawnCooldown,.35);
     }
 
-    if(activeChallenge.metric==="rush"){
-        scheduleRushWarp(true);
-        showModeBanner("RUSH");
+    if(activeChallenge.metric==="warp"){
+        scheduleWarpFlowOrb(true);
+        showModeBanner("WARP");
     }else{
-        rushNextWarpDistance=Infinity;
+        warpFlowNextWarpDistance=Infinity;
     }
 
     updateChallenge();
@@ -4464,7 +4507,7 @@ function challengeBaseValue(ch){
   if(ch.metric==="distance")return Math.max(0,distance-challengeStart.distance);
   if(ch.metric==="rings")return Math.max(0,goldRingsPassed-(challengeStart.rings||0));
   if(ch.metric==="shift")return Math.max(0,shiftCountRun-(challengeStart.shifts||0));
-  if(ch.metric==="rush")return Math.max(0,warpCollectedThisRun-(challengeStart.rushes||0));
+  if(ch.metric==="warp")return Math.max(0,warpCollectedThisRun-(challengeStart.warps||0));
 
   return 0;
 }
@@ -4670,7 +4713,7 @@ if(replayReturnFlowIndex !== null){
         strikes,
         rings:goldRingsPassed,
         shifts:shiftCountRun,
-        rushes:warpCollectedThisRun,
+        warps:warpCollectedThisRun,
         tierCounts:{...tierCounts}
     };
 
@@ -4723,7 +4766,7 @@ if(replayReturnFlowIndex !== null){
         strikes,
         rings:goldRingsPassed,
         shifts:shiftCountRun,
-        rushes:warpCollectedThisRun,
+        warps:warpCollectedThisRun,
         tierCounts:{...tierCounts}
     };
 
@@ -4748,7 +4791,7 @@ function updateChallenge(){
   updateHUD();
   if(!activeChallenge){
     activeChallenge=createFlow(currentFlowIndex);
-    challengeStart={found:foundCount,score,distance,strikes,rings:goldRingsPassed,shifts:shiftCountRun,rushes:warpCollectedThisRun,tierCounts:{...tierCounts}};
+    challengeStart={found:foundCount,score,distance,strikes,rings:goldRingsPassed,shifts:shiftCountRun,warps:warpCollectedThisRun,tierCounts:{...tierCounts}};
     updateHUD();
   }
   const raw=challengeValue(activeChallenge);
@@ -4783,7 +4826,7 @@ function renderRetentionArchiveCards(){
     "SCORE",
     "RINGS",
     "SHIFT",
-    "RUSH"
+    "WARP"
   ].map(category=>`
     <div class="recordChip">
       <div class="recordChipLabel">${category}</div>
@@ -4801,7 +4844,7 @@ function renderRetentionArchiveCards(){
 
       <div class="todayVectorCard">
         <div class="todayVectorTop">
-          <span class="todayVectorName">TODAY'S VECTOR</span>
+          <span class="todayVectorName">TODAY'S FLOW</span>
           <span class="todayVectorStatus">${
             todayVector.completed
               ?"COMPLETE"
@@ -4810,7 +4853,7 @@ function renderRetentionArchiveCards(){
         </div>
 
         <div class="todayVectorFlow">
-          FLOW ${todayVector.flowIndex+1} · ${dailyFlow.category}
+          ${dailyFlow.category}
         </div>
 
         <div class="todayVectorObjective">
@@ -4824,28 +4867,13 @@ function renderRetentionArchiveCards(){
         >${
           todayVector.completed
             ?"PLAY AGAIN"
-            :"PLAY TODAY'S VECTOR"
+            :"PLAY TODAY'S FLOW"
         }</button>
-      </div>
-
-      <div class="vectorJourneyCard">
-        <div class="vectorJourneyLabel">
-          <strong>VECTOR ${
-            stage>0
-              ?VECTOR_ROMANS[stage-1]
-              :"0"
-          } / IX</strong>
-
-          <span>${
-            info.complete
-              ?"300 FLOWS COMPLETE"
-              :`${info.flowsRemaining} FLOWS TO VECTOR ${info.nextRoman}`
-          }</span>
-        </div>
-
-        <div class="vectorDots">
-          ${vectorDotsHtml()}
-        </div>
+        <div class="nextDailyNote">${
+          todayVector.completed
+            ?"TODAY COMPLETE · KEEP FLYING OR COME BACK TOMORROW"
+            :"ONE DAILY OBJECTIVE · FREE PLAY CONTINUES AFTER"
+        }</div>
       </div>
 
       <div class="personalRecords">
@@ -4873,6 +4901,7 @@ function renderFlowArchive(){
             <span>🔒 NEXT / LOCKED</span>
         </div>
 
+        ${sixFlowCycleHtml()}
         ${renderRetentionArchiveCards()}
     `;
 
@@ -4962,7 +4991,7 @@ function renderFlowArchive(){
             strikes,
             rings:goldRingsPassed,
             shifts:shiftCountRun,
-            rushes:warpCollectedThisRun,
+            warps:warpCollectedThisRun,
             tierCounts:{...tierCounts}
         };
 
@@ -4975,7 +5004,7 @@ function renderFlowArchive(){
         closeFlowArchive();
         updateChallenge();
 
-        showModeBanner("TODAY'S VECTOR");
+        showModeBanner("TODAY'S FLOW");
 
         trackGame("today_vector_started",{
             flow_number:currentFlowIndex+1,
@@ -5822,15 +5851,15 @@ function chooseReachableGoldRingLane(reason="ambient"){
   return pool[Math.floor(Math.random()*pool.length)];
 }
 
-function makeGoldRing(reason="ambient"){
+function makeGoldRing(reason="ambient",forcedLane=null,zOffset=0){
   const activeRings=beacons.filter(
     b=>b?.userData?.isGoldRing && b.userData.state==="active"
   ).length;
-  if(activeRings>=2)return false;
+  if(activeRings>=4)return false;
 
   trainId++;
 
-  const chosen=chooseReachableGoldRingLane(reason);
+  const chosen=forcedLane||chooseReachableGoldRingLane(reason);
   if(!chosen)return false;
 
   const x=LANE_X[chosen.x];
@@ -5888,7 +5917,7 @@ function makeGoldRing(reason="ambient"){
   group.add(hotEdge);
   group.add(innerGlow);
 
-  group.position.set(x,y,FAR_Z+120);
+  group.position.set(x,y,FAR_Z+120+zOffset);
   group.scale.setScalar(introScale);
 
   group.userData={
@@ -5934,6 +5963,126 @@ function makeGoldRing(reason="ambient"){
   return true;
 }
 
+function safeRingRouteCandidates(){
+  const playerLane={
+    x:nearestRingLaneIndex(playerX,LANE_X),
+    y:nearestRingLaneIndex(playerY,LANE_Y)
+  };
+
+  const candidates=[];
+
+  for(let y=0;y<3;y++){
+    for(let x=0;x<3;x++){
+      const laneXValue=LANE_X[x];
+      const laneYValue=LANE_Y[y];
+
+      const blocked=beacons.some(b=>
+        b?.userData?.isVoid &&
+        b.userData.state==="active" &&
+        Math.abs(b.userData.roadX-laneXValue)<1 &&
+        Math.abs(b.userData.roadY-laneYValue)<1 &&
+        b.position.z<(FAR_Z+350)
+      );
+
+      if(blocked)continue;
+
+      const fromPlayer=ringLaneDistance({x,y},playerLane);
+
+      // Keep every offered route achievable.
+      if(fromPlayer>3)continue;
+
+      candidates.push({
+        x,
+        y,
+        fromPlayer
+      });
+    }
+  }
+
+  return candidates;
+}
+
+function spawnGoldRingRouteChoice(){
+  if(activeChallenge?.metric!=="rings")return false;
+
+  const activeRings=beacons.filter(
+    b=>b?.userData?.isGoldRing &&
+       b.userData.state==="active"
+  ).length;
+
+  if(activeRings>1)return false;
+
+  const candidates=safeRingRouteCandidates();
+  if(candidates.length<2)return false;
+
+  const byDistance=(a,b)=>a.fromPlayer-b.fromPlayer;
+  const sorted=candidates.slice().sort(byDistance);
+
+  const picked=[];
+
+  // EASY: nearest readable route.
+  picked.push(sorted[0]);
+
+  // MEDIUM: a different lane around the middle of the safe pool.
+  const mediumPool=sorted.filter(c=>
+    !picked.some(p=>p.x===c.x&&p.y===c.y) &&
+    c.fromPlayer>=1
+  );
+
+  if(mediumPool.length){
+    picked.push(
+      mediumPool[
+        Math.floor(mediumPool.length/2)
+      ]
+    );
+  }
+
+  // HARD: furthest still-reachable safe lane.
+  const hardPool=sorted
+    .slice()
+    .reverse()
+    .filter(c=>
+      !picked.some(p=>p.x===c.x&&p.y===c.y)
+    );
+
+  if(hardPool.length){
+    picked.push(hardPool[0]);
+  }
+
+  // Fall back to any remaining safe lane so a volley can still show 2–3 options.
+  for(const candidate of sorted){
+    if(picked.length>=3)break;
+    if(!picked.some(p=>p.x===candidate.x&&p.y===candidate.y)){
+      picked.push(candidate);
+    }
+  }
+
+  const zOffsets=[0,-62,-124];
+  let spawned=0;
+
+  picked.slice(0,3).forEach((lane,i)=>{
+    if(
+      makeGoldRing(
+        "ring_route_choice",
+        {x:lane.x,y:lane.y},
+        zOffsets[i]
+      )
+    ){
+      spawned++;
+    }
+  });
+
+  if(spawned>0){
+    trackGame("gold_ring_route_choice_spawned",{
+      options:spawned,
+      distance:Math.floor(distance),
+      flow_number:currentFlowIndex+1
+    });
+  }
+
+  return spawned>0;
+}
+
 function startGoldRingSequence(){
   /*
     A Ring Flow can occasionally send a short run of 2–3 rings.
@@ -5941,7 +6090,7 @@ function startGoldRingSequence(){
     but they arrive close enough together to feel like a flight path.
   */
   goldRingSequenceRemaining=
-    Math.random()<.55 ? 2 : 3;
+    Math.random()<.60 ? 3 : 4;
 
   goldRingSequenceDelay=.18;
 }
@@ -5960,7 +6109,7 @@ function updateGoldRingSequence(worldDt){
   if(goldRingSequenceDelay<=0){
     if(makeGoldRing("ring_sequence")){
       goldRingSequenceRemaining--;
-      goldRingSequenceDelay=.48+Math.random()*.30;
+      goldRingSequenceDelay=.38+Math.random()*.24;
     }else{
       goldRingSequenceDelay=.18;
     }
@@ -6309,40 +6458,40 @@ function playWarpOrbSound(tier=1){
   osc.start(now);osc.stop(now+.5);
 }
 
-function isRushFlowActive(){
-  return activeChallenge?.metric==="rush";
+function isWarpFlowActive(){
+  return activeChallenge?.metric==="warp";
 }
 
-function scheduleRushWarp(first=false){
-  if(!isRushFlowActive()){
-    rushNextWarpDistance=Infinity;
+function scheduleWarpFlowOrb(first=false){
+  if(!isWarpFlowActive()){
+    warpFlowNextWarpDistance=Infinity;
     return;
   }
 
-  const min=first?RUSH_WARP_FIRST_GAP_MIN:RUSH_WARP_GAP_MIN;
-  const max=first?RUSH_WARP_FIRST_GAP_MAX:RUSH_WARP_GAP_MAX;
+  const min=first?WARP_FLOW_FIRST_GAP_MIN:WARP_FLOW_GAP_MIN;
+  const max=first?WARP_FLOW_FIRST_GAP_MAX:WARP_FLOW_GAP_MAX;
 
-  rushNextWarpDistance=
+  warpFlowNextWarpDistance=
     distance+
     min+
     Math.random()*(max-min);
 
   warpCooldownUntilDistance=Math.min(
     warpCooldownUntilDistance,
-    rushNextWarpDistance
+    warpFlowNextWarpDistance
   );
 }
 
-function updateRushWarpOpportunity(){
-  if(!isRushFlowActive())return;
+function updateWarpFlowOpportunity(){
+  if(!isWarpFlowActive())return;
   if(warpOrbActive)return;
-  if(distance<rushNextWarpDistance)return;
+  if(distance<warpFlowNextWarpDistance)return;
   if(distance<warpCooldownUntilDistance)return;
 
-  if(makeWarpOrb("rush_flow")){
-    rushNextWarpDistance=Infinity;
+  if(makeWarpOrb("warp_flow")){
+    warpFlowNextWarpDistance=Infinity;
   }else{
-    rushNextWarpDistance=distance+35;
+    warpFlowNextWarpDistance=distance+35;
   }
 }
 
@@ -6361,13 +6510,13 @@ function activateWarp(reason,tier=1){
 
   warpCollectedThisRun++;
 
-  if(isRushFlowActive()){
+  if(isWarpFlowActive()){
     warpCooldownUntilDistance=
       distance+
-      RUSH_WARP_GAP_MIN+
-      Math.random()*(RUSH_WARP_GAP_MAX-RUSH_WARP_GAP_MIN);
+      WARP_FLOW_GAP_MIN+
+      Math.random()*(WARP_FLOW_GAP_MAX-WARP_FLOW_GAP_MIN);
 
-    rushNextWarpDistance=warpCooldownUntilDistance;
+    warpFlowNextWarpDistance=warpCooldownUntilDistance;
   }else{
     warpCooldownUntilDistance=
       distance+700+Math.random()*250;
@@ -6393,7 +6542,7 @@ function activateWarp(reason,tier=1){
     level_after:level,
     flow_number:currentFlowIndex+1,
     warp_count_run:warpCollectedThisRun,
-    rush_progress:
+    warp_progress:
       activeChallenge?.metric==="rush"
         ? challengeBaseValue(activeChallenge)
         : 0
@@ -7046,7 +7195,7 @@ function takeStrike(){
 
    const rushWarpOverride=
      collectedType==="warp" &&
-     isRushFlowActive();
+     isWarpFlowActive();
 
    if(activeEffect && !rushWarpOverride){
      // The orb's effect is consumed, but its Tier score is ALWAYS earned.
@@ -7173,9 +7322,9 @@ function objectiveHudData(){
         };
     }
 
-    if(activeChallenge.metric==="rush"){
+    if(activeChallenge.metric==="warp"){
         return {
-            label:"RUSH",
+            label:"WARP",
             value:`${current.toLocaleString()} / ${target.toLocaleString()}`
         };
     }
@@ -7245,7 +7394,7 @@ function flowDisplayLabel(flow){
   if(flow.metric==="orbs")return "ORBS";
   if(flow.metric==="rings")return "RINGS";
   if(flow.metric==="shift")return "SHIFT";
-  if(flow.metric==="rush")return "RUSH";
+  if(flow.metric==="warp")return "WARP";
   if(flow.metric==="distance")return "DISTANCE";
   if(flow.metric==="score")return "SCORE";
   if(flow.metric==="level")return "LEVEL";
@@ -7412,15 +7561,17 @@ function endRun(){
         <div class="runObjectiveCondition">${runFlowCondition}</div>
     </div>
 
-    <div class="runArchiveProgress">
-        ${completedFlows.toLocaleString()} / ${FLOW_TOTAL.toLocaleString()} FLOWS COMPLETE
-    </div>
+    ${sixFlowCycleHtml()}
 
-    ${retentionJourneyHtml()}
+    <div class="nextDailyNote">${
+      todayVector?.completed
+        ?"TODAY'S FLOW COMPLETE · KEEP PLAYING OR RETURN TOMORROW"
+        :"TODAY'S FLOW IS STILL AVAILABLE · FREE PLAY CONTINUES"
+    }</div>
 
     <div class="nextFlowPreview">
         <div class="nextFlowEyebrow">
-          CONTINUE · FLOW ${currentFlowIndex+1}
+          NEXT · ${createFlow(currentFlowIndex).category}
         </div>
         <div class="nextFlowTitle">
           ${createFlow(currentFlowIndex).category}
@@ -7504,7 +7655,7 @@ vix.style.transform = "translateY(0)";
 
 title.style.transform = "translate(-50%,-50%)";
 
-const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;shiftCountRun=0;shiftLastArrivalLane=`${laneX}:${laneY}`;shiftPreviousArrivalLane=null;rushNextWarpDistance=Infinity;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;goldRingLastLane=null;goldRingSequenceAnchor=null;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
+const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;shiftCountRun=0;shiftLastArrivalLane=`${laneX}:${laneY}`;shiftPreviousArrivalLane=null;warpFlowNextWarpDistance=Infinity;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;goldRingLastLane=null;goldRingSequenceAnchor=null;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
 
 lastLevel = 1;strikes = 0;milestonesReached = {};lastWarpBreakthrough=0;starColorUpdateFrame=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();applyFrozenGameViewport(stableViewportWidth,stableViewportHeight);resetEnvironmentForRun();beginCurrentFlow();updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
 const title = document.getElementById("gameTitle");
@@ -7581,7 +7732,7 @@ updateEnvironment(worldDt);
 starColorUpdateFrame=(starColorUpdateFrame+1)%1200;
 updateFluxDust(worldDt);
 
-updateRushWarpOpportunity();
+updateWarpFlowOpportunity();
 
 
 if(
@@ -7631,32 +7782,39 @@ if(silentTutorialComplete){
       activeChallenge &&
       activeChallenge.metric==="rings";
 
-    const spawnedRing=makeGoldRing(
-      ringObjective?"ring_flow":"ambient"
-    );
+    let spawnedRing=false;
+
+    if(ringObjective){
+      // Most Ring opportunities present a readable 2–3 route choice:
+      // easy / medium / hard. Singles and sequences still appear between them.
+      if(Math.random()<.62){
+        spawnedRing=spawnGoldRingRouteChoice();
+      }
+
+      if(!spawnedRing){
+        spawnedRing=makeGoldRing("ring_flow");
+      }
+    }else{
+      spawnedRing=makeGoldRing("ambient");
+    }
 
     if(spawnedRing){
       if(ringObjective){
-        /*
-          Ring objectives get a stronger cadence.
-          Normal singles arrive often, with occasional short 2–3 ring runs.
-        */
         if(
           goldRingSequenceRemaining<=0 &&
-          Math.random()<.46
+          Math.random()<.38
         ){
           startGoldRingSequence();
         }
 
         goldRingSpawnCooldown=
-          .62 + Math.random()*.48;
+          .44 + Math.random()*.34;
       }else{
-        // Outside Ring objectives, rings remain an occasional visual bonus.
         goldRingSpawnCooldown=
           7.0 + Math.random()*6.0;
       }
     }else{
-      goldRingSpawnCooldown=.45;
+      goldRingSpawnCooldown=.30;
     }
   }
 
@@ -8031,8 +8189,8 @@ if(b.position.z>NEAR_Z+60){
   if(b.userData.isWarp){
     warpOrbActive=false;
 
-    if(isRushFlowActive()){
-      scheduleRushWarp(false);
+    if(isWarpFlowActive()){
+      scheduleWarpFlowOrb(false);
     }
 
     trackGame("warp_orb_missed",{
@@ -8041,7 +8199,7 @@ if(b.position.z>NEAR_Z+60){
       distance:Math.floor(distance),
       flow_number:currentFlowIndex+1,
       warp_count_run:warpCollectedThisRun,
-      rush_flow:isRushFlowActive()
+      warp_flow:isWarpFlowActive()
     });
   }
 
