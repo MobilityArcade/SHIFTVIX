@@ -39,7 +39,7 @@ function track(eventName, data = {}) {
 }
 </script>
 <head>
-<!-- SHIFTVIX 2.22 — SHIFT PROGRESSION 50–200 -->
+<!-- SHIFTVIX 2.23 — VECTOR RETENTION LAYER -->
 <meta charset="utf-8">
 <link rel="icon" type="image/png" href="icon-512.png">
 
@@ -990,6 +990,41 @@ canvas{
   text-shadow:0 1px 4px #000
 }
 .runArchiveProgress{margin:12px 0 16px;font-size:10px;font-weight:900;letter-spacing:1.4px;color:rgba(255,255,255,.48)}
+.retentionJourney{margin:14px 0 0;padding:13px 14px 12px;border:1px solid rgba(255,211,106,.25);border-radius:16px;background:rgba(255,211,106,.035)}
+.retentionJourneyTop{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:9px;font-weight:950;letter-spacing:1.2px;color:rgba(255,255,255,.58)}
+.retentionJourneyTop strong{color:#ffd36a;font-size:10px;letter-spacing:1.5px}
+.vectorDots{display:grid;grid-template-columns:repeat(9,1fr);gap:6px;margin-top:9px}
+.vectorDot{height:5px;border-radius:999px;background:rgba(255,255,255,.10);box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+.vectorDot.done{background:#ffd36a;box-shadow:0 0 8px rgba(255,211,106,.55)}
+.vectorDot.current{background:rgba(255,211,106,.38);box-shadow:0 0 7px rgba(255,211,106,.24)}
+
+.nextFlowPreview{margin:12px 0 16px;padding:12px 14px;border-radius:15px;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.025);text-align:left}
+.nextFlowEyebrow{font-size:8px;font-weight:950;letter-spacing:1.4px;color:rgba(255,255,255,.44)}
+.nextFlowTitle{margin-top:5px;font-size:12px;font-weight:950;letter-spacing:1.05px;color:#fff}
+.nextFlowObjective{margin-top:4px;font-size:10px;font-weight:850;letter-spacing:.45px;color:rgba(255,255,255,.64);line-height:1.35}
+
+.archiveRetention{display:grid;gap:11px;margin:12px 0 18px}
+.todayVectorCard{padding:14px 15px;border:1px solid rgba(255,211,106,.30);border-radius:17px;background:linear-gradient(180deg,rgba(255,211,106,.075),rgba(255,211,106,.02))}
+.todayVectorTop{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.todayVectorName{font-size:10px;font-weight:950;letter-spacing:1.55px;color:#ffd36a}
+.todayVectorStatus{font-size:9px;font-weight:950;letter-spacing:1.15px;color:rgba(255,255,255,.50)}
+.todayVectorFlow{margin-top:8px;font-size:13px;font-weight:950;letter-spacing:.75px;color:#fff}
+.todayVectorObjective{margin-top:4px;font-size:10px;font-weight:850;letter-spacing:.4px;color:rgba(255,255,255,.64);line-height:1.4}
+.todayVectorAction{margin-top:10px;width:100%;min-height:40px;border-radius:12px;border:1px solid rgba(255,211,106,.38);background:rgba(255,211,106,.08);color:#ffd36a;font:950 9px Arial;letter-spacing:1.2px;cursor:pointer}
+
+.vectorJourneyCard{padding:12px 14px;border:1px solid rgba(255,255,255,.10);border-radius:16px;background:rgba(255,255,255,.018)}
+.vectorJourneyLabel{display:flex;justify-content:space-between;gap:10px;font-size:9px;font-weight:950;letter-spacing:1.15px;color:rgba(255,255,255,.56)}
+.vectorJourneyLabel strong{color:#ffd36a}
+.personalRecords{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.recordChip{padding:9px 7px;border-radius:12px;border:1px solid rgba(255,255,255,.085);background:rgba(255,255,255,.016);text-align:center}
+.recordChipLabel{font-size:7px;font-weight:950;letter-spacing:1px;color:rgba(255,255,255,.38)}
+.recordChipValue{margin-top:4px;font-size:11px;font-weight:950;color:#fff}
+
+@media(max-width:600px){
+  .personalRecords{grid-template-columns:repeat(2,1fr)}
+  .retentionJourneyTop,.vectorJourneyLabel{font-size:8px}
+}
+
 .runActions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .runAction{min-height:48px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.045);color:#fff;font:900 12px Arial;letter-spacing:2px;cursor:pointer;transition:transform .12s ease,border-color .15s ease,background .15s ease,box-shadow .15s ease}
 .runAction.primary{border-color:rgba(255,211,106,.58);background:rgba(255,211,106,.09);color:#ffd36a;box-shadow:0 0 17px rgba(255,211,106,.10)}
@@ -3419,6 +3454,215 @@ const FLOW_STAGES = [
   {name:"MASTERY",end:270},
   {name:"TRANSCENDENCE",end:300}
 ];
+
+// =========================
+// SHIFTVIX 2.23 — VECTOR RETENTION LAYER
+// =========================
+const VECTOR_THRESHOLDS=[34,67,100,134,167,200,234,267,300];
+const VECTOR_ROMANS=["I","II","III","IV","V","VI","VII","VIII","IX"];
+const VECTOR_RECORD_KEY="shiftvixVectorRecordsV1";
+const TODAY_VECTOR_KEY="shiftvixTodayVectorV1";
+
+function vectorStageForCompleted(total=completedFlows){
+  const done=Math.max(0,Math.min(FLOW_TOTAL,Number(total)||0));
+  let stage=0;
+  for(const threshold of VECTOR_THRESHOLDS){
+    if(done>=threshold)stage++;
+  }
+  return stage;
+}
+
+function nextVectorInfo(total=completedFlows){
+  const done=Math.max(0,Math.min(FLOW_TOTAL,Number(total)||0));
+  const stage=vectorStageForCompleted(done);
+
+  if(stage>=VECTOR_THRESHOLDS.length){
+    return {
+      complete:true,
+      stage:9,
+      nextRoman:"IX",
+      flowsRemaining:0
+    };
+  }
+
+  return {
+    complete:false,
+    stage,
+    nextRoman:VECTOR_ROMANS[stage],
+    flowsRemaining:Math.max(0,VECTOR_THRESHOLDS[stage]-done)
+  };
+}
+
+function vectorDotsHtml(total=completedFlows){
+  const stage=vectorStageForCompleted(total);
+  return VECTOR_THRESHOLDS.map((_,i)=>{
+    const cls=i<stage?"done":i===stage?"current":"";
+    return `<span class="vectorDot ${cls}"></span>`;
+  }).join("");
+}
+
+function loadVectorRecords(){
+  try{
+    const raw=JSON.parse(localStorage.getItem(VECTOR_RECORD_KEY)||"{}");
+    return {
+      COLLECT:Number(raw.COLLECT)||0,
+      TRAVEL:Number(raw.TRAVEL)||0,
+      SCORE:Number(raw.SCORE)||0,
+      RINGS:Number(raw.RINGS)||0,
+      SHIFT:Number(raw.SHIFT)||0,
+      RUSH:Number(raw.RUSH)||0
+    };
+  }catch(e){
+    return {COLLECT:0,TRAVEL:0,SCORE:0,RINGS:0,SHIFT:0,RUSH:0};
+  }
+}
+
+let vectorRecords=loadVectorRecords();
+
+function saveVectorRecords(){
+  localStorage.setItem(VECTOR_RECORD_KEY,JSON.stringify(vectorRecords));
+}
+
+function updateVectorRecord(flow,value){
+  if(!flow)return;
+  const category=flow.category;
+  if(!(category in vectorRecords))return;
+
+  const safe=Math.max(0,Math.floor(Number(value)||0));
+  if(safe<=vectorRecords[category])return;
+
+  vectorRecords[category]=safe;
+  saveVectorRecords();
+
+  trackGame("vector_personal_record",{
+    category,
+    record:safe,
+    flow_number:currentFlowIndex+1
+  });
+}
+
+function formatVectorRecord(category,value){
+  const v=Math.max(0,Math.floor(Number(value)||0));
+  return category==="TRAVEL"
+    ? `${v.toLocaleString()}m`
+    : v.toLocaleString();
+}
+
+function localDateKey(){
+  const d=new Date();
+  return [
+    d.getFullYear(),
+    String(d.getMonth()+1).padStart(2,"0"),
+    String(d.getDate()).padStart(2,"0")
+  ].join("-");
+}
+
+function hashDateKey(key){
+  let h=2166136261;
+  for(let i=0;i<key.length;i++){
+    h^=key.charCodeAt(i);
+    h=Math.imul(h,16777619);
+  }
+  return h>>>0;
+}
+
+function selectableDailyFlowIndexes(){
+  const maxSelectable=Math.max(
+    currentFlowIndex,
+    highestCompletedFlow,
+    Math.min(
+      FLOW_TOTAL-1,
+      highestUnlockedBlock*FLOWS_PER_BLOCK-1
+    )
+  );
+
+  const indexes=[];
+  for(let i=0;i<=Math.min(FLOW_TOTAL-1,maxSelectable);i++){
+    if(isFlowArchiveSelectable(i))indexes.push(i);
+  }
+
+  return indexes.length?indexes:[currentFlowIndex];
+}
+
+function loadTodayVector(){
+  const date=localDateKey();
+
+  try{
+    const saved=JSON.parse(localStorage.getItem(TODAY_VECTOR_KEY)||"null");
+    if(
+      saved &&
+      saved.date===date &&
+      Number.isFinite(saved.flowIndex)
+    ){
+      return saved;
+    }
+  }catch(e){}
+
+  const choices=selectableDailyFlowIndexes();
+  const seed=hashDateKey(date);
+  const flowIndex=choices[seed%choices.length];
+
+  const today={
+    date,
+    flowIndex,
+    completed:false
+  };
+
+  localStorage.setItem(
+    TODAY_VECTOR_KEY,
+    JSON.stringify(today)
+  );
+
+  return today;
+}
+
+let todayVector=null;
+
+function refreshTodayVector(){
+  todayVector=loadTodayVector();
+  return todayVector;
+}
+
+function markTodayVectorComplete(flowIndex){
+  refreshTodayVector();
+
+  if(!todayVector || todayVector.completed)return;
+  if(flowIndex!==todayVector.flowIndex)return;
+
+  todayVector.completed=true;
+
+  localStorage.setItem(
+    TODAY_VECTOR_KEY,
+    JSON.stringify(todayVector)
+  );
+
+  trackGame("today_vector_completed",{
+    flow_number:flowIndex+1,
+    category:createFlow(flowIndex).category
+  });
+
+  showModeBanner("TODAY'S VECTOR COMPLETE");
+}
+
+function retentionJourneyHtml(){
+  const info=nextVectorInfo();
+  const stage=vectorStageForCompleted();
+
+  return `
+    <div class="retentionJourney">
+      <div class="retentionJourneyTop">
+        <strong>VECTOR ${stage>0?VECTOR_ROMANS[stage-1]:"0"} / IX</strong>
+        <span>${
+          info.complete
+            ?"JOURNEY COMPLETE"
+            :`${info.flowsRemaining} FLOWS TO VECTOR ${info.nextRoman}`
+        }</span>
+      </div>
+      <div class="vectorDots">${vectorDotsHtml()}</div>
+    </div>
+  `;
+}
+
 let currentFlowIndex = Math.max(0,Math.min(FLOW_TOTAL-1,Number(localStorage.getItem("shiftvixCurrentFlow")||0)));
 let highestCompletedFlow = Number(localStorage.getItem("shiftvixHighestCompletedFlow") || 0);
 let completedFlows = Math.max(0,Math.min(FLOW_TOTAL,Number(localStorage.getItem("shiftvixCompletedFlows")||0)));
@@ -4173,6 +4417,7 @@ function createFlow(index){
   return applyFlowStrikeAllowance(flow,index);
 }
 function beginCurrentFlow(){
+    refreshTodayVector();
 
     activeChallenge=createFlow(currentFlowIndex);
 
@@ -4273,6 +4518,9 @@ function completeCurrentFlow(){
         finishedFlowIndex
     );
 
+    const completedBeforeThisFlow=
+        Math.max(0,completedFlowIndexes.size-1);
+
     completedFlows =
         completedFlowIndexes.size;
 
@@ -4280,6 +4528,50 @@ function completeCurrentFlow(){
         highestCompletedFlow,
         finishedFlowIndex
     );
+
+    updateVectorRecord(
+        finished,
+        Math.max(
+            finished.target||0,
+            challengeBaseValue(finished)||0
+        )
+    );
+
+    markTodayVectorComplete(
+        finishedFlowIndex
+    );
+
+    const vectorBefore=
+        vectorStageForCompleted(
+            completedBeforeThisFlow
+        );
+
+    const vectorAfter=
+        vectorStageForCompleted(
+            completedFlows
+        );
+
+    if(vectorAfter>vectorBefore){
+        const unlockedRoman=
+            VECTOR_ROMANS[
+                Math.min(
+                    VECTOR_ROMANS.length-1,
+                    vectorAfter-1
+                )
+            ];
+
+        trackGame("vector_stage_unlocked",{
+            vector_stage:vectorAfter,
+            vector_roman:unlockedRoman,
+            completed_flows:completedFlows
+        });
+
+        setTimeout(()=>{
+            showModeBanner(
+                `VECTOR ${unlockedRoman} UNLOCKED`
+            );
+        },180);
+    }
 
     saveFlowProgress();
 
@@ -4478,6 +4770,92 @@ function updateChallenge(){
   }
 }
 // SHIFTVIX v2.5 PATCH 8 — FLOW SELECTION
+function renderRetentionArchiveCards(){
+  refreshTodayVector();
+
+  const info=nextVectorInfo();
+  const stage=vectorStageForCompleted();
+  const dailyFlow=createFlow(todayVector.flowIndex);
+
+  const recordsHtml=[
+    "COLLECT",
+    "TRAVEL",
+    "SCORE",
+    "RINGS",
+    "SHIFT",
+    "RUSH"
+  ].map(category=>`
+    <div class="recordChip">
+      <div class="recordChipLabel">${category}</div>
+      <div class="recordChipValue">${
+        formatVectorRecord(
+          category,
+          vectorRecords[category]
+        )
+      }</div>
+    </div>
+  `).join("");
+
+  return `
+    <div class="archiveRetention">
+
+      <div class="todayVectorCard">
+        <div class="todayVectorTop">
+          <span class="todayVectorName">TODAY'S VECTOR</span>
+          <span class="todayVectorStatus">${
+            todayVector.completed
+              ?"COMPLETE"
+              :"AVAILABLE"
+          }</span>
+        </div>
+
+        <div class="todayVectorFlow">
+          FLOW ${todayVector.flowIndex+1} · ${dailyFlow.category}
+        </div>
+
+        <div class="todayVectorObjective">
+          ${dailyFlow.label}
+        </div>
+
+        <button
+          class="todayVectorAction"
+          id="todayVectorPlay"
+          type="button"
+        >${
+          todayVector.completed
+            ?"PLAY AGAIN"
+            :"PLAY TODAY'S VECTOR"
+        }</button>
+      </div>
+
+      <div class="vectorJourneyCard">
+        <div class="vectorJourneyLabel">
+          <strong>VECTOR ${
+            stage>0
+              ?VECTOR_ROMANS[stage-1]
+              :"0"
+          } / IX</strong>
+
+          <span>${
+            info.complete
+              ?"300 FLOWS COMPLETE"
+              :`${info.flowsRemaining} FLOWS TO VECTOR ${info.nextRoman}`
+          }</span>
+        </div>
+
+        <div class="vectorDots">
+          ${vectorDotsHtml()}
+        </div>
+      </div>
+
+      <div class="personalRecords">
+        ${recordsHtml}
+      </div>
+
+    </div>
+  `;
+}
+
 function renderFlowArchive(){
 
     const list = document.getElementById("archiveList");
@@ -4494,6 +4872,8 @@ function renderFlowArchive(){
             <span>▶ CURRENT</span>
             <span>🔒 NEXT / LOCKED</span>
         </div>
+
+        ${renderRetentionArchiveCards()}
     `;
 
     for(let block = 0; block < TOTAL_FLOW_BLOCKS; block++){
@@ -4546,6 +4926,63 @@ function renderFlowArchive(){
     }
 
     list.innerHTML = html;
+
+    document
+      .getElementById("todayVectorPlay")
+      ?.addEventListener("click",event=>{
+
+        event.stopPropagation();
+
+        refreshTodayVector();
+
+        const flowIndex=Math.max(
+            0,
+            Math.min(
+                FLOW_TOTAL-1,
+                Number(todayVector.flowIndex)||0
+            )
+        );
+
+        if(!isFlowArchiveSelectable(flowIndex)){
+            return;
+        }
+
+        if(flowIndex!==currentFlowIndex){
+            replayReturnFlowIndex=currentFlowIndex;
+        }
+
+        currentFlowIndex=flowIndex;
+        activeChallenge=createFlow(currentFlowIndex);
+        objectiveOrbsCollected=0;
+
+        challengeStart={
+            found:foundCount,
+            score,
+            distance,
+            strikes,
+            rings:goldRingsPassed,
+            shifts:shiftCountRun,
+            rushes:warpCollectedThisRun,
+            tierCounts:{...tierCounts}
+        };
+
+        saveFlowProgress();
+
+        environmentEngine.resetForFlow({
+            announce:false
+        });
+
+        closeFlowArchive();
+        updateChallenge();
+
+        showModeBanner("TODAY'S VECTOR");
+
+        trackGame("today_vector_started",{
+            flow_number:currentFlowIndex+1,
+            category:activeChallenge.category,
+            already_completed:todayVector.completed
+        });
+      });
 
     requestAnimationFrame(()=>{
         if(archiveScrollTop > 0){
@@ -6977,6 +7414,20 @@ function endRun(){
 
     <div class="runArchiveProgress">
         ${completedFlows.toLocaleString()} / ${FLOW_TOTAL.toLocaleString()} FLOWS COMPLETE
+    </div>
+
+    ${retentionJourneyHtml()}
+
+    <div class="nextFlowPreview">
+        <div class="nextFlowEyebrow">
+          CONTINUE · FLOW ${currentFlowIndex+1}
+        </div>
+        <div class="nextFlowTitle">
+          ${createFlow(currentFlowIndex).category}
+        </div>
+        <div class="nextFlowObjective">
+          ${createFlow(currentFlowIndex).label}
+        </div>
     </div>
 
     <div class="runActions">
