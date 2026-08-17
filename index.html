@@ -39,7 +39,7 @@ function track(eventName, data = {}) {
 }
 </script>
 <head>
-<!-- SHIFTVIX 2.28 — DESKTOP PAUSE + FLOWS SCROLL -->
+<!-- SHIFTVIX 2.29 — FREE-CHOICE CYCLES + LARGE RUN COMPLETE -->
 <meta charset="utf-8">
 <link rel="icon" type="image/png" href="icon-512.png">
 
@@ -2163,6 +2163,242 @@ body.uiModalOpen #center{pointer-events:none}
   }
 }
 
+
+
+/* ============================================================
+   SHIFTVIX 2.29 — FREE-CHOICE CYCLES + LARGE RUN COMPLETE
+   ============================================================ */
+
+/* Six Flow chips are true choices now. */
+.sixFlowName{
+    position:relative;
+    appearance:none;
+    -webkit-appearance:none;
+    font-family:Arial,sans-serif;
+    cursor:pointer;
+    transition:
+      transform .12s ease,
+      border-color .15s ease,
+      background .15s ease,
+      color .15s ease,
+      box-shadow .15s ease;
+}
+
+.sixFlowName:hover,
+.sixFlowName:focus-visible{
+    outline:none;
+    transform:translateY(-1px);
+    border-color:rgba(255,211,106,.62) !important;
+    color:#fff !important;
+    background:rgba(255,211,106,.075);
+    box-shadow:0 0 14px rgba(255,211,106,.10);
+}
+
+.sixFlowName:active{
+    transform:scale(.98);
+}
+
+.sixFlowName.done{
+    border-color:rgba(255,211,106,.48);
+    color:#ffd36a;
+    background:rgba(255,211,106,.07);
+}
+
+.sixFlowName.current{
+    border-color:rgba(255,255,255,.48);
+    color:#fff;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.07);
+}
+
+.flowChoiceMark{
+    position:absolute;
+    right:9px;
+    top:5px;
+    font-size:10px;
+    color:#ffd36a;
+}
+
+/* RUN COMPLETE gets the same readability philosophy as FLOWS. */
+#roundComplete{
+    padding:
+      max(14px,env(safe-area-inset-top))
+      14px
+      max(14px,env(safe-area-inset-bottom));
+    box-sizing:border-box;
+}
+
+#roundComplete .resultsCard.flowResults.minimalResults{
+    width:min(800px,72vw);
+    max-height:88vh;
+    padding:clamp(34px,3.2vw,50px);
+    border-radius:30px;
+    box-sizing:border-box;
+    overflow-y:auto;
+    overflow-x:hidden;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(255,211,106,.46) rgba(255,255,255,.06);
+}
+
+#roundComplete .resultsCard.flowResults.minimalResults::-webkit-scrollbar{
+    width:7px;
+}
+
+#roundComplete .resultsCard.flowResults.minimalResults::-webkit-scrollbar-thumb{
+    background:rgba(255,211,106,.42);
+    border-radius:999px;
+}
+
+#roundComplete .flowResults .big{
+    margin-bottom:clamp(22px,2.4vh,34px);
+    font-size:clamp(38px,4vw,56px);
+    letter-spacing:clamp(5px,.55vw,8px);
+}
+
+#roundComplete .runObjectiveOnly{
+    margin-bottom:22px;
+    padding:clamp(22px,2.2vw,32px);
+    border-radius:22px;
+}
+
+#roundComplete .runObjectiveLabel{
+    font-size:clamp(14px,1.25vw,19px);
+    letter-spacing:2.4px;
+}
+
+#roundComplete .runObjectiveValue{
+    margin-top:14px;
+    font-size:clamp(44px,5.1vw,72px);
+}
+
+#roundComplete .runObjectiveCondition{
+    font-size:clamp(11px,1vw,15px);
+}
+
+#roundComplete .sixFlowSummary{
+    padding:clamp(16px,1.8vw,24px);
+    margin-bottom:16px;
+}
+
+#roundComplete .sixFlowSummaryTop{
+    font-size:clamp(11px,1vw,15px);
+}
+
+#roundComplete .sixFlowName{
+    min-height:46px;
+    font-size:clamp(10px,.9vw,13px);
+}
+
+#roundComplete .nextDailyNote{
+    margin:13px 0;
+    font-size:clamp(9px,.82vw,12px);
+    line-height:1.4;
+}
+
+.runCycleHint{
+    margin:14px 0 18px;
+    font-size:clamp(10px,.9vw,13px);
+    font-weight:950;
+    letter-spacing:1.5px;
+    color:rgba(255,255,255,.52);
+}
+
+#roundComplete .runActions{
+    gap:14px;
+}
+
+#roundComplete .runAction{
+    min-height:64px;
+    font-size:clamp(13px,1.15vw,17px);
+}
+
+/* Tablet */
+@media(min-width:700px) and (max-width:1100px){
+  #roundComplete .resultsCard.flowResults.minimalResults{
+      width:min(780px,82vw);
+      max-height:86vh;
+      padding:34px;
+  }
+
+  #roundComplete .flowResults .big{
+      font-size:42px;
+  }
+
+  #roundComplete .runObjectiveValue{
+      font-size:52px;
+  }
+
+  #roundComplete .sixFlowNames{
+      grid-template-columns:repeat(3,1fr);
+  }
+
+  #roundComplete .sixFlowName{
+      min-height:48px;
+      font-size:12px;
+  }
+}
+
+/* Phone */
+@media(max-width:699px){
+  #roundComplete{
+      padding:
+        max(8px,env(safe-area-inset-top))
+        8px
+        max(8px,env(safe-area-inset-bottom));
+  }
+
+  #roundComplete .resultsCard.flowResults.minimalResults{
+      width:95vw;
+      max-height:90vh;
+      padding:26px 20px 22px;
+      border-radius:26px;
+  }
+
+  #roundComplete .flowResults .big{
+      font-size:clamp(32px,9vw,44px);
+      letter-spacing:4px;
+      margin-bottom:20px;
+  }
+
+  #roundComplete .runObjectiveOnly{
+      padding:20px 15px;
+      margin-bottom:17px;
+  }
+
+  #roundComplete .runObjectiveLabel{
+      font-size:12px;
+  }
+
+  #roundComplete .runObjectiveValue{
+      font-size:clamp(38px,11vw,52px);
+  }
+
+  #roundComplete .sixFlowNames{
+      grid-template-columns:repeat(2,1fr);
+      gap:8px;
+  }
+
+  #roundComplete .sixFlowName{
+      min-height:44px;
+      font-size:11px;
+  }
+
+  #roundComplete .runActions{
+      grid-template-columns:1fr;
+      gap:10px;
+  }
+
+  #roundComplete .runAction{
+      min-height:58px;
+      font-size:14px;
+  }
+
+  .runCycleHint{
+      font-size:9px;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -4141,32 +4377,94 @@ function cycleNumberForFlow(index=currentFlowIndex){
 function cycleStartIndex(index=currentFlowIndex){
   return Math.floor(Math.max(0,index)/FLOWS_PER_CYCLE)*FLOWS_PER_CYCLE;
 }
-function cycleProgress(index=currentFlowIndex){
-  const start=cycleStartIndex(index);
-  const completed=new Set();
+function cycleIsCompleteAtStart(start){
+  if(start<0 || start>=FLOW_TOTAL)return false;
+
   for(let i=0;i<FLOWS_PER_CYCLE;i++){
     const fi=start+i;
     if(fi>=FLOW_TOTAL)break;
-    if(completedFlowIndexes.has(fi)) completed.add(createFlow(fi).category);
+    if(!completedFlowIndexes.has(fi))return false;
   }
-  return {cycle:cycleNumberForFlow(index),completed,count:completed.size};
+
+  return true;
+}
+
+function activeCycleStartIndex(){
+  for(
+    let start=0;
+    start<FLOW_TOTAL;
+    start+=FLOWS_PER_CYCLE
+  ){
+    if(!cycleIsCompleteAtStart(start)){
+      return start;
+    }
+  }
+
+  // All hidden objectives complete: remain on the final cycle.
+  return Math.max(0,FLOW_TOTAL-FLOWS_PER_CYCLE);
+}
+
+function activeCycleIndexes(){
+  const start=activeCycleStartIndex();
+  const result=[];
+
+  for(let i=0;i<FLOWS_PER_CYCLE;i++){
+    const fi=start+i;
+    if(fi<FLOW_TOTAL)result.push(fi);
+  }
+
+  return result;
+}
+
+function isCurrentCycleFlow(index){
+  return activeCycleIndexes().includes(index);
+}
+
+function cycleProgress(index=currentFlowIndex){
+  const start=activeCycleStartIndex();
+  const completed=new Set();
+
+  for(let i=0;i<FLOWS_PER_CYCLE;i++){
+    const fi=start+i;
+    if(fi>=FLOW_TOTAL)break;
+
+    if(completedFlowIndexes.has(fi)){
+      completed.add(createFlow(fi).category);
+    }
+  }
+
+  return {
+    cycle:Math.floor(start/FLOWS_PER_CYCLE)+1,
+    start,
+    completed,
+    count:completed.size
+  };
 }
 function sixFlowCycleHtml(index=currentFlowIndex){
   const p=cycleProgress(index);
-  const current=createFlow(index).category;
+  const start=p.start;
 
-  const chips=FLOW_TYPES.map(type=>{
-    const cls=
-      p.completed.has(type)
-        ?"done"
-        :type===current
-          ?"current"
-          :"";
+  const chips=FLOW_TYPES.map((type,offset)=>{
+    const flowIndex=start+offset;
+    const flow=createFlow(flowIndex);
+    const done=completedFlowIndexes.has(flowIndex);
+    const current=flowIndex===currentFlowIndex;
+
+    const cls=[
+      done?"done":"",
+      current?"current":""
+    ].filter(Boolean).join(" ");
 
     return `
-      <span class="sixFlowName ${cls}">
-        ${type}
-      </span>
+      <button
+        class="sixFlowName ${cls}"
+        type="button"
+        data-cycle-flow-index="${flowIndex}"
+        aria-label="${type}: ${flow.label}${done?" — completed":""}"
+      >
+        <span>${type}</span>
+        ${done?'<span class="flowChoiceMark">✓</span>':""}
+      </button>
     `;
   }).join("");
 
@@ -4312,21 +4610,16 @@ function hashDateKey(key){
 }
 
 function selectableDailyFlowIndexes(){
-  const maxSelectable=Math.max(
-    currentFlowIndex,
-    highestCompletedFlow,
-    Math.min(
-      FLOW_TOTAL-1,
-      highestUnlockedBlock*FLOWS_PER_BLOCK-1
-    )
+  const indexes=activeCycleIndexes();
+
+  // Prefer unfinished choices so Today's Flow helps move the current Cycle.
+  const unfinished=indexes.filter(
+    index=>!completedFlowIndexes.has(index)
   );
 
-  const indexes=[];
-  for(let i=0;i<=Math.min(FLOW_TOTAL-1,maxSelectable);i++){
-    if(isFlowArchiveSelectable(i))indexes.push(i);
-  }
-
-  return indexes.length?indexes:[currentFlowIndex];
+  return unfinished.length
+    ? unfinished
+    : indexes;
 }
 
 function loadTodayVector(){
@@ -4782,8 +5075,11 @@ function isFlowUnlocked(index){
         return false;
     }
 
-    return isBlockUnlocked(
-        blockForFlow(index)
+    // Player-facing progression is six-choice Cycles.
+    // Completed hidden objectives remain replayable.
+    return (
+      isCurrentCycleFlow(index) ||
+      isFlowCompleted(index)
     );
 }
 
@@ -4802,7 +5098,7 @@ function isFlowCompleted(index){
 */
 function isFlowArchiveSelectable(index){
     return (
-        index === currentFlowIndex ||
+        isCurrentCycleFlow(index) ||
         isFlowCompleted(index)
     );
 }
@@ -4840,45 +5136,39 @@ function blockIsComplete(blockNumber){
 function nextUnfinishedUnlockedFlow(
     afterIndex=currentFlowIndex
 ){
+    const indexes=activeCycleIndexes();
 
-    // Search forward first so normal Flow 1 → Flow 2
-    // progression remains seamless.
-    for(
-        let index=afterIndex+1;
-        index<FLOW_TOTAL;
-        index++
-    ){
-        if(
-            isFlowUnlocked(index) &&
-            !isFlowCompleted(index)
-        ){
-            return index;
-        }
-    }
-
-    // Then wrap through earlier unfinished choices
-    // inside the player's unlocked Flow blocks.
-    for(
-        let index=0;
-        index<=afterIndex &&
-        index<FLOW_TOTAL;
-        index++
-    ){
-        if(
-            isFlowUnlocked(index) &&
-            !isFlowCompleted(index)
-        ){
-            return index;
-        }
-    }
-
-    return Math.max(
+    if(!indexes.length){
+      return Math.max(
         0,
-        Math.min(
-            FLOW_TOTAL-1,
-            afterIndex
-        )
-    );
+        Math.min(FLOW_TOTAL-1,afterIndex)
+      );
+    }
+
+    // First look after the currently played choice.
+    const afterPos=indexes.indexOf(afterIndex);
+
+    if(afterPos>=0){
+      for(let step=1;step<=indexes.length;step++){
+        const index=
+          indexes[
+            (afterPos+step)%indexes.length
+          ];
+
+        if(!completedFlowIndexes.has(index)){
+          return index;
+        }
+      }
+    }
+
+    // After 6/6, activeCycleIndexes() automatically points at the next Cycle.
+    for(const index of indexes){
+      if(!completedFlowIndexes.has(index)){
+        return index;
+      }
+    }
+
+    return indexes[0];
 }
 
 
@@ -5259,12 +5549,32 @@ function completeCurrentFlow(){
             finishedFlowIndex
         );
 
+    const finishedCycleStart=
+        cycleStartIndex(
+            finishedFlowIndex
+        );
+
+    const cycleWasComplete=
+        cycleIsCompleteAtStart(
+            finishedCycleStart
+        );
+
     completedFlowIndexes.add(
         finishedFlowIndex
     );
 
+    const cycleCompletedNow=
+        !cycleWasComplete &&
+        cycleIsCompleteAtStart(
+            finishedCycleStart
+        );
+
     const completedBeforeThisFlow=
-        Math.max(0,completedFlowIndexes.size-1);
+        Math.max(
+          0,
+          completedFlowIndexes.size -
+          (wasAlreadyCompleted?0:1)
+        );
 
     completedFlows =
         completedFlowIndexes.size;
@@ -5376,19 +5686,9 @@ function completeCurrentFlow(){
     });
 
     showModeBanner(
-        blockUnlocked
-            ? `FLOWS ${
-                highestUnlockedBlock *
-                FLOWS_PER_BLOCK -
-                FLOWS_PER_BLOCK + 1
-              }–${
-                Math.min(
-                    highestUnlockedBlock *
-                    FLOWS_PER_BLOCK,
-                    FLOW_TOTAL
-                )
-              } UNLOCKED`
-            : `${environmentEngine.current.name} COMPLETE`
+        cycleCompletedNow
+          ? "CYCLE COMPLETE"
+          : `${finished.category} COMPLETE`
     );
 
 if(replayReturnFlowIndex !== null){
@@ -5430,11 +5730,7 @@ if(replayReturnFlowIndex !== null){
 
             updateChallenge();
 
-            showModeBanner(
-                `REPLAY COMPLETE · FLOW ${
-                    currentFlowIndex + 1
-                } RESTORED`
-            );
+            showModeBanner("FLOW RESTORED");
 
         },650);
 
@@ -5515,6 +5811,65 @@ function updateChallenge(){
   }
 }
 // SHIFTVIX v2.5 PATCH 8 — FLOW SELECTION
+function activateCycleFlow(
+  flowIndex,
+  source="cycle_choice"
+){
+  if(
+    !Number.isInteger(flowIndex) ||
+    flowIndex<0 ||
+    flowIndex>=FLOW_TOTAL ||
+    !isFlowArchiveSelectable(flowIndex)
+  ){
+    return false;
+  }
+
+  trackGame("cycle_flow_selected",{
+    category:createFlow(flowIndex).category,
+    flow_number:flowIndex+1,
+    source,
+    cycle_progress:cycleProgress().count
+  });
+
+  // From RUN COMPLETE, selecting a Flow starts the next run immediately.
+  if(gameOver){
+    replayReturnFlowIndex=null;
+    currentFlowIndex=flowIndex;
+    saveFlowProgress();
+    resetRun();
+    return true;
+  }
+
+  return loadSelectedFlow(
+    flowIndex,
+    {
+      replay:false,
+      announce:false
+    }
+  );
+}
+
+function wireCycleChoiceButtons(root,source){
+  if(!root)return;
+
+  root
+    .querySelectorAll("[data-cycle-flow-index]")
+    .forEach(button=>{
+      button.addEventListener("click",event=>{
+        event.stopPropagation();
+
+        const flowIndex=Number(
+          button.dataset.cycleFlowIndex
+        );
+
+        activateCycleFlow(
+          flowIndex,
+          source
+        );
+      });
+    });
+}
+
 function renderRetentionArchiveCards(){
   refreshTodayVector();
 
@@ -5574,7 +5929,7 @@ function renderRetentionArchiveCards(){
         <div class="nextDailyNote">${
           todayVector.completed
             ?"TODAY COMPLETE · KEEP FLYING OR COME BACK TOMORROW"
-            :"ONE DAILY OBJECTIVE · FREE PLAY CONTINUES AFTER"
+            :"DAILY PICK · ALL SIX FLOWS ARE PLAYABLE"
         }</div>
       </div>
 
@@ -5604,61 +5959,22 @@ function renderFlowArchive(){
         ${renderRetentionArchiveCards()}
     `;
 
+    wireCycleChoiceButtons(
+      list,
+      "flows_screen"
+    );
+
     document
       .getElementById("todayVectorPlay")
       ?.addEventListener("click",event=>{
 
         event.stopPropagation();
-
         refreshTodayVector();
 
-        const flowIndex=Math.max(
-            0,
-            Math.min(
-                FLOW_TOTAL-1,
-                Number(todayVector.flowIndex)||0
-            )
+        activateCycleFlow(
+          Number(todayVector.flowIndex),
+          "today_flow"
         );
-
-        if(!isFlowArchiveSelectable(flowIndex)){
-            return;
-        }
-
-        if(flowIndex!==currentFlowIndex){
-            replayReturnFlowIndex=currentFlowIndex;
-        }
-
-        currentFlowIndex=flowIndex;
-        activeChallenge=createFlow(currentFlowIndex);
-        objectiveOrbsCollected=0;
-
-        challengeStart={
-            found:foundCount,
-            score,
-            distance,
-            strikes,
-            rings:goldRingsPassed,
-            shifts:shiftCountRun,
-            warps:warpCollectedThisRun,
-            tierCounts:{...tierCounts}
-        };
-
-        saveFlowProgress();
-
-        environmentEngine.resetForFlow({
-            announce:false
-        });
-
-        closeFlowArchive();
-        updateChallenge();
-
-        showModeBanner("TODAY'S FLOW");
-
-        trackGame("today_vector_started",{
-            flow_number:currentFlowIndex+1,
-            category:activeChallenge.category,
-            already_completed:todayVector.completed
-        });
       });
 
     list.scrollTop=0;
@@ -5725,6 +6041,9 @@ function loadSelectedFlow(
         score,
         distance,
         strikes,
+        rings:goldRingsPassed,
+        shifts:shiftCountRun,
+        warps:warpCollectedThisRun,
         tierCounts:{...tierCounts}
     };
 
@@ -5760,13 +6079,9 @@ function loadSelectedFlow(
 
     if(announce){
         showModeBanner(
-            replay
-                ? `REPLAY FLOW ${
-                    currentFlowIndex + 1
-                  }`
-                : `FLOW ${
-                    currentFlowIndex + 1
-                  } SELECTED`
+          `${
+            createFlow(currentFlowIndex).category
+          } SELECTED`
         );
     }
 
@@ -5827,7 +6142,7 @@ function updatePauseSelection(){
   const raw=challengeValue(flow);
   const value=Math.max(0,Math.min(flow.target,raw));
   const pct=Math.max(0,Math.min(100,(value/flow.target)*100));
-  if(name)name.textContent=`FLOW ${currentFlowIndex+1} · ${flow.category}`;
+  if(name)name.textContent=flow.category;
   if(objective)objective.textContent=flow.label;
   const fill=document.getElementById("pauseFlowFill");
   const pctLabel=document.getElementById("pauseFlowPct");
@@ -8210,19 +8525,11 @@ function endRun(){
     <div class="nextDailyNote">${
       todayVector?.completed
         ?"TODAY'S FLOW COMPLETE · KEEP PLAYING OR RETURN TOMORROW"
-        :"TODAY'S FLOW IS STILL AVAILABLE · FREE PLAY CONTINUES"
+        :"TODAY'S FLOW AVAILABLE · ALL SIX FLOWS ARE OPEN"
     }</div>
 
-    <div class="nextFlowPreview">
-        <div class="nextFlowEyebrow">
-          NEXT · ${createFlow(currentFlowIndex).category}
-        </div>
-        <div class="nextFlowTitle">
-          ${createFlow(currentFlowIndex).category}
-        </div>
-        <div class="nextFlowObjective">
-          ${createFlow(currentFlowIndex).label}
-        </div>
+    <div class="runCycleHint">
+      CHOOSE ANY FLOW ABOVE · OR PLAY AGAIN
     </div>
 
     <div class="runActions">
@@ -8234,6 +8541,12 @@ function endRun(){
 `;
     card.style.display = "grid";
     card.onclick = null;
+
+    wireCycleChoiceButtons(
+      card,
+      "run_complete"
+    );
+
     document.getElementById("runPlayAgain")?.addEventListener("click",event=>{
         event.stopPropagation();
         resetRun();
