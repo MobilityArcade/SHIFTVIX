@@ -39,7 +39,7 @@ function track(eventName, data = {}) {
 }
 </script>
 <head>
-<!-- SHIFTVIX 2.25 — WARP FLOW + RING ROUTE CHOICES -->
+<!-- SHIFTVIX 2.26 — SIMPLIFIED SIX-FLOWS SCREEN -->
 <meta charset="utf-8">
 <link rel="icon" type="image/png" href="icon-512.png">
 
@@ -1481,6 +1481,194 @@ body.uiModalOpen #center{pointer-events:none}
 .sixFlowName.done{border-color:rgba(255,211,106,.32);color:#ffd36a;background:rgba(255,211,106,.06)}
 .sixFlowName.current{border-color:rgba(255,255,255,.25);color:#fff}
 .nextDailyNote{margin-top:8px;text-align:center;font-size:8px;font-weight:900;letter-spacing:1px;color:rgba(255,255,255,.42)}
+
+/* =========================
+   SHIFTVIX 2.26 — SIMPLIFIED FLOWS SCREEN
+   Six visible Flow types. 300 objectives stay hidden under the hood.
+   ========================= */
+
+#flowArchive{
+    padding:
+      max(12px,env(safe-area-inset-top))
+      12px
+      max(12px,env(safe-area-inset-bottom));
+    box-sizing:border-box;
+}
+
+#flowArchive .archiveCard{
+    width:min(560px,90vw);
+    max-height:none;
+    overflow:hidden;
+    padding:22px;
+    box-sizing:border-box;
+}
+
+#flowArchive .archiveHeader{
+    margin-bottom:14px;
+}
+
+#flowArchive .archiveHeader h2{
+    font-size:24px;
+    letter-spacing:4px;
+}
+
+#archiveList{
+    max-height:none;
+    overflow:visible;
+    padding:0;
+}
+
+#flowArchive .archiveProgress,
+#flowArchive .archiveLegend,
+#flowArchive .archiveBlock,
+#flowArchive .archiveGrid,
+#flowArchive .archiveRow{
+    display:none !important;
+}
+
+#flowArchive .sixFlowSummary{
+    margin:0 0 12px;
+    padding:13px 14px;
+}
+
+#flowArchive .sixFlowSummaryTop{
+    font-size:9px;
+}
+
+#flowArchive .sixFlowNames{
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    gap:6px;
+}
+
+#flowArchive .sixFlowName{
+    display:grid;
+    place-items:center;
+    min-width:0;
+    padding:7px 3px;
+    font-size:7px;
+    letter-spacing:.55px;
+}
+
+#flowArchive .archiveRetention{
+    gap:10px;
+    margin:0;
+}
+
+#flowArchive .todayVectorCard{
+    padding:14px 15px;
+}
+
+#flowArchive .todayVectorFlow{
+    font-size:14px;
+}
+
+#flowArchive .todayVectorObjective{
+    font-size:10px;
+}
+
+#flowArchive .todayVectorAction{
+    min-height:42px;
+}
+
+#flowArchive .personalRecords{
+    grid-template-columns:repeat(3,1fr);
+    gap:7px;
+}
+
+#flowArchive .recordChip{
+    padding:10px 6px;
+}
+
+#flowArchive .recordChipLabel{
+    font-size:7px;
+}
+
+#flowArchive .recordChipValue{
+    font-size:13px;
+}
+
+@media(max-width:520px){
+  #flowArchive{
+      place-items:center;
+      padding:
+        max(10px,env(safe-area-inset-top))
+        10px
+        max(10px,env(safe-area-inset-bottom));
+  }
+
+  #flowArchive .archiveCard{
+      width:min(94vw,500px);
+      padding:18px 15px;
+      border-radius:22px;
+  }
+
+  #flowArchive .archiveHeader{
+      margin-bottom:10px;
+  }
+
+  #flowArchive .archiveHeader h2{
+      font-size:22px;
+      letter-spacing:3px;
+  }
+
+  #flowArchive .archiveClose{
+      font-size:24px;
+      padding:5px 9px;
+  }
+
+  #flowArchive .sixFlowSummary{
+      padding:11px 10px;
+      margin-bottom:10px;
+  }
+
+  #flowArchive .sixFlowNames{
+      grid-template-columns:repeat(3,1fr);
+      gap:6px;
+  }
+
+  #flowArchive .sixFlowName{
+      padding:6px 3px;
+      font-size:7px;
+  }
+
+  #flowArchive .todayVectorCard{
+      padding:12px;
+  }
+
+  #flowArchive .todayVectorFlow{
+      font-size:13px;
+  }
+
+  #flowArchive .todayVectorObjective{
+      margin-top:3px;
+      line-height:1.3;
+  }
+
+  #flowArchive .todayVectorAction{
+      min-height:40px;
+      margin-top:9px;
+  }
+
+  #flowArchive .nextDailyNote{
+      margin-top:7px;
+      font-size:7px;
+  }
+
+  #flowArchive .personalRecords{
+      grid-template-columns:repeat(3,1fr);
+      gap:6px;
+  }
+
+  #flowArchive .recordChip{
+      padding:8px 4px;
+  }
+
+  #flowArchive .recordChipValue{
+      font-size:12px;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1509,14 +1697,14 @@ body.uiModalOpen #center{pointer-events:none}
     </div>
     <div class="pauseActions">
       <button class="pauseButton primary" id="pauseResume" type="button">RESUME</button>
-      <button class="pauseButton" id="pauseFlowPath" type="button">FLOW PATH</button>
+      <button class="pauseButton" id="pauseFlowPath" type="button">FLOWS</button>
     </div>
     <div class="pauseHint">CENTER EYE OR ESC TO RESUME</div>
   </div>
 </div>
 <div id="challengeHud"><div id="challengeName">SURVIVE THE FLOW</div><div id="challengeText">LOADING…</div><div id="challengeBar"><div id="challengeFill"></div><div id="challengePct">0%</div></div></div>
 <div id="tutorialPrompt" aria-live="polite"></div><div id="powerAnnouncement" aria-live="polite"></div><div id="modeBanner"></div><div id="chronoMultiplier">×2 SCORE</div><div id="warpBurstFx"></div><div id="flowFx"></div><div id="fluxFx"></div><div id="chronoFx"></div><div id="midasFx"></div><div id="prismFx"></div><div id="pulseWaves"></div>
-<div id="flowArchive" aria-hidden="true"><div class="archiveCard" role="dialog" aria-modal="true" aria-labelledby="flowPathTitle"><div class="archiveHeader"><h2 id="flowPathTitle">FLOW PATH</h2><button class="archiveClose" id="archiveClose" type="button" aria-label="Close Flow Path">×</button></div><div id="archiveList"></div></div></div>
+<div id="flowArchive" aria-hidden="true"><div class="archiveCard" role="dialog" aria-modal="true" aria-labelledby="flowPathTitle"><div class="archiveHeader"><h2 id="flowPathTitle">FLOWS</h2><button class="archiveClose" id="archiveClose" type="button" aria-label="Close Flows">×</button></div><div id="archiveList"></div></div></div>
 
 <!-- SHIFTVIX CHRONO 2.0 — SLOW TIME + PRISM VISION + 2X SCORE -->
 <script type="module">
@@ -3472,14 +3660,34 @@ function cycleProgress(index=currentFlowIndex){
 function sixFlowCycleHtml(index=currentFlowIndex){
   const p=cycleProgress(index);
   const current=createFlow(index).category;
+
   const chips=FLOW_TYPES.map(type=>{
-    const cls=p.completed.has(type)?"done":type===current?"current":"";
-    return `<span class="sixFlowName ${cls}">${type}</span>`;
+    const cls=
+      p.completed.has(type)
+        ?"done"
+        :type===current
+          ?"current"
+          :"";
+
+    return `
+      <span class="sixFlowName ${cls}">
+        ${type}
+      </span>
+    `;
   }).join("");
-  return `<div class="sixFlowSummary">
-    <div class="sixFlowSummaryTop"><strong>CYCLE ${p.cycle}</strong><span>${p.count} / 6 FLOWS</span></div>
-    <div class="sixFlowNames">${chips}</div>
-  </div>`;
+
+  return `
+    <div class="sixFlowSummary">
+      <div class="sixFlowSummaryTop">
+        <strong>CURRENT CYCLE</strong>
+        <span>${p.count} / 6</span>
+      </div>
+
+      <div class="sixFlowNames">
+        ${chips}
+      </div>
+    </div>
+  `;
 }
 
 
@@ -4886,75 +5094,21 @@ function renderRetentionArchiveCards(){
 
 function renderFlowArchive(){
 
-    const list = document.getElementById("archiveList");
-    if(!list) return;
+    const list =
+        document.getElementById("archiveList");
 
-    let html = `
-        <div class="archiveProgress">
-            <span>SECTOR ${blockForFlow(currentFlowIndex)} · FLOW ${currentFlowIndex+1}</span>
-            <span>${Math.min(completedFlows,FLOW_TOTAL)} / ${FLOW_TOTAL} COMPLETE</span>
-        </div>
+    if(!list)return;
 
-        <div class="archiveLegend">
-            <span>✓ COMPLETED</span>
-            <span>▶ CURRENT</span>
-            <span>🔒 NEXT / LOCKED</span>
-        </div>
-
+    /*
+      Player-facing SHIFTVIX has SIX FLOWS.
+      The full 300-objective progression remains intact underneath
+      for difficulty, daily selection, analytics, and tuning.
+      It is intentionally never rendered on this screen.
+    */
+    list.innerHTML = `
         ${sixFlowCycleHtml()}
         ${renderRetentionArchiveCards()}
     `;
-
-    for(let block = 0; block < TOTAL_FLOW_BLOCKS; block++){
-        const blockNumber = block + 1;
-        const blockStart = block * FLOWS_PER_BLOCK;
-        const blockEnd = Math.min(blockStart + FLOWS_PER_BLOCK,FLOW_TOTAL);
-        const blockLocked = !isBlockUnlocked(blockNumber);
-        let blockDone = 0;
-        for(let i=blockStart;i<blockEnd;i++) if(isFlowCompleted(i)) blockDone++;
-
-        html += `
-            <section class="archiveBlock ${blockLocked ? "lockedBlock" : ""}" data-block="${blockNumber}">
-                <div class="archiveBlockLabel">
-                    <span>SECTOR ${blockNumber} · FLOWS ${blockStart + 1}–${blockEnd}</span>
-                    <span class="blockProgress">${blockLocked ? "🔒" : `${blockDone}/${blockEnd-blockStart}`}</span>
-                </div>
-                <div class="archiveGrid">
-        `;
-
-        for(let i = blockStart; i < blockEnd; i++){
-            const flowNumber = i + 1;
-            const isCompleted = isFlowCompleted(i);
-            const isCurrent = i === currentFlowIndex;
-            const isLocked = !isFlowArchiveSelectable(i);
-            const flowType = createFlow(i).category;
-            let rowClass = "locked";
-            let status = "🔒";
-
-            if(isCurrent){rowClass="current selectable";status="▶";}
-            else if(isCompleted){rowClass="done selectable";status="✓";}
-
-            html += `
-                <div
-                    class="archiveRow ${rowClass}"
-                    data-flow-index="${i}"
-                    role="button"
-                    tabindex="${isLocked ? -1 : 0}"
-                    aria-disabled="${isLocked}"
-                    aria-current="${isCurrent ? "true" : "false"}"
-                    aria-label="Flow ${flowNumber}, ${flowType.toLowerCase()} objective${isCompleted ? ", completed" : isLocked ? ", locked" : ", available"}"
-                    title="Flow ${flowNumber} · ${flowType}"
-                >
-                    <span>${flowNumber}</span>
-                    <span class="archiveStatus">${status}</span>
-                    <span class="archiveFlowType category-${flowType.toLowerCase()}">${flowType}</span>
-                </div>
-            `;
-        }
-        html += `</div></section>`;
-    }
-
-    list.innerHTML = html;
 
     document
       .getElementById("todayVectorPlay")
@@ -5013,15 +5167,9 @@ function renderFlowArchive(){
         });
       });
 
-    requestAnimationFrame(()=>{
-        if(archiveScrollTop > 0){
-            list.scrollTop = archiveScrollTop;
-            return;
-        }
-        const current = list.querySelector(`[data-flow-index="${currentFlowIndex}"]`);
-        if(current) current.scrollIntoView({block:"center",behavior:"auto"});
-    });
+    list.scrollTop=0;
 }
+
 function loadSelectedFlow(
     flowIndex,
     {
@@ -5269,8 +5417,10 @@ function openFlowArchive(source="hud"){
   document.getElementById("pauseMenu")?.classList.remove("show");
   document.body.classList.add("uiModalOpen");
   requestAnimationFrame(()=>{
-    const current=archive.querySelector(`[data-flow-index="${currentFlowIndex}"]`);
-    (current||document.getElementById("archiveClose"))?.focus();
+    (
+      document.getElementById("todayVectorPlay") ||
+      document.getElementById("archiveClose")
+    )?.focus();
   });
   trackGame("pause_flow_path_opened",{source,opened_while_paused:archiveOpenedFromPause,flow_number:currentFlowIndex+1});
 }
@@ -5279,7 +5429,7 @@ function closeFlowArchive(){
   const archive=document.getElementById("flowArchive");
   if(!archive||!archive.classList.contains("show"))return;
   const list=document.getElementById("archiveList");
-  archiveScrollTop=list?.scrollTop||0;
+  archiveScrollTop=0;
   archive.classList.remove("show");
   archive.setAttribute("aria-hidden","true");
   if(paused){
@@ -7583,7 +7733,7 @@ function endRun(){
 
     <div class="runActions">
         <button class="runAction primary" id="runPlayAgain" type="button">PLAY AGAIN</button>
-        <button class="runAction" id="runFlowPath" type="button">FLOW PATH</button>
+        <button class="runAction" id="runFlowPath" type="button">FLOWS</button>
     </div>
 
 </div>
