@@ -39,7 +39,7 @@ function track(eventName, data = {}) {
 }
 </script>
 <head>
-<!-- SHIFTVIX 2.30 — UNIFIED FLOW HUB + SIX NEON IDENTITIES -->
+<!-- SHIFTVIX 2.33 — BRANDED SHIFTVIX HUB TITLE -->
 <meta charset="utf-8">
 <link rel="icon" type="image/png" href="icon-512.png">
 
@@ -49,6 +49,7 @@ function track(eventName, data = {}) {
 
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SHIFTVIX">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
@@ -2795,6 +2796,56 @@ body.uiModalOpen #center{pointer-events:none}
   }
 }
 
+
+
+/* ============================================================
+   SHIFTVIX 2.31 — CENTERED FLOWS TITLE / NO CLOSE BUTTON
+   ============================================================ */
+
+#flowArchive .archiveHeader{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:64px;
+    margin-bottom:18px;
+}
+
+#flowArchive .archiveHeader h2{
+    width:100%;
+    margin:0;
+    text-align:center;
+}
+
+#flowArchive .archiveClose{
+    display:none !important;
+}
+
+
+
+/* ============================================================
+   SHIFTVIX 2.33 — BRANDED UNIFIED HUB TITLE
+   Gold outline / black center, matching the in-game identity.
+   ============================================================ */
+#flowArchive .archiveHeader h2{
+    color:#050505 !important;
+    -webkit-text-fill-color:#050505;
+    -webkit-text-stroke:2px #ffd25a;
+    paint-order:stroke fill;
+    text-shadow:
+        0 0 7px rgba(255,210,90,.55),
+        0 0 16px rgba(255,181,44,.24);
+    letter-spacing:.12em;
+    font-weight:900;
+    text-align:center;
+}
+@media (max-width:600px){
+    #flowArchive .archiveHeader h2{
+        -webkit-text-stroke:1.6px #ffd25a;
+        letter-spacing:.09em;
+    }
+}
+
 </style>
 </head>
 <body>
@@ -2830,7 +2881,7 @@ body.uiModalOpen #center{pointer-events:none}
 </div>
 <div id="challengeHud"><div id="challengeName">SURVIVE THE FLOW</div><div id="challengeText">LOADING…</div><div id="challengeBar"><div id="challengeFill"></div><div id="challengePct">0%</div></div></div>
 <div id="tutorialPrompt" aria-live="polite"></div><div id="powerAnnouncement" aria-live="polite"></div><div id="modeBanner"></div><div id="chronoMultiplier">×2 SCORE</div><div id="warpBurstFx"></div><div id="flowFx"></div><div id="fluxFx"></div><div id="chronoFx"></div><div id="midasFx"></div><div id="prismFx"></div><div id="pulseWaves"></div>
-<div id="flowArchive" aria-hidden="true"><div class="archiveCard" role="dialog" aria-modal="true" aria-labelledby="flowPathTitle"><div class="archiveHeader"><h2 id="flowPathTitle">FLOWS</h2><button class="archiveClose" id="archiveClose" type="button" aria-label="Close Flows">×</button></div><div id="archiveList"></div></div></div>
+<div id="flowArchive" aria-hidden="true"><div class="archiveCard" role="dialog" aria-modal="true" aria-labelledby="flowPathTitle"><div class="archiveHeader"><h2 id="flowPathTitle">SHIFTVIX</h2></div><div id="archiveList"></div></div></div>
 
 <!-- SHIFTVIX CHRONO 2.0 — SLOW TIME + PRISM VISION + 2X SCORE -->
 <script type="module">
@@ -6984,8 +7035,7 @@ function openFlowArchive(source="hud"){
   requestAnimationFrame(()=>{
     (
       document.getElementById("hubResumeButton") ||
-      document.getElementById("todayVectorPlay") ||
-      document.getElementById("archiveClose")
+      document.getElementById("todayVectorPlay")
     )?.focus();
   });
 
@@ -7023,7 +7073,7 @@ function closeFlowArchive(){
   }
 }
 document.getElementById("challengeHud").addEventListener("click",()=>openFlowArchive("hud"));
-document.getElementById("archiveClose").addEventListener("click",closeFlowArchive);
+document.getElementById("archiveClose")?.addEventListener("click",closeFlowArchive);
 document.getElementById("flowArchive").addEventListener("click",e=>{if(e.target.id==="flowArchive")closeFlowArchive();});
 document.getElementById("pauseResume").addEventListener("click",()=>resumeGame("pause_button"));
 document.getElementById("pauseFlowPath").addEventListener("click",()=>openFlowArchive("pause_menu"));
