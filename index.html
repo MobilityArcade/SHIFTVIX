@@ -39,7 +39,7 @@ function track(eventName, data = {}) {
 }
 </script>
 <head>
-<!-- SHIFTVIX 2.26 — SIMPLIFIED SIX-FLOWS SCREEN -->
+<!-- SHIFTVIX 2.27 — FLOWS RESPONSIVE READABILITY -->
 <meta charset="utf-8">
 <link rel="icon" type="image/png" href="icon-512.png">
 
@@ -1666,6 +1666,346 @@ body.uiModalOpen #center{pointer-events:none}
 
   #flowArchive .recordChipValue{
       font-size:12px;
+  }
+}
+
+
+
+/* ============================================================
+   SHIFTVIX 2.27 — FLOWS RESPONSIVE READABILITY
+   ============================================================ */
+
+#flowArchive{
+    place-items:center;
+    padding:
+      max(18px,env(safe-area-inset-top))
+      18px
+      max(18px,env(safe-area-inset-bottom));
+    box-sizing:border-box;
+}
+
+#flowArchive .archiveCard{
+    width:min(1040px,92vw);
+    max-height:min(900px,92vh);
+    min-height:min(680px,82vh);
+    padding:clamp(28px,3vw,44px);
+    border-radius:30px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    box-sizing:border-box;
+}
+
+#flowArchive .archiveHeader{
+    margin-bottom:clamp(18px,2vh,28px);
+}
+
+#flowArchive .archiveHeader h2{
+    font-size:clamp(34px,4.2vw,58px);
+    letter-spacing:clamp(4px,.55vw,8px);
+    line-height:1;
+}
+
+#flowArchive .archiveClose{
+    font-size:clamp(30px,3vw,42px);
+    min-width:58px;
+    min-height:58px;
+    display:grid;
+    place-items:center;
+}
+
+#archiveList{
+    max-height:none;
+    overflow:visible;
+    padding:0;
+    width:100%;
+}
+
+#flowArchive .sixFlowSummary{
+    margin:0 0 clamp(18px,2vh,26px);
+    padding:clamp(18px,2vw,26px);
+    border-radius:22px;
+}
+
+#flowArchive .sixFlowSummaryTop{
+    font-size:clamp(13px,1.4vw,19px);
+    letter-spacing:clamp(1.4px,.18vw,2.5px);
+    margin-bottom:14px;
+}
+
+#flowArchive .sixFlowSummaryTop strong{
+    font-size:inherit;
+}
+
+#flowArchive .sixFlowNames{
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    gap:clamp(8px,1vw,14px);
+    margin-top:0;
+}
+
+#flowArchive .sixFlowName{
+    min-height:48px;
+    padding:10px 8px;
+    border-radius:999px;
+    font-size:clamp(11px,1.05vw,15px);
+    letter-spacing:clamp(.8px,.1vw,1.4px);
+}
+
+#flowArchive .archiveRetention{
+    gap:clamp(16px,1.8vh,24px);
+    margin:0;
+}
+
+#flowArchive .todayVectorCard{
+    padding:clamp(20px,2.2vw,30px);
+    border-radius:22px;
+}
+
+#flowArchive .todayVectorTop{
+    font-size:clamp(12px,1.2vw,17px);
+    letter-spacing:1.7px;
+}
+
+#flowArchive .todayVectorName,
+#flowArchive .todayVectorStatus{
+    font-size:inherit;
+}
+
+#flowArchive .todayVectorFlow{
+    margin-top:14px;
+    font-size:clamp(22px,2.2vw,32px);
+    letter-spacing:1.4px;
+}
+
+#flowArchive .todayVectorObjective{
+    margin-top:8px;
+    font-size:clamp(15px,1.45vw,21px);
+    line-height:1.35;
+    letter-spacing:.7px;
+}
+
+#flowArchive .todayVectorAction{
+    min-height:clamp(54px,6vh,70px);
+    margin-top:18px;
+    border-radius:16px;
+    font-size:clamp(13px,1.3vw,18px);
+    letter-spacing:1.8px;
+}
+
+#flowArchive .nextDailyNote{
+    margin-top:12px;
+    font-size:clamp(10px,.95vw,14px);
+    letter-spacing:1.2px;
+    line-height:1.35;
+}
+
+#flowArchive .personalRecords{
+    grid-template-columns:repeat(3,1fr);
+    gap:clamp(10px,1.2vw,16px);
+}
+
+#flowArchive .recordChip{
+    min-height:82px;
+    padding:14px 10px;
+    border-radius:16px;
+    display:grid;
+    align-content:center;
+}
+
+#flowArchive .recordChipLabel{
+    font-size:clamp(10px,.95vw,14px);
+    letter-spacing:1.4px;
+}
+
+#flowArchive .recordChipValue{
+    margin-top:7px;
+    font-size:clamp(18px,1.9vw,28px);
+}
+
+/* TABLET */
+@media(min-width:700px) and (max-width:1180px){
+  #flowArchive{
+      padding:
+        max(20px,env(safe-area-inset-top))
+        24px
+        max(20px,env(safe-area-inset-bottom));
+  }
+
+  #flowArchive .archiveCard{
+      width:min(900px,90vw);
+      min-height:min(760px,86vh);
+      max-height:90vh;
+      padding:32px;
+  }
+
+  #flowArchive .sixFlowNames{
+      grid-template-columns:repeat(3,1fr);
+  }
+
+  #flowArchive .sixFlowName{
+      min-height:52px;
+      font-size:14px;
+  }
+
+  #flowArchive .personalRecords{
+      grid-template-columns:repeat(3,1fr);
+  }
+}
+
+/* PHONE */
+@media(max-width:699px){
+  #flowArchive{
+      place-items:center;
+      padding:
+        max(8px,env(safe-area-inset-top))
+        8px
+        max(8px,env(safe-area-inset-bottom));
+  }
+
+  #flowArchive .archiveCard{
+      width:96vw;
+      min-height:88vh;
+      max-height:92vh;
+      padding:22px 18px 20px;
+      border-radius:26px;
+      justify-content:flex-start;
+  }
+
+  #flowArchive .archiveHeader{
+      margin-bottom:16px;
+  }
+
+  #flowArchive .archiveHeader h2{
+      font-size:clamp(30px,9vw,42px);
+      letter-spacing:4px;
+  }
+
+  #flowArchive .archiveClose{
+      min-width:52px;
+      min-height:52px;
+      font-size:30px;
+  }
+
+  #flowArchive .sixFlowSummary{
+      padding:16px 14px;
+      margin-bottom:16px;
+      border-radius:20px;
+  }
+
+  #flowArchive .sixFlowSummaryTop{
+      font-size:13px;
+      margin-bottom:12px;
+  }
+
+  #flowArchive .sixFlowNames{
+      grid-template-columns:repeat(2,1fr);
+      gap:9px;
+  }
+
+  #flowArchive .sixFlowName{
+      min-height:46px;
+      padding:9px 6px;
+      font-size:12px;
+      letter-spacing:1px;
+  }
+
+  #flowArchive .todayVectorCard{
+      padding:18px 16px;
+      border-radius:20px;
+  }
+
+  #flowArchive .todayVectorTop{
+      font-size:12px;
+  }
+
+  #flowArchive .todayVectorFlow{
+      margin-top:12px;
+      font-size:24px;
+  }
+
+  #flowArchive .todayVectorObjective{
+      margin-top:6px;
+      font-size:16px;
+      line-height:1.35;
+  }
+
+  #flowArchive .todayVectorAction{
+      min-height:56px;
+      margin-top:16px;
+      font-size:14px;
+  }
+
+  #flowArchive .nextDailyNote{
+      font-size:10px;
+      margin-top:10px;
+  }
+
+  #flowArchive .personalRecords{
+      grid-template-columns:repeat(2,1fr);
+      gap:9px;
+  }
+
+  #flowArchive .recordChip{
+      min-height:68px;
+      padding:11px 8px;
+  }
+
+  #flowArchive .recordChipLabel{
+      font-size:10px;
+  }
+
+  #flowArchive .recordChipValue{
+      font-size:20px;
+  }
+}
+
+/* VERY SHORT PHONE SCREENS */
+@media(max-width:699px) and (max-height:740px){
+  #flowArchive .archiveCard{
+      min-height:0;
+      max-height:96vh;
+      padding-top:16px;
+      padding-bottom:16px;
+  }
+
+  #flowArchive .archiveHeader{
+      margin-bottom:10px;
+  }
+
+  #flowArchive .sixFlowSummary{
+      padding:12px;
+      margin-bottom:11px;
+  }
+
+  #flowArchive .sixFlowName{
+      min-height:38px;
+      font-size:11px;
+  }
+
+  #flowArchive .todayVectorCard{
+      padding:14px;
+  }
+
+  #flowArchive .todayVectorFlow{
+      font-size:21px;
+  }
+
+  #flowArchive .todayVectorObjective{
+      font-size:14px;
+  }
+
+  #flowArchive .todayVectorAction{
+      min-height:48px;
+      margin-top:11px;
+  }
+
+  #flowArchive .personalRecords{
+      gap:7px;
+  }
+
+  #flowArchive .recordChip{
+      min-height:58px;
   }
 }
 
