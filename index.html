@@ -39,7 +39,7 @@ function track(eventName, data = {}) {
 }
 </script>
 <head>
-<!-- SHIFTVIX 2.27 — FLOWS RESPONSIVE READABILITY -->
+<!-- SHIFTVIX 2.28 — DESKTOP PAUSE + FLOWS SCROLL -->
 <meta charset="utf-8">
 <link rel="icon" type="image/png" href="icon-512.png">
 
@@ -2006,6 +2006,160 @@ body.uiModalOpen #center{pointer-events:none}
 
   #flowArchive .recordChip{
       min-height:58px;
+  }
+}
+
+
+
+/* ============================================================
+   SHIFTVIX 2.28 — DESKTOP PAUSE + FLOWS SCROLL
+   ============================================================ */
+
+/* ---------- FLOWS: keep the current visual scale, add controlled scroll ---------- */
+#flowArchive .archiveCard{
+    overflow:hidden;
+}
+
+#archiveList{
+    overflow-y:auto;
+    overflow-x:hidden;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(255,211,106,.46) rgba(255,255,255,.06);
+    padding-right:6px;
+}
+
+#archiveList::-webkit-scrollbar{
+    width:7px;
+}
+
+#archiveList::-webkit-scrollbar-track{
+    background:rgba(255,255,255,.045);
+    border-radius:999px;
+}
+
+#archiveList::-webkit-scrollbar-thumb{
+    background:rgba(255,211,106,.42);
+    border-radius:999px;
+}
+
+#archiveList::-webkit-scrollbar-thumb:hover{
+    background:rgba(255,211,106,.62);
+}
+
+/* Desktop/tablet: enough travel to expose the bottom record row without making
+   the card feel like a long page. */
+@media(min-width:700px){
+  #archiveList{
+      max-height:calc(min(900px,92vh) - 150px);
+      padding-bottom:10px;
+  }
+}
+
+/* Phone: use almost the full panel height, but allow a short scroll to the
+   SCORE / RINGS / SHIFT / WARP record cards. */
+@media(max-width:699px){
+  #archiveList{
+      max-height:calc(92vh - 118px);
+      padding-right:4px;
+      padding-bottom:12px;
+  }
+}
+
+/* Very short phones need slightly more compressed scroll viewport. */
+@media(max-width:699px) and (max-height:740px){
+  #archiveList{
+      max-height:calc(96vh - 105px);
+  }
+}
+
+/* ---------- PAUSE: desktop only ---------- */
+@media(min-width:900px){
+  #pauseOverlay{
+      place-items:center;
+      padding:24px;
+  }
+
+  #pauseOverlay .pauseCard{
+      width:min(760px,72vw);
+      min-height:520px;
+      padding:38px 40px 34px;
+      border-radius:28px;
+      box-sizing:border-box;
+  }
+
+  #pauseOverlay .pauseTitle{
+      font-size:44px;
+      letter-spacing:7px;
+      margin-bottom:22px;
+  }
+
+  #pauseOverlay .pauseChallenge{
+      padding:24px 26px;
+      border-radius:18px;
+      margin-bottom:24px;
+  }
+
+  #pauseOverlay .pauseChallengeTitle{
+      font-size:20px;
+      letter-spacing:2.4px;
+  }
+
+  #pauseOverlay .pauseChallengeObjective{
+      margin-top:12px;
+      font-size:18px;
+      line-height:1.35;
+      letter-spacing:1.1px;
+  }
+
+  #pauseOverlay .pauseProgress{
+      margin-top:18px;
+      height:18px;
+  }
+
+  #pauseOverlay .pauseProgressPct{
+      font-size:12px;
+  }
+
+  #pauseOverlay .pauseButton{
+      min-height:72px;
+      border-radius:18px;
+      font-size:20px;
+      letter-spacing:3px;
+      margin-top:14px;
+  }
+
+  #pauseOverlay .pauseHint{
+      margin-top:20px;
+      font-size:12px;
+      letter-spacing:2px;
+  }
+}
+
+/* Large desktop screens get a stronger scale-up. */
+@media(min-width:1280px){
+  #pauseOverlay .pauseCard{
+      width:min(860px,68vw);
+      min-height:560px;
+      padding:44px 46px 38px;
+  }
+
+  #pauseOverlay .pauseTitle{
+      font-size:50px;
+  }
+
+  #pauseOverlay .pauseChallengeTitle{
+      font-size:22px;
+  }
+
+  #pauseOverlay .pauseChallengeObjective{
+      font-size:20px;
+  }
+
+  #pauseOverlay .pauseButton{
+      min-height:78px;
+      font-size:22px;
   }
 }
 
