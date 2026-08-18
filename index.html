@@ -124,7 +124,7 @@ function track(eventName,data={}){
   Do not add new GA4 events unless they answer a real product/retention question.
 -->
 <head>
-<!-- SHIFTVIX 2.40 — WARP FLOW TIER I ONLY -->
+<!-- SHIFTVIX 2.41 — WARP SCALING + SHIFT REBALANCE -->
 <meta charset="utf-8">
 <link rel="icon" type="image/png" href="icon-512.png">
 
@@ -3686,6 +3686,28 @@ function warpTierDistance(tier){
   return WARP_DISTANCES[Math.max(0,Math.min(2,(tier||1)-1))];
 }
 
+function warpFlowJumpDistance(){
+  /*
+    SHIFTVIX 2.41 — WARP FLOW DISTANCE CURVE
+
+    The more Warps the Flow asks the player to chain, the less raw
+    distance each Warp adds. The visual Warp/surge remains intact;
+    only the underlying distance jump is reduced.
+
+      8–12  -> 400m
+      13–17 -> 300m
+      18–21 -> 200m
+      22–24 -> 100m
+  */
+  const target=
+    Number(activeChallenge?.target)||8;
+
+  if(target<=12)return 400;
+  if(target<=17)return 300;
+  if(target<=21)return 200;
+  return 100;
+}
+
 function powerOrbScoreValue(tier){
   return POWER_ORB_SCORE_VALUES[
     Math.max(0,Math.min(2,(tier||1)-1))
@@ -6451,11 +6473,20 @@ function createFlow(index){
   }
 
   if(category==="SHIFT"){
-    // Start substantial. SHIFT measures ARRIVAL at a distinct lane,
-    // not raw swipe/input events.
+    /*
+      SHIFTVIX 2.41 — SHIFT REBALANCE
+
+      Empty space is now safe, so SHIFT needs more endurance to retain
+      its identity as the agility / train-connection Flow.
+
+      2.40: 50 + categoryStep*5, capped at 200.
+      2.41: 100 + categoryStep*10, capped at 400.
+
+      A SHIFT still counts ONLY after a real train-to-train reconnection.
+    */
     const target=Math.min(
-      200,
-      50 + categoryStep*5
+      400,
+      100 + categoryStep*10
     );
 
     flow={
@@ -6472,9 +6503,9 @@ function createFlow(index){
 
   // WARP = acceleration / space-jump mastery.
   // One successfully activated Warp orb counts as one WARP.
-  // During a WARP Flow every Warp orb is forced to Tier I (+500m)
-  // so the player can chain several Warps without instantly outrunning
-  // the objective's readable pacing.
+  // During a WARP Flow every Warp orb remains Tier I visually,
+  // while its actual jump distance scales down as the required Warp
+  // count rises: 400 / 300 / 200 / 100m.
   const target=Math.min(
     24,
     8+Math.floor(categoryStep/3)
@@ -8755,7 +8786,11 @@ function updateWarpFlowOpportunity(){
 }
 
 function activateWarp(reason,tier=1){
-  const jump=warpTierDistance(tier);
+  const jump=
+    isWarpFlowActive()
+      ? warpFlowJumpDistance()
+      : warpTierDistance(tier);
+
   const before=distance;
 
   // Warp is instantaneous and never changes the current viewport/camera sizing.
@@ -8819,8 +8854,9 @@ function makeWarpOrb(reason="random"){
     later required Warps become harder to physically reach/read.
 
     Therefore:
-      WARP Flow active  -> Tier I only (+500m)
-      Any other Flow    -> normal weighted Tier I / II / III
+      WARP Flow active  -> Tier I visual + scaled 400/300/200/100m jump
+      Any other Flow    -> normal weighted Tier I / II / III with
+                           500/1000/1500m jumps
   */
   const powerTier=
     isWarpFlowActive()
