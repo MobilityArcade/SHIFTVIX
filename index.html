@@ -124,7 +124,7 @@ function track(eventName,data={}){
   Do not add new GA4 events unless they answer a real product/retention question.
 -->
 <head>
-<!-- SHIFTVIX 2.39 — VOID PRESSURE + TRUE HOLLOW TITLE -->
+<!-- SHIFTVIX 2.40 — WARP FLOW TIER I ONLY -->
 <meta charset="utf-8">
 <link rel="icon" type="image/png" href="icon-512.png">
 
@@ -6471,9 +6471,10 @@ function createFlow(index){
   }
 
   // WARP = acceleration / space-jump mastery.
-  // One successfully activated Warp orb counts as one WARP,
-  // regardless of Tier I / II / III. The 500 / 1000 / 1500m
-  // jump still happens normally.
+  // One successfully activated Warp orb counts as one WARP.
+  // During a WARP Flow every Warp orb is forced to Tier I (+500m)
+  // so the player can chain several Warps without instantly outrunning
+  // the objective's readable pacing.
   const target=Math.min(
     24,
     8+Math.floor(categoryStep/3)
@@ -8809,7 +8810,22 @@ function activateWarp(reason,tier=1){
 
 function makeWarpOrb(reason="random"){
   if(warpOrbActive || distance<warpCooldownUntilDistance)return false;
-  const powerTier=choosePowerTier();
+
+  /*
+    SHIFTVIX 2.40 — WARP FLOW CONTROL
+
+    WARP objectives are about chaining multiple spatial jumps.
+    Tier II / III jumps accelerate progression so aggressively that
+    later required Warps become harder to physically reach/read.
+
+    Therefore:
+      WARP Flow active  -> Tier I only (+500m)
+      Any other Flow    -> normal weighted Tier I / II / III
+  */
+  const powerTier=
+    isWarpFlowActive()
+      ? 1
+      : choosePowerTier();
 
   trainId++;
   const xIndex=Math.floor(Math.random()*3);
