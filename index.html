@@ -1,45 +1,130 @@
 <!DOCTYPE html>
 <html>
-<!-- Google Analytics -->
+<!-- Google Analytics — SHIFTVIX 2.32 Retention Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-M88902RHLE"></script>
 
 <script>
 window.dataLayer = window.dataLayer || [];
 
-function gtag() {
+function gtag(){
     dataLayer.push(arguments);
 }
 
-gtag('js', new Date());
+gtag("js",new Date());
 
-const isDeveloper =
-    localStorage.getItem("shiftvixDeveloper") === "true";
+const params=
+    new URLSearchParams(
+        window.location.search
+    );
 
-gtag('config', 'G-M88902RHLE', {
-    developer_mode: isDeveloper
-});
-
-const params = new URLSearchParams(window.location.search);
-
-if (params.get("developer") === "true") {
-    localStorage.setItem("shiftvixDeveloper", "true");
+if(params.get("developer")==="true"){
+    localStorage.setItem(
+        "shiftvixDeveloper",
+        "true"
+    );
 }
 
-function track(eventName, data = {}) {
+const isDeveloper=
+    params.get("developer")==="true" ||
+    localStorage.getItem(
+        "shiftvixDeveloper"
+    )==="true";
 
-    // Completely ignore analytics from your developer browser
-    if (isDeveloper) {
-        console.log("[Developer analytics blocked]", eventName, data);
+/*
+  GA4 already handles page/session/user engagement automatically.
+  Custom SHIFTVIX analytics are intentionally limited to:
+  - real gameplay starts
+  - Flow choice
+  - Flow outcome
+  - run outcome
+  - daily-pick behavior
+  - meaningful return behavior
+  - personal records
+  - a few core mechanic-health signals
+*/
+const ANALYTICS_EVENT_ALIASES={
+    flow_family_selected:"flow_selected",
+    current_flow_completed:"flow_completed",
+    today_vector_completed:"today_pick_completed",
+    vector_personal_record:"personal_best",
+    gold_ring_passed:"ring_passed",
+    warp_orb_collected:"warp_collected"
+};
+
+const ANALYTICS_ALLOWED_EVENTS=new Set([
+    "first_run",
+    "game_started",
+    "player_returned",
+    "flow_selected",
+    "flow_completed",
+    "flow_attempt_ended",
+    "run_ended",
+    "today_pick_started",
+    "today_pick_completed",
+    "personal_best",
+    "void_hit",
+    "ring_passed",
+    "warp_collected"
+]);
+
+gtag("config","G-M88902RHLE",{
+    developer_mode:isDeveloper,
+    send_page_view:!isDeveloper
+});
+
+function track(eventName,data={}){
+    const cleanName=
+        ANALYTICS_EVENT_ALIASES[eventName] ||
+        eventName;
+
+    // Completely suppress analytics from the developer browser.
+    if(isDeveloper){
+        console.log(
+            "[Developer analytics blocked]",
+            cleanName,
+            data
+        );
         return;
     }
 
-    if (typeof gtag === "function") {
-        gtag("event", eventName, data);
+    // Old/debug/engine events remain harmless in code but never reach GA4.
+    if(!ANALYTICS_ALLOWED_EVENTS.has(cleanName)){
+        return;
+    }
+
+    if(typeof gtag==="function"){
+        gtag(
+            "event",
+            cleanName,
+            data
+        );
     }
 }
 </script>
+
+
+<!--
+  ANALYTICS MAINTENANCE NOTE — 2.32
+  GA4 custom events intentionally kept:
+    first_run
+    game_started
+    player_returned
+    flow_selected
+    flow_completed
+    flow_attempt_ended
+    run_ended
+    today_pick_started
+    today_pick_completed
+    personal_best
+    void_hit
+    ring_passed
+    warp_collected
+
+  Everything else is suppressed centrally by ANALYTICS_ALLOWED_EVENTS.
+  Do not add new GA4 events unless they answer a real product/retention question.
+-->
 <head>
-<!-- SHIFTVIX 2.33 — BRANDED SHIFTVIX HUB TITLE -->
+<!-- SHIFTVIX 2.34 — FLOW HUB RUNTIME FIX -->
 <meta charset="utf-8">
 <link rel="icon" type="image/png" href="icon-512.png">
 
@@ -2821,31 +2906,6 @@ body.uiModalOpen #center{pointer-events:none}
     display:none !important;
 }
 
-
-
-/* ============================================================
-   SHIFTVIX 2.33 — BRANDED UNIFIED HUB TITLE
-   Gold outline / black center, matching the in-game identity.
-   ============================================================ */
-#flowArchive .archiveHeader h2{
-    color:#050505 !important;
-    -webkit-text-fill-color:#050505;
-    -webkit-text-stroke:2px #ffd25a;
-    paint-order:stroke fill;
-    text-shadow:
-        0 0 7px rgba(255,210,90,.55),
-        0 0 16px rgba(255,181,44,.24);
-    letter-spacing:.12em;
-    font-weight:900;
-    text-align:center;
-}
-@media (max-width:600px){
-    #flowArchive .archiveHeader h2{
-        -webkit-text-stroke:1.6px #ffd25a;
-        letter-spacing:.09em;
-    }
-}
-
 </style>
 </head>
 <body>
@@ -2881,7 +2941,7 @@ body.uiModalOpen #center{pointer-events:none}
 </div>
 <div id="challengeHud"><div id="challengeName">SURVIVE THE FLOW</div><div id="challengeText">LOADING…</div><div id="challengeBar"><div id="challengeFill"></div><div id="challengePct">0%</div></div></div>
 <div id="tutorialPrompt" aria-live="polite"></div><div id="powerAnnouncement" aria-live="polite"></div><div id="modeBanner"></div><div id="chronoMultiplier">×2 SCORE</div><div id="warpBurstFx"></div><div id="flowFx"></div><div id="fluxFx"></div><div id="chronoFx"></div><div id="midasFx"></div><div id="prismFx"></div><div id="pulseWaves"></div>
-<div id="flowArchive" aria-hidden="true"><div class="archiveCard" role="dialog" aria-modal="true" aria-labelledby="flowPathTitle"><div class="archiveHeader"><h2 id="flowPathTitle">SHIFTVIX</h2></div><div id="archiveList"></div></div></div>
+<div id="flowArchive" aria-hidden="true"><div class="archiveCard" role="dialog" aria-modal="true" aria-labelledby="flowPathTitle"><div class="archiveHeader"><h2 id="flowPathTitle">FLOWS</h2></div><div id="archiveList"></div></div></div>
 
 <!-- SHIFTVIX CHRONO 2.0 — SLOW TIME + PRISM VISION + 2X SCORE -->
 <script type="module">
@@ -3130,13 +3190,155 @@ let runStartTime = 0;
 let lastRunDuration = 0;
 
 // =========================
-// SHIFTVIX v2.5 ANALYTICS (Patch 7 scaffold)
+// SHIFTVIX 2.32 — RETENTION ANALYTICS
 // =========================
-const ANALYTICS_VERSION="2.5";
-const analyticsSessionId=`${Date.now()}-${Math.random().toString(36).slice(2,10)}`;
-let analyticsRunId=null,analyticsRunStartedAt=0,analyticsFlowStartedAt=0;
-function analyticsBaseData(){return {analytics_version:ANALYTICS_VERSION,analytics_session_id:analyticsSessionId,analytics_run_id:analyticsRunId||"not_started"};}
-function trackGame(eventName,data={}){track(eventName,{...analyticsBaseData(),...data});}
+const ANALYTICS_VERSION="3.0-retention";
+const analyticsSessionId=
+  `${Date.now()}-${Math.random().toString(36).slice(2,10)}`;
+
+let analyticsRunId=null;
+let analyticsRunStartedAt=0;
+let analyticsFlowStartedAt=0;
+let playerReturnRecordedThisPage=false;
+
+function analyticsBaseData(){
+  return {
+    analytics_version:ANALYTICS_VERSION,
+    analytics_session_id:analyticsSessionId,
+    analytics_run_id:
+      analyticsRunId||"not_started"
+  };
+}
+
+function trackGame(eventName,data={}){
+  track(
+    eventName,
+    {
+      ...analyticsBaseData(),
+      ...data
+    }
+  );
+}
+
+function analyticsLocalDateKey(date=new Date()){
+  const y=date.getFullYear();
+  const m=String(
+    date.getMonth()+1
+  ).padStart(2,"0");
+  const d=String(
+    date.getDate()
+  ).padStart(2,"0");
+
+  return `${y}-${m}-${d}`;
+}
+
+function daysBetweenDateKeys(a,b){
+  if(!a||!b)return null;
+
+  const parse=key=>{
+    const [y,m,d]=
+      key.split("-").map(Number);
+
+    if(!y||!m||!d)return NaN;
+
+    return Date.UTC(y,m-1,d);
+  };
+
+  const start=parse(a);
+  const end=parse(b);
+
+  if(
+    !Number.isFinite(start) ||
+    !Number.isFinite(end)
+  ){
+    return null;
+  }
+
+  return Math.max(
+    0,
+    Math.round(
+      (end-start)/86400000
+    )
+  );
+}
+
+function recordPlayerReturnOnGameStart(){
+  if(playerReturnRecordedThisPage)return;
+  playerReturnRecordedThisPage=true;
+
+  const today=analyticsLocalDateKey();
+  const lastPlay=
+    localStorage.getItem(
+      "shiftvixLastPlayDate"
+    );
+
+  let lifetimePlayDays=
+    Math.max(
+      0,
+      Number(
+        localStorage.getItem(
+          "shiftvixLifetimePlayDays"
+        )||0
+      )
+    );
+
+  if(!lastPlay){
+    lifetimePlayDays=
+      Math.max(1,lifetimePlayDays);
+
+    localStorage.setItem(
+      "shiftvixLastPlayDate",
+      today
+    );
+
+    localStorage.setItem(
+      "shiftvixLifetimePlayDays",
+      String(lifetimePlayDays)
+    );
+
+    return;
+  }
+
+  if(lastPlay!==today){
+    const daysSince=
+      daysBetweenDateKeys(
+        lastPlay,
+        today
+      );
+
+    lifetimePlayDays++;
+
+    localStorage.setItem(
+      "shiftvixLastPlayDate",
+      today
+    );
+
+    localStorage.setItem(
+      "shiftvixLifetimePlayDays",
+      String(lifetimePlayDays)
+    );
+
+    trackGame(
+      "player_returned",
+      {
+        days_since_last_play:
+          daysSince===null
+            ? -1
+            : daysSince,
+        lifetime_play_days:
+          lifetimePlayDays,
+        d1_return:
+          daysSince===1 ? 1 : 0,
+        d3_return:
+          daysSince!==null &&
+          daysSince>=3 ? 1 : 0,
+        d7_return:
+          daysSince!==null &&
+          daysSince>=7 ? 1 : 0
+      }
+    );
+  }
+}
 
 
 // Remembers whether this browser has ever started SHIFTVIX before
@@ -4954,7 +5156,7 @@ function chooseFlowFamily(category,source="flow_hub"){
   const flowIndex=
     currentFamilyFlowIndex(category);
 
-  trackGame("flow_family_selected",{
+  trackGame("flow_selected",{
     category,
     flow_number:flowIndex+1,
     source,
@@ -4963,6 +5165,16 @@ function chooseFlowFamily(category,source="flow_hub"){
     family_mastery:
       familyMastered(category)
   });
+
+  if(source==="today_pick"){
+    trackGame(
+      "today_pick_started",
+      {
+        category,
+        flow_number:flowIndex+1
+      }
+    );
+  }
 
   currentFlowIndex=flowIndex;
   replayReturnFlowIndex=null;
@@ -5231,7 +5443,7 @@ function updateVectorRecord(flow,value){
   vectorRecords[category]=safe;
   saveVectorRecords();
 
-  trackGame("vector_personal_record",{
+  trackGame("personal_best",{
     category,
     record:safe,
     flow_number:currentFlowIndex+1
@@ -5348,7 +5560,7 @@ function markTodayVectorComplete(flowIndex){
     JSON.stringify(todayVector)
   );
 
-  trackGame("today_vector_completed",{
+  trackGame("today_pick_completed",{
     flow_number:flowIndex+1,
     category:finishedCategory
   });
@@ -6324,28 +6536,55 @@ function completeCurrentFlow(){
         queueFluxOrb("flow_complete");
     }
 
-    track("current_flow_completed",{
-        flow_number:
-            finishedFlowIndex + 1,
-        flow_id:finished.id,
-        flow_stage:
-            flowStageFor(
-                finishedFlowIndex
-            ).name,
-        environment:
-            environmentEngine.current.id,
-        level,
+    const completedFlowProgress=
+        Math.max(
+          0,
+          Math.min(
+            finished.target,
+            challengeBaseValue(finished)
+          )
+        );
+
+    const completedFlowSeconds=
+        Math.max(
+          0,
+          Math.round(
+            (
+              performance.now() -
+              (analyticsFlowStartedAt||runStartTime)
+            )/1000
+          )
+        );
+
+    trackGame("flow_completed",{
+        category:finished.category,
+        flow_number:finishedFlowIndex+1,
+        target:Math.floor(finished.target),
+        progress:Math.floor(completedFlowProgress),
+        duration_seconds:completedFlowSeconds,
         distance:Math.floor(distance),
         score,
+        lives_remaining:
+          Math.max(0,3-strikes),
         first_completion:
-            !wasAlreadyCompleted,
-        completed_flows_total:
-            completedFlows
+          !wasAlreadyCompleted,
+        family_completed:
+          familyCompletedCount(
+            finished.category
+          )
     });
 
-    track("highest_flow_reached",{
-        highest_flow:
-            finishedFlowIndex + 1
+    trackGame("flow_attempt_ended",{
+        category:finished.category,
+        result:"completed",
+        flow_number:finishedFlowIndex+1,
+        progress:Math.floor(completedFlowProgress),
+        target:Math.floor(finished.target),
+        progress_percent:100,
+        duration_seconds:completedFlowSeconds,
+        distance:Math.floor(distance),
+        score,
+        strikes
     });
 
     const nextFamilyIndex=
@@ -7072,12 +7311,12 @@ function closeFlowArchive(){
     resumeGame("flow_hub_close");
   }
 }
-document.getElementById("challengeHud").addEventListener("click",()=>openFlowArchive("hud"));
-document.getElementById("archiveClose")?.addEventListener("click",closeFlowArchive);
-document.getElementById("flowArchive").addEventListener("click",e=>{if(e.target.id==="flowArchive")closeFlowArchive();});
-document.getElementById("pauseResume").addEventListener("click",()=>resumeGame("pause_button"));
-document.getElementById("pauseFlowPath").addEventListener("click",()=>openFlowArchive("pause_menu"));
-document.getElementById("pauseMenu").addEventListener("click",e=>{if(e.target.id==="pauseMenu")document.getElementById("pauseResume")?.focus();});
+document.getElementById("challengeHud")?.addEventListener("click",()=>openFlowArchive("hud"));
+// #archiveClose intentionally removed in the unified FLOWS hub.
+document.getElementById("flowArchive")?.addEventListener("click",e=>{e.stopPropagation();});
+document.getElementById("pauseResume")?.addEventListener("click",()=>resumeGame("pause_button"));
+document.getElementById("pauseFlowPath")?.addEventListener("click",()=>openFlowArchive("pause_menu"));
+document.getElementById("pauseMenu")?.addEventListener("click",e=>{if(e.target.id==="pauseMenu")document.getElementById("pauseResume")?.focus();});
 
 document
     .getElementById("archiveList")
@@ -7917,7 +8156,7 @@ function passGoldRing(b){
     navigator.vibrate([10,22,10]);
   }
 
-  trackGame("gold_ring_passed",{
+  trackGame("ring_passed",{
     distance:Math.floor(distance),
     level,
     flow_number:currentFlowIndex+1,
@@ -8314,7 +8553,7 @@ function activateWarp(reason,tier=1){
     navigator.vibrate(tier===3?[30,24,50,28,70]:tier===2?[26,22,48]:[22,20,38]);
   }
 
-  trackGame("warp_orb_collected",{
+  trackGame("warp_collected",{
     trigger_reason:reason||"unknown",
     power_tier:tier,
     jump_meters:jump,
@@ -8744,8 +8983,8 @@ function startGame(){
     // Fires only once on this browser/device
     if(!hasPlayedBefore){
 
-        track("first_run",{
-            starting_level: 1
+        trackGame("first_run",{
+            starting_level:1
         });
 
         localStorage.setItem(
@@ -8756,9 +8995,16 @@ function startGame(){
         hasPlayedBefore = true;
     }
 
-    // Fires every time a new game session begins
-    track("game_started",{
-        starting_level: 1
+    // Fires every time a real game session begins.
+    recordPlayerReturnOnGameStart();
+
+    trackGame("game_started",{
+        category:
+          activeChallenge?.category ||
+          createFlow(currentFlowIndex).category,
+        flow_number:
+          currentFlowIndex+1,
+        starting_level:1
     });
 
     runStartTime = performance.now();
@@ -9221,41 +9467,91 @@ function endRun(){
 
     lastRunDuration = Math.round(runSeconds);
 
-    // Exact level where all three lives were lost
-    track("death_level",{
-        level: level,
-        distance: Math.floor(distance),
-        strikes: strikes,
-        score: score,
-        duration: lastRunDuration,
-        sources: foundCount
+    const endedFlow=
+        activeChallenge ||
+        createFlow(currentFlowIndex);
+
+    const endedProgress=
+        Math.max(
+          0,
+          Math.min(
+            endedFlow.target,
+            challengeBaseValue(
+              endedFlow
+            )
+          )
+        );
+
+    const endedTarget=
+        Math.max(
+          1,
+          Math.floor(
+            Number(endedFlow.target)||1
+          )
+        );
+
+    const endedPercent=
+        Math.max(
+          0,
+          Math.min(
+            100,
+            Math.round(
+              endedProgress /
+              endedTarget *
+              100
+            )
+          )
+        );
+
+    /*
+      ONE run summary replaces:
+      death_level + run_duration + duplicate run_ended detail.
+      This is the primary gameplay-health event.
+    */
+    trackGame("run_ended",{
+        result:"failed",
+        category:endedFlow.category,
+        flow_number:currentFlowIndex+1,
+        duration_seconds:lastRunDuration,
+        distance:Math.floor(distance),
+        level,
+        score,
+        strikes,
+        lives_remaining:
+          Math.max(0,3-strikes),
+        orbs_collected:foundCount,
+        rings_passed:goldRingsPassed,
+        shifts:shiftCountRun,
+        warps_collected:
+          warpCollectedThisRun,
+        progress:
+          Math.floor(endedProgress),
+        target:endedTarget,
+        progress_percent:
+          endedPercent
     });
 
-    // Dedicated survival-time event
-    track("run_duration",{
-        seconds: lastRunDuration,
-        level: level,
-        distance: Math.floor(distance),
-        score: score
-    });
-
-    // Existing full run summary
-    track("run_ended",{
-        level: level,
-        distance: Math.floor(distance),
-        strikes: strikes,
-        score: score,
-        sources: foundCount,
-        duration: lastRunDuration,
+    trackGame("flow_attempt_ended",{
+        category:endedFlow.category,
+        result:"failed",
+        flow_number:currentFlowIndex+1,
+        progress:
+          Math.floor(endedProgress),
+        target:endedTarget,
+        progress_percent:
+          endedPercent,
+        duration_seconds:lastRunDuration,
+        distance:Math.floor(distance),
+        score,
+        strikes
     });
     
     const isNewBestDistance = distance > bestDistance;
     if(isNewBestDistance){
         bestDistance = distance;
-        track("new_best_distance",{
-
-    distance: Math.floor(bestDistance)
-
+        trackGame("personal_best",{
+    category:"DISTANCE",
+    value:Math.floor(bestDistance)
 });
         localStorage.setItem(
             "sourceLaneBestDistance",
@@ -9267,10 +9563,11 @@ function endRun(){
 
     bestLevel = level;
 
-    track("new_best_level",{
-        level: bestLevel,
-        distance: Math.floor(distance)
-    });
+    trackGame("personal_best",{
+    category:"LEVEL",
+    value:bestLevel,
+    distance:Math.floor(distance)
+});
 
     localStorage.setItem(
         "shiftvixBestLevel",
@@ -9282,10 +9579,9 @@ function endRun(){
     const isNewBestScore = score > bestScore;
     if(isNewBestScore){
         bestScore = score;
-        track("new_best_score",{
-
-    score: bestScore
-
+        trackGame("personal_best",{
+    category:"SCORE",
+    value:bestScore
 });
         localStorage.setItem(
             "sourceLaneBestScore",
@@ -10330,15 +10626,7 @@ document.addEventListener("visibilitychange",()=>{
 });
     
 window.addEventListener("beforeunload",()=>{
-
     saveFlowProgress();
-
-    track("session_finished",{
-
-        runs:sessionRuns
-
-    });
-
 });
 function scheduleViewportSync(force=false,delay=180){
   if(viewportResizeTimer){
