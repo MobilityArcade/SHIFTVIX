@@ -124,7 +124,7 @@ function track(eventName,data={}){
   Do not add new GA4 events unless they answer a real product/retention question.
 -->
 <head>
-<!-- SHIFTVIX 2.34 — FLOW HUB RUNTIME FIX -->
+<!-- SHIFTVIX 2.38 — CLEAN HOLLOW GOLD OUTLINE TITLE -->
 <meta charset="utf-8">
 <link rel="icon" type="image/png" href="icon-512.png">
 
@@ -2906,6 +2906,116 @@ body.uiModalOpen #center{pointer-events:none}
     display:none !important;
 }
 
+
+
+/* ============================================================
+   SHIFTVIX 2.37 — OUTLINED NEON HUB TITLE
+   ============================================================ */
+
+#flowArchive .archiveHeader{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:clamp(86px,10vh,128px);
+    margin-bottom:clamp(18px,2.4vh,30px);
+}
+
+#flowArchive .archiveHeader h2,
+#flowPathTitle{
+    width:100%;
+    margin:0;
+    text-align:center;
+
+    font-family:"Arial Black",Arial,Helvetica,sans-serif;
+    font-size:clamp(46px,6.4vw,82px);
+    font-weight:900;
+    line-height:.92;
+    letter-spacing:clamp(2px,.38vw,6px);
+
+    /* Hollow black/transparent SHIFTVIX */
+    color:transparent !important;
+    -webkit-text-fill-color:transparent !important;
+
+    /* Gold outlined logo aesthetic */
+    -webkit-text-stroke:
+        clamp(1.6px,.18vw,2.8px)
+        #ffd36a;
+
+    /* Small neon halo — bright enough to feel alive, not blurry */
+    text-shadow:
+        0 0 5px rgba(255,211,106,.80),
+        0 0 12px rgba(255,185,45,.42),
+        0 0 24px rgba(255,153,0,.16);
+
+    filter:
+        drop-shadow(
+            0 0 6px
+            rgba(255,211,106,.20)
+        );
+
+    background:transparent !important;
+}
+
+/* Keep the title elegant rather than oversized on phones. */
+@media(max-width:699px){
+    #flowArchive .archiveHeader{
+        min-height:84px;
+        margin-bottom:18px;
+    }
+
+    #flowArchive .archiveHeader h2,
+    #flowPathTitle{
+        font-size:clamp(43px,12.2vw,62px);
+        letter-spacing:2px;
+        -webkit-text-stroke:2px #ffd36a;
+        text-shadow:
+            0 0 4px rgba(255,211,106,.78),
+            0 0 10px rgba(255,185,45,.38),
+            0 0 20px rgba(255,153,0,.14);
+    }
+}
+
+/* Tablet */
+@media(min-width:700px) and (max-width:1100px){
+    #flowArchive .archiveHeader h2,
+    #flowPathTitle{
+        font-size:clamp(54px,7.5vw,74px);
+        -webkit-text-stroke:2.4px #ffd36a;
+    }
+}
+
+
+
+/* ============================================================
+   SHIFTVIX 2.38 — CLEAN HOLLOW GOLD OUTLINE TITLE
+   Removes the gold fill/inner neon appearance from 2.37.
+   ============================================================ */
+#flowArchive .archiveHeader h2,
+#flowPathTitle{
+    color:rgba(0,0,0,0) !important;
+    -webkit-text-fill-color:rgba(0,0,0,0) !important;
+    -webkit-text-stroke:2px #f4c64f !important;
+    paint-order:stroke fill;
+
+    /* Crisp outline with only a faint OUTSIDE halo. */
+    text-shadow:
+        0 0 3px rgba(244,198,79,.34),
+        0 0 8px rgba(244,198,79,.16) !important;
+    filter:none !important;
+    background:transparent !important;
+}
+
+@media(max-width:699px){
+    #flowArchive .archiveHeader h2,
+    #flowPathTitle{
+        -webkit-text-stroke:2px #f4c64f !important;
+        text-shadow:
+            0 0 3px rgba(244,198,79,.30),
+            0 0 7px rgba(244,198,79,.14) !important;
+    }
+}
+
 </style>
 </head>
 <body>
@@ -2941,7 +3051,7 @@ body.uiModalOpen #center{pointer-events:none}
 </div>
 <div id="challengeHud"><div id="challengeName">SURVIVE THE FLOW</div><div id="challengeText">LOADING…</div><div id="challengeBar"><div id="challengeFill"></div><div id="challengePct">0%</div></div></div>
 <div id="tutorialPrompt" aria-live="polite"></div><div id="powerAnnouncement" aria-live="polite"></div><div id="modeBanner"></div><div id="chronoMultiplier">×2 SCORE</div><div id="warpBurstFx"></div><div id="flowFx"></div><div id="fluxFx"></div><div id="chronoFx"></div><div id="midasFx"></div><div id="prismFx"></div><div id="pulseWaves"></div>
-<div id="flowArchive" aria-hidden="true"><div class="archiveCard" role="dialog" aria-modal="true" aria-labelledby="flowPathTitle"><div class="archiveHeader"><h2 id="flowPathTitle">FLOWS</h2></div><div id="archiveList"></div></div></div>
+<div id="flowArchive" aria-hidden="true"><div class="archiveCard" role="dialog" aria-modal="true" aria-labelledby="flowPathTitle"><div class="archiveHeader"><h2 id="flowPathTitle">SHIFTVIX</h2></div><div id="archiveList"></div></div></div>
 
 <!-- SHIFTVIX CHRONO 2.0 — SLOW TIME + PRISM VISION + 2X SCORE -->
 <script type="module">
@@ -3151,9 +3261,20 @@ let runStartStrikes = 0;
 // RUSH = 60-second performance Flow layered over existing actions.
 // =========================
 let shiftCountRun=0;
-let shiftArrivalTimer=null;
-let shiftLastArrivalLane="1:1";
+
+// SHIFTVIX 2.35 — true train-to-train SHIFT validation.
+let shiftLastArrivalLane=null;
 let shiftPreviousArrivalLane=null;
+let lastRegularTrainContact=null;
+let pendingTrainShift=null;
+
+// A coin string passes the player quickly. This small grace window means
+// "still riding this train" even when the swipe happens between adjacent coins.
+const TRAIN_CONTACT_GRACE_MS=420;
+
+// A player can cross one or more empty lanes before reconnecting.
+// The departure remains valid briefly, but empty air itself never scores.
+const TRAIN_SHIFT_CONNECTION_WINDOW_MS=1250;
 
 let warpFlowNextWarpDistance=Infinity;
 const WARP_FLOW_FIRST_GAP_MIN=45;
@@ -8786,7 +8907,7 @@ function spawnTrain(){
  else if(tier.value>=50)length=8+Math.floor(Math.random()*8);
  else length=12+Math.floor(Math.random()*14);
  for(let i=0;i<length;i++)makeBeacon(tier,x,y,FAR_Z-i*TRAIN_GAP,trainId);
- document.getElementById("signal").textContent=runStarted?"Signal: stay connected":"Signal: touch first string";
+ document.getElementById("signal").textContent=runStarted?"Signal: avoid the VOID":"Signal: enter the flow";
 }
 function spawnWave(){
   const now=performance.now();
@@ -8807,61 +8928,211 @@ function spawnWave(){
   }
 }
 
-function registerShiftArrival(){
-  const laneKey=`${laneX}:${laneY}`;
+function laneKeyFromIndexes(xIndex,yIndex){
+  return `${xIndex}:${yIndex}`;
+}
 
-  if(laneKey===shiftLastArrivalLane)return;
+function currentLaneKey(){
+  return laneKeyFromIndexes(
+    laneX,
+    laneY
+  );
+}
 
-  // Reject immediate reversals. This prevents LEFT↔RIGHT, UP↔DOWN,
-  // or the same diagonal bounce from farming the SHIFT objective.
+function recentTrainContactForLane(
+  laneKey,
+  now=performance.now()
+){
+  return !!(
+    lastRegularTrainContact &&
+    lastRegularTrainContact.laneKey===laneKey &&
+    (
+      now-lastRegularTrainContact.at
+    )<=TRAIN_CONTACT_GRACE_MS
+  );
+}
+
+function beginTrainShiftIfConnected(
+  fromLaneKey,
+  toLaneKey
+){
+  const now=performance.now();
+
+  // Already carrying a valid departure across empty lanes:
+  // do not replace it just because another swipe crosses more empty space.
+  if(
+    pendingTrainShift &&
+    (
+      now-pendingTrainShift.startedAt
+    )<=TRAIN_SHIFT_CONNECTION_WINDOW_MS
+  ){
+    pendingTrainShift.toLaneKey=
+      toLaneKey;
+    return;
+  }
+
+  if(
+    !recentTrainContactForLane(
+      fromLaneKey,
+      now
+    )
+  ){
+    pendingTrainShift=null;
+    return;
+  }
+
+  pendingTrainShift={
+    fromLaneKey,
+    fromTrainId:
+      lastRegularTrainContact.trainId,
+    toLaneKey,
+    startedAt:now
+  };
+}
+
+function scoreTrainToTrainShift(
+  destinationLaneKey,
+  destinationTrainId
+){
+  const now=performance.now();
+
+  // First real train contact primes the SHIFT route.
+  if(!shiftLastArrivalLane){
+    shiftLastArrivalLane=
+      destinationLaneKey;
+  }
+
+  if(!pendingTrainShift){
+    return false;
+  }
+
+  const age=
+    now-pendingTrainShift.startedAt;
+
+  if(
+    age>TRAIN_SHIFT_CONNECTION_WINDOW_MS
+  ){
+    pendingTrainShift=null;
+    return false;
+  }
+
+  // Returning to the train/lane you departed from is not a SHIFT.
+  if(
+    destinationLaneKey===
+      pendingTrainShift.fromLaneKey
+  ){
+    pendingTrainShift=null;
+    return false;
+  }
+
+  // It must be a real train on the destination lane.
+  if(
+    !Number.isFinite(
+      Number(destinationTrainId)
+    )
+  ){
+    return false;
+  }
+
+  const fromLane=
+    pendingTrainShift.fromLaneKey;
+
+  // Existing anti-farming rule:
+  // A -> B -> A does not score the return to A.
   const countsAsPatternShift=
-    laneKey!==shiftPreviousArrivalLane;
+    destinationLaneKey!==
+      shiftPreviousArrivalLane;
 
-  const fromLane=shiftLastArrivalLane;
+  // Route history is updated ONLY on real train reconnection,
+  // never while crossing empty air.
+  shiftPreviousArrivalLane=
+    shiftLastArrivalLane;
 
-  // Update route history whether or not this arrival scores.
-  shiftPreviousArrivalLane=shiftLastArrivalLane;
-  shiftLastArrivalLane=laneKey;
+  shiftLastArrivalLane=
+    destinationLaneKey;
+
+  pendingTrainShift=null;
 
   if(!countsAsPatternShift){
-    trackGame("lane_shift_repeat_rejected",{
-      from_lane:fromLane,
-      to_lane:laneKey,
-      shift_count_run:shiftCountRun,
-      flow_number:currentFlowIndex+1
-    });
-    return;
+    trackGame(
+      "lane_shift_repeat_rejected",
+      {
+        from_lane:fromLane,
+        to_lane:destinationLaneKey,
+        shift_count_run:shiftCountRun,
+        flow_number:
+          currentFlowIndex+1
+      }
+    );
+    return false;
   }
 
   shiftCountRun++;
 
-  trackGame("lane_shift",{
-    shift_count_run:shiftCountRun,
-    from_lane:fromLane,
-    to_lane:laneKey,
-    flow_number:currentFlowIndex+1,
-    flow_category:activeChallenge?.category||"none"
-  });
+  trackGame(
+    "lane_shift",
+    {
+      shift_count_run:
+        shiftCountRun,
+      from_lane:
+        fromLane,
+      to_lane:
+        destinationLaneKey,
+      destination_train:
+        destinationTrainId,
+      flow_number:
+        currentFlowIndex+1,
+      flow_category:
+        activeChallenge?.category||
+        "none"
+    }
+  );
 
-  if(activeChallenge?.metric==="shift"){
+  if(
+    activeChallenge?.metric===
+      "shift"
+  ){
     updateChallenge();
   }
+
+  return true;
 }
 
-function scheduleShiftArrival(){
-  if(shiftArrivalTimer){
-    clearTimeout(shiftArrivalTimer);
+function noteRegularTrainContact(beacon){
+  if(
+    !beacon?.userData ||
+    beacon.userData.isVoid ||
+    beacon.userData.isGoldRing ||
+    beacon.userData.isFlux ||
+    beacon.userData.isChrono ||
+    beacon.userData.isMidas ||
+    beacon.userData.isWarp
+  ){
+    return;
   }
 
-  // Rapid swipes may pass through intermediate lanes.
-  // Only the destination the player actually arrives/settles on counts.
-  shiftArrivalTimer=setTimeout(()=>{
-    shiftArrivalTimer=null;
+  const laneKey=currentLaneKey();
+  const now=performance.now();
+  const trainId=
+    Number(beacon.userData.train);
 
-    if(!gameStarted||gameOver||paused)return;
+  // If we departed a real train and have now connected with
+  // a real train in another lane, this is the exact moment SHIFT earns credit.
+  scoreTrainToTrainShift(
+    laneKey,
+    trainId
+  );
 
-    registerShiftArrival();
-  },95);
+  lastRegularTrainContact={
+    laneKey,
+    trainId,
+    at:now
+  };
+
+  // The first train touched establishes the initial valid route anchor.
+  if(!shiftLastArrivalLane){
+    shiftLastArrivalLane=laneKey;
+  }
 }
 
 function moveLane(dx,dy){
@@ -8878,7 +9149,22 @@ function moveLane(dx,dy){
     laneY!==oldLaneY;
 
   if(changed){
-    scheduleShiftArrival();
+    const fromLaneKey=
+      laneKeyFromIndexes(
+        oldLaneX,
+        oldLaneY
+      );
+
+    const toLaneKey=
+      laneKeyFromIndexes(
+        laneX,
+        laneY
+      );
+
+    beginTrainShiftIfConnected(
+      fromLaneKey,
+      toLaneKey
+    );
   }
 
   environmentEngine.updatePlayerTarget();
@@ -9131,57 +9417,14 @@ function animateLostLife(index){
 }    
 function updateStrikes(){for(let i=0;i<3;i++)document.getElementById("s"+i).classList.toggle("used",i<strikes);}
 function takeStrike(){
+    // SHIFTVIX 2.35:
+    // Legacy gap/connection strikes are permanently disabled.
+    // ONLY hitVoidHazard() is allowed to remove a player life.
+    breakTimer=0;
+    return;
+}
 
-    if(!runStarted || gameOver) return;
-
-    if(heroMode){
-        breakTimer=0;
-        return;
-    }
-
-    strikes++;
-    fluxCollectionStreak = 0;
-    lastStrikeDistance = distance;
-    if(environmentEngine?.current?.onStrike)environmentEngine.current.onStrike();
-
-    track("strike",{
-    strike_number: strikes,
-    level: level,
-    distance: Math.floor(distance),
-    score: score
-});
-
-    breakTimer = 0;
-    combo = 1;
-
-    playStrike();
-    pulseCenterReactorDamage();
-
-    if(navigator.vibrate){
-        navigator.vibrate([30,40,30]);
-    }
-
-    // Animate only the first two lost lives.
-    // The third strike immediately opens the results screen.
-    if(strikes < 3){
-
-        animateLostLife(strikes - 1);
-
-    }
-    else{
-
-        updateStrikes();
-
-    }
-
-    document.getElementById("signal").textContent =
-        "Signal: break " + strikes + "/3";
-
-    if(strikes >= 3){
-        endRun();
-    }
-
-}function collectBeacon(b){
+function collectBeacon(b){
  if(b.userData.state!=="active")return;
 
  if(b.userData.isVoid){
@@ -9260,6 +9503,10 @@ function takeStrike(){
    updateChallenge();
    return;
  }
+
+ // A normal coin is also proof that the player is physically
+ // connected to a real train in the current lane.
+ noteRegularTrainContact(b);
 
  const baseGained=b.userData.value;
  const chronoScoring=chronoTime>0;
@@ -9711,7 +9958,7 @@ vix.style.transform = "translateY(0)";
 
 title.style.transform = "translate(-50%,-50%)";
 
-const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;shiftCountRun=0;shiftLastArrivalLane=`${laneX}:${laneY}`;shiftPreviousArrivalLane=null;warpFlowNextWarpDistance=Infinity;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;goldRingLastLane=null;goldRingSequenceAnchor=null;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
+const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;shiftCountRun=0;shiftLastArrivalLane=null;shiftPreviousArrivalLane=null;lastRegularTrainContact=null;pendingTrainShift=null;warpFlowNextWarpDistance=Infinity;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;goldRingLastLane=null;goldRingSequenceAnchor=null;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
 
 lastLevel = 1;strikes = 0;milestonesReached = {};lastWarpBreakthrough=0;starColorUpdateFrame=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();applyFrozenGameViewport(stableViewportWidth,stableViewportHeight);resetEnvironmentForRun();beginCurrentFlow();updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
 const title = document.getElementById("gameTitle");
@@ -9884,7 +10131,14 @@ if(spawnTimer<=0){
     const fluxInterval=.22+Math.random()*.12;
     spawnTimer=THREE.MathUtils.lerp(normalInterval,fluxInterval,fluxBoostAmount);
     spawnWave();
-}if(runStarted){breakTimer+=worldDt;if(breakTimer>BREAK_GRACE)takeStrike();}playerX+=(targetX-playerX)*(1-Math.pow(.0009,dt));playerY+=(targetY-playerY)*(1-Math.pow(.0009,dt));
+}
+// SHIFTVIX 2.35:
+// Empty space between trains is safe.
+// breakTimer is retained only for legacy compatibility; it can never cause damage.
+if(runStarted){
+  breakTimer=0;
+}
+playerX+=(targetX-playerX)*(1-Math.pow(.0009,dt));playerY+=(targetY-playerY)*(1-Math.pow(.0009,dt));
 camera.position.x=playerX;
 camera.position.y=playerY;
 // Camera Z is finalized below after warp offsets.
