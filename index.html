@@ -5218,6 +5218,84 @@ function updateDriftAudio(distanceDelta,isOpenSpace){
   }
 }
 
+// SHIFTVIX V33 — Traveler rounded plasma-hum foreground mix, targeted just below coin pickup presence.
+// Smooth, physical energy displacement: no static/noise layer and no bright synth beep.
+// The sound is built from rounded sine/triangle bodies, low-pass filtering and a soft pitch bend.
+function playTravelerShiftSound(dx=0,dy=0){
+  if(!audioCtx)return;
+  if(audioCtx.state!=="running")audioCtx.resume();
+
+  const now=audioCtx.currentTime;
+  const diagonal=(dx!==0&&dy!==0);
+  const duration=diagonal?.31:.27;
+
+  // Soft master envelope: rounded attack and a longer, smooth release.
+  const master=audioCtx.createGain();
+  master.gain.setValueAtTime(.0001,now);
+  master.gain.linearRampToValueAtTime(.12,now+.035);
+  master.gain.setValueAtTime(.12,now+duration*.38);
+  master.gain.exponentialRampToValueAtTime(.0001,now+duration);
+
+  let output=master;
+  if(audioCtx.createStereoPanner){
+    const pan=audioCtx.createStereoPanner();
+    pan.pan.setValueAtTime(Math.max(-.68,Math.min(.68,dx*.55)),now);
+    master.connect(pan);
+    output=pan;
+  }
+  output.connect(audioCtx.destination);
+
+  // Shared low-pass stage removes the buzzy/radio-like edge from the plasma body.
+  const bodyFilter=audioCtx.createBiquadFilter();
+  bodyFilter.type="lowpass";
+  bodyFilter.frequency.setValueAtTime(760,now);
+  bodyFilter.frequency.exponentialRampToValueAtTime(430,now+duration);
+  bodyFilter.Q.setValueAtTime(.55,now);
+  bodyFilter.connect(master);
+
+  // Main rounded plasma body: a smooth Doppler-like bend instead of a sawtooth sweep.
+  const body=audioCtx.createOscillator();
+  const bodyGain=audioCtx.createGain();
+  body.type="triangle";
+  body.frequency.setValueAtTime(diagonal?168:154,now);
+  body.frequency.exponentialRampToValueAtTime(diagonal?112:104,now+duration*.58);
+  body.frequency.exponentialRampToValueAtTime(diagonal?126:116,now+duration);
+  bodyGain.gain.setValueAtTime(.0001,now);
+  bodyGain.gain.linearRampToValueAtTime(.78,now+.035);
+  bodyGain.gain.setValueAtTime(.68,now+duration*.48);
+  bodyGain.gain.exponentialRampToValueAtTime(.0001,now+duration);
+  body.connect(bodyGain).connect(bodyFilter);
+  body.start(now); body.stop(now+duration+.025);
+
+  // Deep sine foundation gives the shift weight without becoming a note/beep.
+  const sub=audioCtx.createOscillator();
+  const subGain=audioCtx.createGain();
+  sub.type="sine";
+  sub.frequency.setValueAtTime(diagonal?92:86,now);
+  sub.frequency.exponentialRampToValueAtTime(62,now+duration*.7);
+  sub.frequency.exponentialRampToValueAtTime(70,now+duration);
+  subGain.gain.setValueAtTime(.0001,now);
+  subGain.gain.linearRampToValueAtTime(.42,now+.045);
+  subGain.gain.exponentialRampToValueAtTime(.0001,now+duration);
+  sub.connect(subGain).connect(master);
+  sub.start(now); sub.stop(now+duration+.025);
+
+  // Very soft upper harmonic: enough energy sheen to read as plasma, never a separate beep.
+  const sheen=audioCtx.createOscillator();
+  const sheenGain=audioCtx.createGain();
+  const sheenFilter=audioCtx.createBiquadFilter();
+  sheen.type="sine";
+  sheen.frequency.setValueAtTime(diagonal?318:292,now);
+  sheen.frequency.exponentialRampToValueAtTime(diagonal?228:214,now+duration);
+  sheenGain.gain.setValueAtTime(.0001,now);
+  sheenGain.gain.linearRampToValueAtTime(.085,now+.05);
+  sheenGain.gain.exponentialRampToValueAtTime(.0001,now+duration*.9);
+  sheenFilter.type="lowpass";
+  sheenFilter.frequency.setValueAtTime(520,now);
+  sheenFilter.Q.setValueAtTime(.35,now);
+  sheen.connect(sheenGain).connect(sheenFilter).connect(master);
+  sheen.start(now+.008); sheen.stop(now+duration);
+}
 function playStrike(){if(!audioCtx)return;const now=audioCtx.currentTime,osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type="sawtooth";osc.frequency.setValueAtTime(180,now);osc.frequency.exponentialRampToValueAtTime(70,now+.22);gain.gain.setValueAtTime(.0001,now);gain.gain.linearRampToValueAtTime(.05,now+.025);gain.gain.exponentialRampToValueAtTime(.0001,now+.28);osc.connect(gain).connect(audioCtx.destination);osc.start(now);osc.stop(now+.3);}
 function playRingPass(){
   if(!audioCtx)return;
@@ -10042,6 +10120,9 @@ function moveLane(dx,dy){
       fromLaneKey,
       toLaneKey
     );
+
+    // Traveler owns the sound of movement; collections keep their existing audio language.
+    playTravelerShiftSound(laneX-oldLaneX,laneY-oldLaneY);
   }
 
   environmentEngine.updatePlayerTarget();
