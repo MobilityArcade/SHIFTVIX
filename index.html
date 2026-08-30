@@ -6967,45 +6967,8 @@ function flowCategoryForIndex(index){
 }
 
 function flowStrikeAllowance(index,category){
-  const n=index+1;
-
-
-  /*
-    SHIFTVIX 2.10 — 300 FLOW DIFFICULTY PHILOSOPHY
-
-    FLOWS   1–30   : teach success — no strike restrictions.
-    FLOWS  31–100  : light pressure — occasional 2-strike limits.
-    FLOWS 101–200  : moderate pressure — 2-strike limits plus rare 1-strike limits.
-    FLOWS 201–300  : advanced pressure — more frequent limits, but NEVER perfection.
-
-    Long-duration COLLECT and TRAVEL objectives remain more forgiving
-    because the player is exposed to more VOID attacks.
-  */
-
-  if(n<=30)return null;
-
-  const longObjective=
-    category==="COLLECT" ||
-    category==="TRAVEL" ||
-    category==="RINGS" ||
-    category==="SHIFT" ||
-    category==="WARP" ||
-    category==="BREAK" ||
-    category==="DRIFT";
-
-  if(n<=100){
-    return ((n-31)%6===0)?2:null;
-  }
-
-  if(n<=200){
-    if(!longObjective && (n-101)%10===0)return 1;
-    if((n-101)%5===0)return 2;
-    return null;
-  }
-
-  if(!longObjective && (n-201)%8===0)return 1;
-  if((n-201)%4===0)return 2;
-
+  // SHIFTVIX V39 — lives are universal protection, never an objective modifier.
+  // Every Flow is simply: complete its core challenge with the standard life pool.
   return null;
 }
 
@@ -7129,8 +7092,8 @@ function createFlow(index){
 
   if(category==="RINGS"){
     const target=Math.min(
-      80,
-      20+Math.floor(categoryStep*1.3)
+      120,
+      30+Math.floor(categoryStep*2.0)
     );
 
     flow={
@@ -7182,8 +7145,8 @@ function createFlow(index){
 
   if(category==="BREAK"){
     const target=Math.min(
-      60,
-      12+Math.floor(categoryStep*1.5)
+      75,
+      15+Math.floor(categoryStep*1.75)
     );
 
     flow={
@@ -7215,6 +7178,10 @@ function createFlow(index){
 }
 function beginCurrentFlow(){
     refreshTodayVector();
+
+    // SHIFTVIX V39 — every Flow begins fresh with all three lives available.
+    strikes=0;
+    updateStrikes();
 
     activeChallenge=createFlow(currentFlowIndex);
 
@@ -7280,21 +7247,13 @@ function flowStrikesUsed(){
 }
 
 function flowConditionMet(ch){
-  if(!Number.isFinite(ch?.maxFlowStrikes))return true;
-  return flowStrikesUsed()<=ch.maxFlowStrikes;
+  // SHIFTVIX V39 — no Flow has a life-count completion condition.
+  return true;
 }
 
 function flowConditionText(ch){
-  if(!Number.isFinite(ch?.maxFlowStrikes))return "";
-
-  // Player starts with 3 lives.
-  // maxFlowStrikes 1 = must finish with at least 2 lives.
-  // maxFlowStrikes 2 = must finish with at least 1 life.
-  const livesRequired=Math.max(1,3-ch.maxFlowStrikes);
-
-  return livesRequired===1
-    ? "FINISH WITH 1+ LIFE"
-    : `FINISH WITH ${livesRequired}+ LIVES`;
+  // SHIFTVIX V39 — keep the HUD focused on the Flow's core objective.
+  return "";
 }
 
 function challengeValue(ch){
@@ -7972,6 +7931,43 @@ function loadSelectedFlow(
     }
 
     currentFlowIndex = flowIndex;
+
+    // SHIFTVIX V40 — Every selected Flow is a true clean slate.
+    // Do not inherit distance, speed, score, progression, or active world
+    // objects from the Flow that just ended. The completion coast preserves
+    // its finishing speed; the NEXT Flow begins from launch conditions.
+    score=0;
+    foundCount=0;
+    combo=1;
+    distance=0;
+    speed=SPEED_START;
+    level=1;
+    lastLevel=1;
+    shiftCountRun=0;
+    shiftLastArrivalLane=null;
+    shiftPreviousArrivalLane=null;
+    lastRegularTrainContact=null;
+    pendingTrainShift=null;
+    warpCollectedThisRun=0;
+    breakVoidsDestroyed=0;
+    goldRingsPassed=0;
+    driftDistance=0;
+    objectiveOrbsCollected=0;
+    laneX=1; laneY=1; targetX=0; targetY=0; playerX=0; playerY=0;
+    spawnTimer=0;
+    goldRingSpawnCooldown=2.5;
+    goldRingSequenceRemaining=0;
+    goldRingSequenceDelay=0;
+    goldRingLastLane=null;
+    goldRingSequenceAnchor=null;
+    beacons.forEach(disposeBeaconObject);
+    beacons.length=0;
+    resetWarpBanking();
+    resetEnvironmentForRun();
+
+    // SHIFTVIX V39 — Flow selection always starts a clean life state.
+    strikes = 0;
+    updateStrikes();
 
     objectiveOrbsCollected = 0;
 
@@ -9056,10 +9052,16 @@ function startGoldRingSequence(){
     They remain spaced apart so the player has to steer accurately,
     but they arrive close enough together to feel like a flight path.
   */
-  goldRingSequenceRemaining=
-    Math.random()<.60 ? 3 : 4;
+  // SHIFTVIX V40 — RINGS become satisfying flight chains.
+  // Most chains stay readable at 3–6 rings, with occasional 7–10 ring
+  // victory runs. Ten is the hard cap.
+  const roll=Math.random();
+  if(roll<.28) goldRingSequenceRemaining=3+Math.floor(Math.random()*2);      // 3–4
+  else if(roll<.72) goldRingSequenceRemaining=5+Math.floor(Math.random()*2); // 5–6
+  else if(roll<.92) goldRingSequenceRemaining=7+Math.floor(Math.random()*2); // 7–8
+  else goldRingSequenceRemaining=9+Math.floor(Math.random()*2);              // 9–10
 
-  goldRingSequenceDelay=.18;
+  goldRingSequenceDelay=.14;
 }
 
 function updateGoldRingSequence(worldDt){
@@ -9076,7 +9078,7 @@ function updateGoldRingSequence(worldDt){
   if(goldRingSequenceDelay<=0){
     if(makeGoldRing("ring_sequence")){
       goldRingSequenceRemaining--;
-      goldRingSequenceDelay=.38+Math.random()*.24;
+      goldRingSequenceDelay=.28+Math.random()*.18;
     }else{
       goldRingSequenceDelay=.18;
     }
@@ -9450,12 +9452,14 @@ function spawnVoidVolley(reason="normal"){
   const breakFlow=
     activeChallenge?.metric==="break";
 
+  // SHIFTVIX V40 — BREAK gets a modest density lift without becoming RINGS.
+  // Preserve its identify/line-up/break rhythm, but occasionally present
+  // two or three hollow targets in a readable group.
   const breakTargetCount=
     breakFlow
       ? (
-          count>=4 && Math.random()<.58
-            ? 2
-            : 1
+          count>=5 && Math.random()<.24 ? 3 :
+          count>=3 && Math.random()<.68 ? 2 : 1
         )
       : 0;
 
@@ -9525,6 +9529,11 @@ function breakHollowVoid(b){
 
 function hitVoidHazard(b){
   if(!b?.userData || b.userData.state!=="active")return;
+
+  // SHIFTVIX V39 — the 8-second completion coast is a victory lap.
+  // Hazards remain visible and can pass through the Traveler, but cannot
+  // remove lives or trigger strike feedback after FLOW COMPLETE.
+  if(flowCompletionCoastActive)return;
 
   b.userData.state="collected";
   b.userData.fade=1;
@@ -11512,13 +11521,13 @@ if(silentTutorialComplete || PROTOTYPE_FORCE_GAMEPLAY_SYSTEMS){
       if(ringObjective){
         if(
           goldRingSequenceRemaining<=0 &&
-          Math.random()<.38
+          Math.random()<.62
         ){
           startGoldRingSequence();
         }
 
         goldRingSpawnCooldown=
-          .44 + Math.random()*.34;
+          .34 + Math.random()*.24;
       }else{
         goldRingSpawnCooldown=
           7.0 + Math.random()*6.0;
