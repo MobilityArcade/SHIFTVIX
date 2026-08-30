@@ -7091,9 +7091,11 @@ function createFlow(index){
   }
 
   if(category==="RINGS"){
+    // SHIFTVIX V41 — true ring corridors make each encounter substantially
+    // richer, so Ring objectives scale upward with the increased throughput.
     const target=Math.min(
-      120,
-      30+Math.floor(categoryStep*2.0)
+      240,
+      60+Math.floor(categoryStep*4.0)
     );
 
     flow={
@@ -7138,7 +7140,9 @@ function createFlow(index){
   }
 
   if(category==="WARP"){
-    const target=Math.min(24,8+Math.floor(categoryStep/3));
+    // SHIFTVIX V41 — WARP is now about triggering discrete hyperspeed bursts,
+    // not jumping the distance counter forward. Each collected orb = one Warp.
+    const target=Math.min(16,5+Math.floor(categoryStep/4));
     flow={id:`warp_${n}`,name,category,label:`HIT ${target.toLocaleString()} WARPS`,target,metric:"warp"};
     return applyFlowStrikeAllowance(flow,index);
   }
@@ -7261,7 +7265,7 @@ function challengeValue(ch){
   // Life restrictions are checked separately so the HUD never jumps back to 0.
   return challengeBaseValue(ch);
 }
-// SHIFTVIX V38 — 8-second completion coast using the existing objective HUD.
+// SHIFTVIX V41 — 6-second completion coast using the existing objective HUD.
 let flowCompletionCoastActive=false;
 let flowCompletionCoastTimeout=null;
 function setFlowCompletionCoast(show, fading=false){
@@ -7502,7 +7506,7 @@ function completeCurrentFlow(){
       if(flowCompletionCoastActive){
         setFlowCompletionCoast(true,true);
       }
-    },6800);
+    },5000);
 
     flowCompletionCoastTimeout=setTimeout(()=>{
       flowCompletionCoastActive=false;
@@ -7518,10 +7522,10 @@ function completeCurrentFlow(){
         {
           completed_category:finished.category,
           next_flow_number:currentFlowIndex+1,
-          transition:"hud_completion_coast_8s"
+          transition:"hud_completion_coast_6s"
         }
       );
-    },8000);
+    },6000);
 
     return;
 
@@ -7949,6 +7953,8 @@ function loadSelectedFlow(
     lastRegularTrainContact=null;
     pendingTrainShift=null;
     warpCollectedThisRun=0;
+    warpBoostTime=0;
+    warpBoostAmount=0;
     breakVoidsDestroyed=0;
     goldRingsPassed=0;
     driftDistance=0;
@@ -8818,7 +8824,7 @@ function makeGoldRing(reason="ambient",forcedLane=null,zOffset=0){
   const activeRings=beacons.filter(
     b=>b?.userData?.isGoldRing && b.userData.state==="active"
   ).length;
-  if(activeRings>=4)return false;
+  if(activeRings>=12)return false;
 
   trainId++;
 
@@ -9046,13 +9052,64 @@ function spawnGoldRingRouteChoice(){
   return spawned>0;
 }
 
+function spawnGoldRingCorridor(){
+  // SHIFTVIX V41 — a corridor is a real 3–10 ring journey, pre-spawned along
+  // depth so the player can SEE and fly through a continuous chain.
+  if(activeChallenge?.metric!=="rings")return false;
+
+  const roll=Math.random();
+  let count;
+  if(roll<.18) count=3+Math.floor(Math.random()*2);       // 3–4
+  else if(roll<.58) count=5+Math.floor(Math.random()*2);  // 5–6
+  else if(roll<.86) count=7+Math.floor(Math.random()*2);  // 7–8
+  else count=9+Math.floor(Math.random()*2);               // 9–10
+
+  const start=chooseReachableGoldRingLane("ring_flow");
+  if(!start)return false;
+
+  const path=[];
+  let lane={x:start.x,y:start.y};
+  const bendAt=(count>=6 && Math.random()<.46)
+    ? 3+Math.floor(Math.random()*Math.max(1,count-4))
+    : -1;
+
+  for(let i=0;i<count;i++){
+    if(i===bendAt){
+      const options=[];
+      [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{
+        const nx=lane.x+dx, ny=lane.y+dy;
+        if(nx>=0&&nx<3&&ny>=0&&ny<3)options.push({x:nx,y:ny});
+      });
+      if(options.length)lane=options[Math.floor(Math.random()*options.length)];
+    }
+    path.push({x:lane.x,y:lane.y});
+  }
+
+  let spawned=0;
+  const spacing=72; // enough separation to read each ring while still feeling continuous
+  path.forEach((p,i)=>{
+    if(makeGoldRing("ring_corridor",p,-i*spacing))spawned++;
+  });
+
+  if(spawned){
+    goldRingSequenceAnchor={...path[path.length-1]};
+    trackGame("gold_ring_corridor_spawned",{
+      rings:spawned,
+      distance:Math.floor(distance),
+      flow_number:currentFlowIndex+1,
+      bent:bendAt>=0
+    });
+  }
+  return spawned>0;
+}
+
 function startGoldRingSequence(){
   /*
     A Ring Flow can occasionally send a short run of 2–3 rings.
     They remain spaced apart so the player has to steer accurately,
     but they arrive close enough together to feel like a flight path.
   */
-  // SHIFTVIX V40 — RINGS become satisfying flight chains.
+  // SHIFTVIX V41 — legacy delayed sequence helper retained for compatibility; primary Ring Flow spawning now uses prebuilt corridors.
   // Most chains stay readable at 3–6 rings, with occasional 7–10 ring
   // victory runs. Ten is the hard cap.
   const roll=Math.random();
@@ -9598,6 +9655,18 @@ const WARP_GLOW_COLOR=0x7feaff;
 let warpOrbActive=false;
 let warpCollectedThisRun=0;
 let warpCooldownUntilDistance=0;
+// SHIFTVIX V41 — Warp is a timed hyperspeed burst rather than a distance jump.
+let warpBoostTime=0;
+let warpBoostAmount=0;
+const WARP_BURST_DURATION=3.8;
+const WARP_SPEED_BOOST=1.10; // +110% at full Warp: ~2.1x normal run speed.
+function updateWarpBoost(dt){
+  if(warpBoostTime>0)warpBoostTime=Math.max(0,warpBoostTime-dt);
+  const target=warpBoostTime>0?1:0;
+  const response=1-Math.exp(-dt*(target?8.5:3.6));
+  warpBoostAmount+=(target-warpBoostAmount)*response;
+  if(warpBoostTime<=0 && warpBoostAmount<.002)warpBoostAmount=0;
+}
 
 function playWarpOrbSound(tier=1){
   initAudio();
@@ -9653,43 +9722,35 @@ function updateWarpFlowOpportunity(){
 }
 
 function activateWarp(reason,tier=1){
-  const jump=
-    isWarpFlowActive()
-      ? warpFlowJumpDistance()
-      : warpTierDistance(tier);
-
   if(activeChallenge?.category==="WARP"){
     addPrototypeTotal("WARP",1);
   }
 
   const before=distance;
-
-  // Warp is instantaneous and never changes the current viewport/camera sizing.
-  distance+=jump;
-  level=Math.floor(distance/500)+1;
-  lastLevel=Math.max(lastLevel,level);
-
-  // The Warp orb supplies its own breakthrough so the normal 3000m boundary
-  // does not immediately fire a duplicate burst on the next frame.
-  lastWarpBreakthrough=Math.floor(distance/3000);
-
   warpCollectedThisRun++;
 
+  // V41 — no teleport and no synthetic distance credit. The player experiences
+  // the speed in real time. Higher tiers outside Warp Flow extend the burst a bit.
+  const duration=isWarpFlowActive()
+    ? WARP_BURST_DURATION
+    : WARP_BURST_DURATION + Math.max(0,tier-1)*.65;
+  warpBoostTime=Math.max(warpBoostTime,duration);
+  warpBoostAmount=Math.max(warpBoostAmount,.18);
+
   if(isWarpFlowActive()){
+    // Schedule the next collectible after enough real travel to experience this burst.
     warpCooldownUntilDistance=
       distance+
       WARP_FLOW_GAP_MIN+
       Math.random()*(WARP_FLOW_GAP_MAX-WARP_FLOW_GAP_MIN);
-
     warpFlowNextWarpDistance=warpCooldownUntilDistance;
   }else{
-    warpCooldownUntilDistance=
-      distance+700+Math.random()*250;
+    warpCooldownUntilDistance=distance+700+Math.random()*250;
   }
 
   playWarpOrbSound(tier);
   triggerWarpBreakthrough("warp");
-  launchSurge=Math.max(launchSurge,16+tier*3);
+  launchSurge=Math.max(launchSurge,18+tier*3);
   showPowerAnnouncement("WARP",tier);
   updateHUD();
   updateChallenge();
@@ -9701,16 +9762,13 @@ function activateWarp(reason,tier=1){
   trackGame("warp_collected",{
     trigger_reason:reason||"unknown",
     power_tier:tier,
-    jump_meters:jump,
+    mode:"hyperspeed_burst",
+    burst_seconds:Number(duration.toFixed(2)),
+    speed_multiplier:Number((1+WARP_SPEED_BOOST).toFixed(2)),
     distance_before:Math.floor(before),
     distance_after:Math.floor(distance),
-    level_after:level,
     flow_number:currentFlowIndex+1,
-    warp_count_run:warpCollectedThisRun,
-    warp_progress:
-      activeChallenge?.metric==="rush"
-        ? challengeBaseValue(activeChallenge)
-        : 0
+    warp_count_run:warpCollectedThisRun
   });
 }
 
@@ -9720,14 +9778,13 @@ function makeWarpOrb(reason="random"){
   /*
     SHIFTVIX 2.40 — WARP FLOW CONTROL
 
-    WARP objectives are about chaining multiple spatial jumps.
-    Tier II / III jumps accelerate progression so aggressively that
-    later required Warps become harder to physically reach/read.
+    SHIFTVIX V41 — WARP objectives are about chaining collectible
+    hyperspeed bursts. Warp no longer advances the distance counter instantly.
 
     Therefore:
-      WARP Flow active  -> Tier I visual + scaled 400/300/200/100m jump
-      Any other Flow    -> normal weighted Tier I / II / III with
-                           500/1000/1500m jumps
+      WARP Flow active  -> consistent Tier I collectible + 3.8s hyperspeed burst
+      Any other Flow    -> normal weighted Tier I / II / III, with higher tiers
+                           extending the burst slightly
   */
   const powerTier=
     isWarpFlowActive()
@@ -9775,7 +9832,7 @@ function makeWarpOrb(reason="random"){
   trackGame("warp_orb_spawned",{
     trigger_reason:reason,
     power_tier:powerTier,
-    jump_meters:warpTierDistance(powerTier),
+    burst_seconds:isWarpFlowActive()?WARP_BURST_DURATION:(WARP_BURST_DURATION+Math.max(0,powerTier-1)*.65),
     distance:Math.floor(distance),
     flow_number:currentFlowIndex+1,
     lane_x:xIndex,lane_y:yIndex
@@ -11020,7 +11077,7 @@ vix.style.transform = "translateY(0)";
 
 title.style.transform = "translate(-50%,-50%)";
 
-const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;shiftCountRun=0;shiftLastArrivalLane=null;shiftPreviousArrivalLane=null;lastRegularTrainContact=null;pendingTrainShift=null;warpFlowNextWarpDistance=Infinity;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;breakVoidsDestroyed=0;driftDistance=0;driftAudioMeterCarry=0;driftAudioLastLane=-1;driftAudioPhraseStep=0;prototypeLastScore=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;goldRingLastLane=null;goldRingSequenceAnchor=null;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
+const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;shiftCountRun=0;shiftLastArrivalLane=null;shiftPreviousArrivalLane=null;lastRegularTrainContact=null;pendingTrainShift=null;warpFlowNextWarpDistance=Infinity;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;warpBoostTime=0;warpBoostAmount=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;breakVoidsDestroyed=0;driftDistance=0;driftAudioMeterCarry=0;driftAudioLastLane=-1;driftAudioPhraseStep=0;prototypeLastScore=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;goldRingLastLane=null;goldRingSequenceAnchor=null;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
 
 lastLevel = 1;strikes = 0;milestonesReached = {};lastWarpBreakthrough=0;starColorUpdateFrame=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();applyFrozenGameViewport(stableViewportWidth,stableViewportHeight);resetEnvironmentForRun();beginCurrentFlow();updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
 const title = document.getElementById("gameTitle");
@@ -11143,7 +11200,9 @@ function updateCometTraveler(dt){
     cometTraveler.history.unshift({x:playerX,y:playerY,t:now});
     cometTraveler.lastSampleAt=now;
   }
-  cometTraveler.history=cometTraveler.history.filter(s=>(now-s.t)/1000<life*1.08).slice(0,110);
+  // V41 — retain invisible history after the ribbon itself reaches zero opacity so
+  // the Departure Spark can hold like a distant flashing star for ~1 second.
+  cometTraveler.history=cometTraveler.history.filter(s=>(now-s.t)/1000<life*1.62).slice(0,150);
   if(cometTraveler.history.length<2){
     cometTraveler.history.push({x:playerX,y:playerY,t:now-16});
   }
@@ -11216,24 +11275,25 @@ function updateCometTraveler(dt){
     const oldest=cometTraveler.history[cometTraveler.history.length-1];
     const ageSec=Math.max(0,(now-oldest.t)/1000);
     const fadeRatio=life>0 ? ageSec/life : 1;
-    if(fadeRatio>0.68 && fadeRatio<1.08){
+    if(fadeRatio>0.66 && fadeRatio<1.58){
       const bp=cometPointForSample(oldest,now,cx,cy,tailPx,life);
-      const turnOn=Math.min(1,Math.max(0,(fadeRatio-0.68)/0.10));
-      const finalFade=fadeRatio>1 ? Math.max(0,1-(fadeRatio-1)/0.08) : 1;
-      const breathe=0.90+0.10*Math.sin(now*.021);
-      const sparkFlicker=0.94+0.06*Math.sin(now*.057+1.3);
+      const turnOn=Math.min(1,Math.max(0,(fadeRatio-0.66)/0.08));
+      // Hold strongly through most of the final second, then disappear cleanly.
+      const finalFade=fadeRatio>1.42 ? Math.max(0,1-(fadeRatio-1.42)/0.16) : 1;
+      const breathe=0.93+0.07*Math.sin(now*.018);
+      const sparkFlicker=0.90+0.10*Math.sin(now*.061+1.3);
       const strength=turnOn*finalFade*breathe*sparkFlicker;
       if(strength>0.01){
         ctx.save();
         ctx.globalCompositeOperation='screen';
 
         // Compact neon-white halo: visible on phone/tablet, but never a trail of light.
-        const br=(3.0+0.45*Math.sin(now*.026))*TRAVELER_VISUAL_SCALE;
+        const br=(4.25+0.62*Math.sin(now*.026))*TRAVELER_VISUAL_SCALE;
         const halo=ctx.createRadialGradient(bp.x,bp.y,0,bp.x,bp.y,br*3.4);
-        halo.addColorStop(0,`rgba(255,255,255,${0.92*strength})`);
-        halo.addColorStop(.12,`rgba(250,255,255,${0.78*strength})`);
-        halo.addColorStop(.34,`rgba(232,250,255,${0.40*strength})`);
-        halo.addColorStop(.70,`rgba(210,244,255,${0.13*strength})`);
+        halo.addColorStop(0,`rgba(255,255,255,${1.00*strength})`);
+        halo.addColorStop(.12,`rgba(252,255,255,${0.92*strength})`);
+        halo.addColorStop(.34,`rgba(235,251,255,${0.58*strength})`);
+        halo.addColorStop(.70,`rgba(215,246,255,${0.20*strength})`);
         halo.addColorStop(1,'rgba(200,240,255,0)');
         ctx.fillStyle=halo;
         ctx.beginPath();
@@ -11243,14 +11303,14 @@ function updateCometTraveler(dt){
         // Deliberate LED core — the persistent point that says “I was here.”
         ctx.globalAlpha=Math.min(1,0.96*strength);
         ctx.fillStyle='rgba(255,255,255,.98)';
-        ctx.shadowBlur=8*TRAVELER_VISUAL_SCALE;
+        ctx.shadowBlur=13*TRAVELER_VISUAL_SCALE;
         ctx.shadowColor='rgba(235,252,255,.95)';
         ctx.beginPath();
-        ctx.arc(bp.x,bp.y,Math.max(1.35,1.55*TRAVELER_VISUAL_SCALE),0,Math.PI*2);
+        ctx.arc(bp.x,bp.y,Math.max(1.65,1.95*TRAVELER_VISUAL_SCALE),0,Math.PI*2);
         ctx.fill();
 
         // Tiny sparkler cross-glint; restrained so the departure marker stays organic.
-        ctx.globalAlpha=0.58*strength;
+        ctx.globalAlpha=0.78*strength;
         ctx.strokeStyle='rgba(255,255,255,.96)';
         ctx.lineWidth=.55*TRAVELER_VISUAL_SCALE;
         ctx.shadowBlur=4*TRAVELER_VISUAL_SCALE;
@@ -11298,7 +11358,7 @@ const coreR=(7.2+intensity*2.1)*pulse*TRAVELER_VISUAL_SCALE;
   ctx.restore();
 }
 
-function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){updateFluxBoost(dt);updateChronoState(dt);updateMidasState(dt);updateIonicThruster(dt);const worldTimeScale=THREE.MathUtils.lerp(1,CHRONO_WORLD_SCALE,chronoAmount);const worldDt=dt*worldTimeScale;const baseRunSpeed=SPEED_START+Math.min(150,distance*.018);speed=baseRunSpeed*(1+fluxBoostAmount*FLUX_SPEED_BOOST);const prototypeDistanceDelta=speed*worldDt*.08;distance+=prototypeDistanceDelta;
+function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){updateFluxBoost(dt);updateWarpBoost(dt);updateChronoState(dt);updateMidasState(dt);updateIonicThruster(dt);const worldTimeScale=THREE.MathUtils.lerp(1,CHRONO_WORLD_SCALE,chronoAmount);const worldDt=dt*worldTimeScale;const baseRunSpeed=SPEED_START+Math.min(150,distance*.018);speed=baseRunSpeed*(1+fluxBoostAmount*FLUX_SPEED_BOOST+warpBoostAmount*WARP_SPEED_BOOST);const prototypeDistanceDelta=speed*worldDt*.08;distance+=prototypeDistanceDelta;
 
 if(activeChallenge?.category==="TRAVEL"){
   addPrototypeTotal(
@@ -11504,36 +11564,23 @@ if(silentTutorialComplete || PROTOTYPE_FORCE_GAMEPLAY_SYSTEMS){
     let spawnedRing=false;
 
     if(ringObjective){
-      // Most Ring opportunities present a readable 2–3 route choice:
-      // easy / medium / hard. Singles and sequences still appear between them.
-      if(Math.random()<.62){
-        spawnedRing=spawnGoldRingRouteChoice();
-      }
-
-      if(!spawnedRing){
-        spawnedRing=makeGoldRing("ring_flow");
-      }
+      // V41 — Ring Flow opportunities are actual depth corridors. A corridor
+      // can be 3–10 rings and may bend once on longer runs.
+      spawnedRing=spawnGoldRingCorridor();
     }else{
       spawnedRing=makeGoldRing("ambient");
     }
 
     if(spawnedRing){
       if(ringObjective){
-        if(
-          goldRingSequenceRemaining<=0 &&
-          Math.random()<.62
-        ){
-          startGoldRingSequence();
-        }
-
-        goldRingSpawnCooldown=
-          .34 + Math.random()*.24;
+        // Give the current corridor time to reach the player before another
+        // one is introduced. This keeps the course readable rather than noisy.
+        goldRingSpawnCooldown=2.2 + Math.random()*1.35;
       }else{
-        goldRingSpawnCooldown=
-          7.0 + Math.random()*6.0;
+        goldRingSpawnCooldown=7.0 + Math.random()*6.0;
       }
     }else{
-      goldRingSpawnCooldown=.30;
+      goldRingSpawnCooldown=.38;
     }
   }
 
