@@ -3213,6 +3213,13 @@ body.uiModalOpen #center{pointer-events:none}
   }
 }
 
+
+/* SHIFTVIX V37 — FLOW COMPLETION COAST */
+#flowCompletionCoast{position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .42s ease,visibility .42s ease;}
+#flowCompletionCoast.show{opacity:1;visibility:visible;}
+#flowCompletionCoast .flowCoastText{font:700 clamp(22px,4.2vw,46px)/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.22em;color:rgba(255,255,255,.94);text-shadow:0 0 10px rgba(255,255,255,.28),0 0 28px rgba(170,225,255,.16);transform:scale(.96);opacity:0;transition:transform .7s cubic-bezier(.2,.8,.2,1),opacity .45s ease;}
+#flowCompletionCoast.show .flowCoastText{transform:scale(1);opacity:1;}
+#flowCompletionCoast.fade .flowCoastText{opacity:0;transform:scale(1.025);}
 </style>
 
 <style id="cometTravelerPrototypeStyle">
@@ -7270,6 +7277,17 @@ function challengeValue(ch){
   // Life restrictions are checked separately so the HUD never jumps back to 0.
   return challengeBaseValue(ch);
 }
+// SHIFTVIX V37 — let the world breathe after a Flow instead of hard-cutting to the hub.
+let flowCompletionCoastActive=false;
+let flowCompletionCoastTimeout=null;
+function setFlowCompletionCoast(show, fading=false){
+  const el=document.getElementById("flowCompletionCoast");
+  if(!el)return;
+  el.classList.toggle("show",!!show);
+  el.classList.toggle("fade",!!fading);
+  el.setAttribute("aria-hidden",show?"false":"true");
+}
+
 function completeCurrentFlow(){
 
     if(challengeAdvanceTimer){
@@ -7473,22 +7491,42 @@ function completeCurrentFlow(){
       }
     );
 
-    paused=true;
-    applyPauseVisuals(false);
+    // V37 — FLOW COMPLETION COAST
+    // Objective is finished immediately, but the universe keeps moving for a few
+    // seconds. No new train waves spawn and player steering is locked, allowing
+    // existing trains, the glass ribbon, and Departure Spark to clear naturally.
+    flowCompletionCoastActive=true;
+    setFlowCompletionCoast(true,false);
 
-    openFlowArchive(
-      "flow_complete"
-    );
+    if(flowCompletionCoastTimeout){
+      clearTimeout(flowCompletionCoastTimeout);
+    }
 
-    trackGame(
-      "flow_hub_after_completion",
-      {
-        completed_category:
-          finished.category,
-        next_flow_number:
-          currentFlowIndex+1
+    // Begin a gentle visual release before the hub arrives automatically.
+    setTimeout(()=>{
+      if(flowCompletionCoastActive){
+        setFlowCompletionCoast(true,true);
       }
-    );
+    },2800);
+
+    flowCompletionCoastTimeout=setTimeout(()=>{
+      flowCompletionCoastActive=false;
+      flowCompletionCoastTimeout=null;
+      setFlowCompletionCoast(false,false);
+
+      paused=true;
+      applyPauseVisuals(false);
+      openFlowArchive("flow_complete");
+
+      trackGame(
+        "flow_hub_after_completion",
+        {
+          completed_category:finished.category,
+          next_flow_number:currentFlowIndex+1,
+          transition:"completion_coast"
+        }
+      );
+    },3600);
 
     return;
 
@@ -7609,6 +7647,7 @@ function updateChallenge(){
   if(challengePct)challengePct.textContent=`${Math.floor(pct)}%`;
   if(
     !challengeAdvanceTimer &&
+    !flowCompletionCoastActive &&
     raw>=activeChallenge.target &&
     flowConditionMet(activeChallenge)
   ){
@@ -10096,7 +10135,7 @@ function noteRegularTrainContact(beacon){
 }
 
 function moveLane(dx,dy){
-  if(!gameStarted||gameOver||paused)return;
+  if(!gameStarted||gameOver||paused||flowCompletionCoastActive)return;
 
   const oldLaneX=laneX;
   const oldLaneY=laneY;
@@ -11454,7 +11493,7 @@ if(silentTutorialComplete || PROTOTYPE_FORCE_GAMEPLAY_SYSTEMS){
 }
 
 spawnTimer-=worldDt;
-if(spawnTimer<=0){
+if(spawnTimer<=0 && !flowCompletionCoastActive){
     // Flux increases incoming train frequency; a separate sparse capped dust layer adds the speed cue.
     const normalInterval=.54+Math.random()*.26;
     const fluxInterval=.22+Math.random()*.12;
@@ -12306,5 +12345,7 @@ window.addEventListener("pageshow",()=>{
 
 makeStarField();makeFluxDustField();makeLaneGuides();resetEnvironmentForRun();updateStrikes();updateHUD();startGame();animate();
 </script>
+
+<div id="flowCompletionCoast" aria-hidden="true"><div class="flowCoastText">FLOW COMPLETE</div></div>
 </body>
 </html>
