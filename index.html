@@ -5218,16 +5218,21 @@ function updateDriftAudio(distanceDelta,isOpenSpace){
   }
 }
 
-// SHIFTVIX V33 — Traveler rounded plasma-hum foreground mix, targeted just below coin pickup presence.
-// Smooth, physical energy displacement: no static/noise layer and no bright synth beep.
-// The sound is built from rounded sine/triangle bodies, low-pass filtering and a soft pitch bend.
+// SHIFTVIX V34 — Three-note Traveler plasma language.
+// Horizontal keeps the V33 sound; vertical is a slightly higher note; diagonals are the highest.
+// Gain/envelopes remain unchanged so the foreground volume balance from V33 is preserved.
 function playTravelerShiftSound(dx=0,dy=0){
   if(!audioCtx)return;
   if(audioCtx.state!=="running")audioCtx.resume();
 
   const now=audioCtx.currentTime;
   const diagonal=(dx!==0&&dy!==0);
+  const vertical=(dx===0&&dy!==0);
   const duration=diagonal?.31:.27;
+
+  // Three-note scale, all played by the exact same rounded plasma instrument.
+  // Horizontal = root, vertical = +~3 semitones, diagonal = +~5 semitones.
+  const pitchScale=diagonal?1.335:(vertical?1.19:1);
 
   // Soft master envelope: rounded attack and a longer, smooth release.
   const master=audioCtx.createGain();
@@ -5248,18 +5253,18 @@ function playTravelerShiftSound(dx=0,dy=0){
   // Shared low-pass stage removes the buzzy/radio-like edge from the plasma body.
   const bodyFilter=audioCtx.createBiquadFilter();
   bodyFilter.type="lowpass";
-  bodyFilter.frequency.setValueAtTime(760,now);
-  bodyFilter.frequency.exponentialRampToValueAtTime(430,now+duration);
+  bodyFilter.frequency.setValueAtTime(760*pitchScale,now);
+  bodyFilter.frequency.exponentialRampToValueAtTime(430*pitchScale,now+duration);
   bodyFilter.Q.setValueAtTime(.55,now);
   bodyFilter.connect(master);
 
-  // Main rounded plasma body: a smooth Doppler-like bend instead of a sawtooth sweep.
+  // Main rounded plasma body: same V33 contour, transposed as one coherent instrument.
   const body=audioCtx.createOscillator();
   const bodyGain=audioCtx.createGain();
   body.type="triangle";
-  body.frequency.setValueAtTime(diagonal?168:154,now);
-  body.frequency.exponentialRampToValueAtTime(diagonal?112:104,now+duration*.58);
-  body.frequency.exponentialRampToValueAtTime(diagonal?126:116,now+duration);
+  body.frequency.setValueAtTime(154*pitchScale,now);
+  body.frequency.exponentialRampToValueAtTime(104*pitchScale,now+duration*.58);
+  body.frequency.exponentialRampToValueAtTime(116*pitchScale,now+duration);
   bodyGain.gain.setValueAtTime(.0001,now);
   bodyGain.gain.linearRampToValueAtTime(.78,now+.035);
   bodyGain.gain.setValueAtTime(.68,now+duration*.48);
@@ -5267,31 +5272,31 @@ function playTravelerShiftSound(dx=0,dy=0){
   body.connect(bodyGain).connect(bodyFilter);
   body.start(now); body.stop(now+duration+.025);
 
-  // Deep sine foundation gives the shift weight without becoming a note/beep.
+  // Deep sine foundation follows the same three-note transposition.
   const sub=audioCtx.createOscillator();
   const subGain=audioCtx.createGain();
   sub.type="sine";
-  sub.frequency.setValueAtTime(diagonal?92:86,now);
-  sub.frequency.exponentialRampToValueAtTime(62,now+duration*.7);
-  sub.frequency.exponentialRampToValueAtTime(70,now+duration);
+  sub.frequency.setValueAtTime(86*pitchScale,now);
+  sub.frequency.exponentialRampToValueAtTime(62*pitchScale,now+duration*.7);
+  sub.frequency.exponentialRampToValueAtTime(70*pitchScale,now+duration);
   subGain.gain.setValueAtTime(.0001,now);
   subGain.gain.linearRampToValueAtTime(.42,now+.045);
   subGain.gain.exponentialRampToValueAtTime(.0001,now+duration);
   sub.connect(subGain).connect(master);
   sub.start(now); sub.stop(now+duration+.025);
 
-  // Very soft upper harmonic: enough energy sheen to read as plasma, never a separate beep.
+  // Soft upper harmonic stays silky while moving with the same pitch family.
   const sheen=audioCtx.createOscillator();
   const sheenGain=audioCtx.createGain();
   const sheenFilter=audioCtx.createBiquadFilter();
   sheen.type="sine";
-  sheen.frequency.setValueAtTime(diagonal?318:292,now);
-  sheen.frequency.exponentialRampToValueAtTime(diagonal?228:214,now+duration);
+  sheen.frequency.setValueAtTime(292*pitchScale,now);
+  sheen.frequency.exponentialRampToValueAtTime(214*pitchScale,now+duration);
   sheenGain.gain.setValueAtTime(.0001,now);
   sheenGain.gain.linearRampToValueAtTime(.085,now+.05);
   sheenGain.gain.exponentialRampToValueAtTime(.0001,now+duration*.9);
   sheenFilter.type="lowpass";
-  sheenFilter.frequency.setValueAtTime(520,now);
+  sheenFilter.frequency.setValueAtTime(520*pitchScale,now);
   sheenFilter.Q.setValueAtTime(.35,now);
   sheen.connect(sheenGain).connect(sheenFilter).connect(master);
   sheen.start(now+.008); sheen.stop(now+duration);
