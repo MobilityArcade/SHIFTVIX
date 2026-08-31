@@ -9229,6 +9229,11 @@ function makeVoidHazard(reason="normal",forcedLane=null,options={}){
   if(activeVoids>=6)return false;
 
   const isBreakTarget=!!options.breakTarget;
+  // SHIFTVIX V44 — Hollow escape Voids now exist outside BREAK as a
+  // universal high-value risk/reward route. They share the same readable
+  // hollow visual language, but do not advance the BREAK objective.
+  const isEscapeVoid=!!options.escapeVoid && !isBreakTarget;
+  const isHollowVoid=isBreakTarget||isEscapeVoid;
 
   trainId++;
 
@@ -9252,7 +9257,7 @@ function makeVoidHazard(reason="normal",forcedLane=null,options={}){
     SOLID BLACK CENTER = lethal Void.
     HOLLOW CYAN CENTER = BREAK target.
   */
-  const core=isBreakTarget
+  const core=isHollowVoid
     ? new THREE.Mesh(
         new THREE.TorusGeometry(
           5.05,
@@ -9385,7 +9390,7 @@ function makeVoidHazard(reason="normal",forcedLane=null,options={}){
     spikes.add(spike);
   }
 
-const breakHalo=isBreakTarget
+const breakHalo=isHollowVoid
   ? new THREE.Mesh(
       new THREE.TorusGeometry(
         5.10,
@@ -9425,6 +9430,8 @@ group.add(aura);
     breakHalo,
     isVoid:true,
     isBreakTarget,
+    isEscapeVoid,
+    isHollowVoid,
     state:"active",
     fade:1,
     train:trainId,
@@ -9562,6 +9569,13 @@ function spawnVoidVolley(reason="normal"){
         )
       : 0;
 
+  // V44 — Every normal non-BREAK Void volley contains one hollow escape
+  // route. The lane is still random because the volley lanes are shuffled.
+  // This gives every Flow a deliberate “thread the needle” option without
+  // removing the danger of the surrounding lethal Voids.
+  const escapeTargetCount=
+    !breakFlow && reason!=="tutorial" ? 1 : 0;
+
   for(let i=0;i<count;i++){
     if(
       makeVoidHazard(
@@ -9572,7 +9586,10 @@ function spawnVoidVolley(reason="normal"){
         {
           breakTarget:
             breakFlow &&
-            i<breakTargetCount
+            i<breakTargetCount,
+          escapeVoid:
+            !breakFlow &&
+            i<escapeTargetCount
         }
       )
     ){
@@ -9586,6 +9603,46 @@ function spawnVoidVolley(reason="normal"){
 
 const BREAK_VOID_PASS_RADIUS=7.1;
 const BREAK_VOID_DAMAGE_RADIUS=17.5;
+const ESCAPE_VOID_SCORE_VALUE=500; // intentionally worth more than a 250-point Ring
+
+function passEscapeVoid(b){
+  if(
+    !b?.userData ||
+    b.userData.state!=="active" ||
+    !b.userData.isEscapeVoid
+  ){
+    return false;
+  }
+
+  b.userData.state="collected";
+  b.userData.fade=1;
+
+  const points=
+    awardBonusScore(
+      ESCAPE_VOID_SCORE_VALUE,
+      "escape_void"
+    );
+
+  playRingPass();
+  pulseObjectiveHud();
+  showModeBanner(`ESCAPE +${points}`);
+
+  if(navigator.vibrate){
+    navigator.vibrate([14,18,14]);
+  }
+
+  trackGame("escape_void_passed",{
+    distance:Math.floor(distance),
+    level,
+    flow_number:currentFlowIndex+1,
+    points_awarded:points,
+    score_after:Math.floor(score)
+  });
+
+  updateHUD();
+  updateChallenge();
+  return true;
+}
 
 function breakHollowVoid(b){
   if(
@@ -10574,8 +10631,8 @@ function collectBeacon(b){
  if(b.userData.state!=="active")return;
 
  if(b.userData.isVoid){
-   // Hollow BREAK targets use center-hole crossing logic below.
-   if(!b.userData.isBreakTarget){
+   // Hollow BREAK / ESCAPE Voids use center-hole crossing logic below.
+   if(!b.userData.isHollowVoid){
      hitVoidHazard(b);
    }
    return;
@@ -11860,7 +11917,7 @@ if(b.userData.isVoid){
   if(b.userData.aura)b.userData.aura.material.opacity=.07+pulse*.09;
 
   if(b.userData.core){
-    if(b.userData.isBreakTarget){
+    if(b.userData.isHollowVoid){
       const attackPulse=
         .5+
         .5*Math.sin(t*1.45);
@@ -11953,22 +12010,26 @@ const voidInFrontHitWindow=
 
 const voidCanHit=
   b.userData.isVoid &&
-  !b.userData.isBreakTarget &&
+  !b.userData.isHollowVoid &&
   (voidInFrontHitWindow||voidCrossedPlayer);
 
 /*
-  HOLLOW BREAK VOID:
-  center hole = destroy.
-  fiery body = damage.
-  miss it = safe.
+  HOLLOW VOID LANGUAGE:
+  BREAK target: center hole destroys it and advances BREAK.
+  ESCAPE Void: center hole is a universal high-value safe passage.
+  For both, clipping the fiery body still costs a life; missing is safe.
 */
 if(
-  b.userData.isBreakTarget &&
+  b.userData.isHollowVoid &&
   b.userData.state==="active" &&
   voidCrossedPlayer
 ){
   if(dxy<=BREAK_VOID_PASS_RADIUS){
-    breakHollowVoid(b);
+    if(b.userData.isBreakTarget){
+      breakHollowVoid(b);
+    }else{
+      passEscapeVoid(b);
+    }
   }else if(dxy<=BREAK_VOID_DAMAGE_RADIUS){
     hitVoidHazard(b);
   }
