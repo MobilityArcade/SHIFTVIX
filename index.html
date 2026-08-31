@@ -900,6 +900,11 @@ canvas{
 #warpBurstFx{position:absolute;inset:0;z-index:63;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.95) 0%,rgba(165,235,255,.58) 17%,rgba(85,160,255,.16) 42%,transparent 72%);mix-blend-mode:screen;transform:scale(.72)}
 #warpBurstFx.fire{animation:warpBurstFlash .48s cubic-bezier(.12,.65,.2,1) forwards}
 #warpBurstFx.flux{background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.92) 0%,rgba(85,234,255,.48) 16%,rgba(255,102,221,.12) 42%,transparent 72%)}
+/* V50 — Personal Best gets a restrained level pulse every 250m.
+   This is intentionally smaller/softer than TRAVEL’s 500m breakthrough. */
+#warpBurstFx.personal{background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.52) 0%,rgba(150,230,255,.22) 18%,rgba(90,160,255,.07) 40%,transparent 68%)}
+#warpBurstFx.personal.fire{animation:personalBestLevelFlash .34s ease-out forwards}
+@keyframes personalBestLevelFlash{0%{opacity:0;transform:scale(.78)}18%{opacity:.48;transform:scale(.92)}100%{opacity:0;transform:scale(1.22)}}
 @keyframes warpBurstFlash{0%{opacity:0;transform:scale(.68)}12%{opacity:.92;transform:scale(.88)}38%{opacity:.34;transform:scale(1.16)}100%{opacity:0;transform:scale(1.45)}}
 /* SHIFTVIX V47 — TRAVEL MILESTONE BREAKTHROUGH.
    Every 500m in TRAVEL gets a brief distance marker using Warp's visual DNA,
@@ -3215,6 +3220,16 @@ body.uiModalOpen #center{pointer-events:none}
 
 
 
+/* SHIFTVIX V50 — PERSONAL BEST three-life challenge */
+.personalBestCard{width:100%;margin-top:18px;border:1px solid rgba(255,255,255,.22);border-radius:20px;padding:20px 22px;background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(90,210,255,.08));color:#fff;text-align:left;cursor:pointer;box-shadow:0 0 30px rgba(110,220,255,.08) inset;transition:transform .16s ease,border-color .16s ease}
+.personalBestCard:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.5)}
+.personalBestTop{display:flex;justify-content:space-between;gap:12px;align-items:center;font-weight:900;letter-spacing:1.5px;font-size:13px;opacity:.78}
+.personalBestName{font-size:clamp(27px,5vw,42px);font-weight:1000;letter-spacing:2px;margin-top:8px}
+.personalBestObjective{font-size:14px;font-weight:800;letter-spacing:1.2px;opacity:.78;margin-top:4px}
+.personalBestBottom{display:flex;justify-content:space-between;align-items:end;gap:14px;margin-top:15px}
+.personalBestBottom span{font-size:12px;font-weight:800;letter-spacing:1px;opacity:.62}
+.personalBestBottom strong{font-size:24px;letter-spacing:1px}
+
 /* SHIFTVIX V5 — visible per-Flow completion level */
 .flowChoiceIdentity{
   display:flex;
@@ -3558,6 +3573,13 @@ const PROTOTYPE_DAILY_KEY="shiftvixProtoV2DailyPick";
 let breakVoidsDestroyed=0;
 let driftDistance=0;
 let playingTodayPick=false;
+let personalBestMode=false;
+let personalBestLastContactAt=0;
+let personalBestConnected=false;
+const PERSONAL_BEST_LEVEL_METERS=250;
+const PERSONAL_BEST_DISCONNECT_GRACE_MS=2300;
+const PERSONAL_BEST_LEVEL_KEY="shiftvixPersonalBestLevelV49";
+let personalBestLevelRecord=Number(localStorage.getItem(PERSONAL_BEST_LEVEL_KEY)||0);
 let prototypeLastScore=0;
 
 let prototypeTotals=(()=>{
@@ -4133,8 +4155,9 @@ function updateFluxBoost(dt){
 function fireWarpBurst(kind="warp"){
   const fx=document.getElementById("warpBurstFx");
   if(!fx)return;
-  fx.classList.remove("fire","flux");
+  fx.classList.remove("fire","flux","personal");
   if(kind==="flux")fx.classList.add("flux");
+  if(kind==="personal")fx.classList.add("personal");
   void fx.offsetWidth;
   fx.classList.add("fire");
 }
@@ -5988,6 +6011,7 @@ function chooseFlowFamily(
   });
 
   playingTodayPick=false;
+  personalBestMode=false;
   currentFlowIndex=flowIndex;
   replayReturnFlowIndex=null;
   saveFlowProgress();
@@ -6010,6 +6034,30 @@ function chooseFlowFamily(
   );
 
   return true;
+}
+
+function personalBestCardHtml(){
+  const best=Math.max(0,Number(personalBestLevelRecord)||0);
+  return `
+    <button class="personalBestCard" id="personalBestPlay" type="button" aria-label="Personal Best challenge">
+      <div class="personalBestTop"><span>PERSONAL BEST</span><span>${best?`BEST · LEVEL ${best}`:"SET YOUR RECORD"}</span></div>
+      <div class="personalBestName">HOW FAR CAN YOU GO?</div>
+      <div class="personalBestObjective">STAY CONNECTED · 250M = 1 LEVEL</div>
+      <div class="personalBestBottom"><span>NO VOIDS · NO RINGS · PURE SHIFTVIX</span><strong>PLAY</strong></div>
+    </button>`;
+}
+
+function startPersonalBestMode(){
+  personalBestMode=true;
+  playingTodayPick=false;
+  personalBestLastContactAt=performance.now();
+  personalBestConnected=false;
+  const archive=document.getElementById("flowArchive");
+  archive?.classList.remove("show");
+  archive?.setAttribute("aria-hidden","true");
+  document.body.classList.remove("uiModalOpen");
+  resetRun();
+  showModeBanner("PERSONAL BEST");
 }
 
 let flowHubContext={
@@ -7716,6 +7764,18 @@ if(replayReturnFlowIndex !== null){
 }
 function updateChallenge(){
   updateHUD();
+  if(personalBestMode){
+    const heading=document.getElementById("challengeName");
+    const text=document.getElementById("challengeText");
+    const fill=document.getElementById("challengeFill");
+    const pct=document.getElementById("challengePct");
+    if(heading)heading.textContent=`LEVEL ${Math.max(1,level)}`;
+    if(text)text.textContent="STAY CONNECTED";
+    const intoLevel=((distance%PERSONAL_BEST_LEVEL_METERS)/PERSONAL_BEST_LEVEL_METERS)*100;
+    if(fill)fill.style.width=intoLevel+"%";
+    if(pct)pct.textContent=`BEST ${Math.max(personalBestLevelRecord,level)}`;
+    return;
+  }
   if(!activeChallenge){
     activeChallenge=createFlow(currentFlowIndex);
     challengeStart={found:foundCount,score,distance,strikes,rings:goldRingsPassed,shifts:shiftCountRun,warps:warpCollectedThisRun,breaks:breakVoidsDestroyed,drift:driftDistance,travel:travelEarnedMeters,tierCounts:{...tierCounts}};
@@ -7940,6 +8000,8 @@ function renderFlowArchive(){
     </div>
 
     ${eightIndependentFlowCardsHtml()}
+
+    ${personalBestCardHtml()}
   `;
 
   // Eight permanent Flow cards.
@@ -7962,6 +8024,13 @@ function renderFlowArchive(){
     ?.addEventListener("click",event=>{
       event.stopPropagation();
       revealAndLaunchTodayPick();
+    });
+
+  document
+    .getElementById("personalBestPlay")
+    ?.addEventListener("click",event=>{
+      event.stopPropagation();
+      startPersonalBestMode();
     });
 
   document
@@ -10380,6 +10449,10 @@ function noteRegularTrainContact(beacon){
 
   const laneKey=currentLaneKey();
   const now=performance.now();
+  if(personalBestMode){
+    personalBestLastContactAt=now;
+    personalBestConnected=true;
+  }
   const trainId=
     Number(beacon.userData.train);
 
@@ -10822,6 +10895,9 @@ tierCounts[b.userData.tier.name] =
  if(navigator.vibrate)navigator.vibrate(4);
 }
 function objectiveHudData(){
+    if(personalBestMode){
+        return {label:"PERSONAL BEST",value:`LEVEL ${Math.max(1,level).toLocaleString()}`};
+    }
     if(!activeChallenge){
         return {
             label:"DISTANCE",
@@ -11008,6 +11084,64 @@ function endRun(){
         (performance.now() - runStartTime) / 1000;
 
     lastRunDuration = Math.round(runSeconds);
+
+    if(personalBestMode){
+      // V51 — PERSONAL BEST END TRANSITION
+      // Lock the achieved record at the instant the third life is lost, but keep
+      // the universe moving at the exact finishing speed for a cinematic exit.
+      const achievedLevel=Math.max(1,Math.floor(distance/PERSONAL_BEST_LEVEL_METERS)+1);
+      const previousBest=Number(localStorage.getItem(PERSONAL_BEST_LEVEL_KEY)||0);
+      const newBest=achievedLevel>previousBest;
+      if(newBest){
+        personalBestLevelRecord=achievedLevel;
+        localStorage.setItem(PERSONAL_BEST_LEVEL_KEY,String(achievedLevel));
+      }
+      setFlowHubContext("failed",{
+        resultLabel:newBest?"NEW PERSONAL BEST":"PERSONAL BEST",
+        resultValue:`LEVEL ${achievedLevel}`,
+        message:`BEST · LEVEL ${Math.max(achievedLevel,personalBestLevelRecord)}`
+      });
+
+      // endRun() normally freezes the game immediately. Personal Best instead
+      // gets the same cinematic language as Flow completion: 4 seconds of pure
+      // finishing-speed coast, then 4 seconds fading the moving universe to black.
+      gameOver=false;
+      personalBestConnected=false;
+      flowCompletionCoastActive=true;
+
+      const completionFade=document.getElementById("flowCompletionFade");
+      if(completionFade){
+        completionFade.classList.remove("active","reveal");
+        completionFade.setAttribute("aria-hidden","false");
+      }
+      if(flowCompletionCoastTimeout)clearTimeout(flowCompletionCoastTimeout);
+      if(flowCompletionFadeTimer)clearTimeout(flowCompletionFadeTimer);
+
+      flowCompletionFadeTimer=setTimeout(()=>{
+        if(!flowCompletionCoastActive)return;
+        if(completionFade)completionFade.classList.add("active");
+      },4000);
+
+      flowCompletionCoastTimeout=setTimeout(()=>{
+        flowCompletionCoastActive=false;
+        flowCompletionCoastTimeout=null;
+        flowCompletionFadeTimer=null;
+        gameOver=true;
+        paused=true;
+        applyPauseVisuals(false);
+        openFlowArchive("run_complete");
+
+        if(completionFade){
+          completionFade.classList.remove("active");
+          completionFade.classList.add("reveal");
+          setTimeout(()=>{
+            completionFade.classList.remove("reveal");
+            completionFade.setAttribute("aria-hidden","true");
+          },620);
+        }
+      },8000);
+      return;
+    }
 
     const endedFlow=
         activeChallenge ||
@@ -11255,7 +11389,7 @@ title.style.transform = "translate(-50%,-50%)";
 
 const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;shiftCountRun=0;shiftLastArrivalLane=null;shiftPreviousArrivalLane=null;lastRegularTrainContact=null;pendingTrainShift=null;warpFlowNextWarpDistance=Infinity;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;warpBoostTime=0;warpBoostAmount=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;breakVoidsDestroyed=0;driftDistance=0;travelEarnedMeters=0;driftAudioMeterCarry=0;driftAudioLastLane=-1;driftAudioPhraseStep=0;prototypeLastScore=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;goldRingLastLane=null;goldRingSequenceAnchor=null;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
 
-lastLevel = 1;strikes = 0;milestonesReached = {};lastWarpBreakthrough=0;lastTravelMilestone=0;starColorUpdateFrame=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();applyFrozenGameViewport(stableViewportWidth,stableViewportHeight);resetEnvironmentForRun();beginCurrentFlow();updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
+lastLevel = 1;strikes = 0;milestonesReached = {};personalBestLastContactAt=performance.now();personalBestConnected=false;lastWarpBreakthrough=0;lastTravelMilestone=0;starColorUpdateFrame=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();applyFrozenGameViewport(stableViewportWidth,stableViewportHeight);resetEnvironmentForRun();if(personalBestMode){activeChallenge=null;challengeStart=null;}else{beginCurrentFlow();}updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
 const title = document.getElementById("gameTitle");
 const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
@@ -11609,7 +11743,7 @@ if(activeChallenge?.category==="SCORE"){
 
 prototypeLastScore=score;
 
-level = Math.floor(distance / 500) + 1;
+level = personalBestMode ? (Math.floor(distance / PERSONAL_BEST_LEVEL_METERS) + 1) : (Math.floor(distance / 500) + 1);
 heroMode = ((performance.now()-runStartTime)/1000) < HERO_SECONDS;
 if(!heroMode && heroBannerShown){heroBannerShown=false;}
 
@@ -11626,6 +11760,16 @@ if (level > lastLevel) {
     });
 
     animateLevelNumber();
+    if(personalBestMode){
+      if(level>personalBestLevelRecord){
+        personalBestLevelRecord=level;
+        localStorage.setItem(PERSONAL_BEST_LEVEL_KEY,String(level));
+      }
+      // V50: every 250m level earns a small visual acknowledgement.
+      // TRAVEL keeps its larger 500m milestone treatment exclusively.
+      fireWarpBurst("personal");
+      showModeBanner(`LEVEL ${level}`);
+    }
 
 }
 const milestones = [
@@ -11674,6 +11818,24 @@ if(warpBoundary>lastWarpBreakthrough){
 }
 
 updateChallenge();
+if(personalBestMode && runStarted){
+  const now=performance.now();
+  if(personalBestConnected && now-personalBestLastContactAt>PERSONAL_BEST_DISCONNECT_GRACE_MS){
+    /* V50 — Personal Best uses the existing three-life HUD as three chances.
+       Each full grace-window spent disconnected costs one life. Reconnecting
+       refreshes the timer. The third lost life ends the run. */
+    const lostIndex=strikes;
+    strikes=Math.min(3,strikes+1);
+    animateLostLife(lostIndex);
+    updateStrikes();
+    personalBestLastContactAt=now;
+    if(navigator.vibrate)navigator.vibrate([35,35,55]);
+    showModeBanner(strikes>=3?"RUN OVER":`${3-strikes} ${3-strikes===1?"LIFE":"LIVES"} LEFT`);
+    if(strikes>=3){
+      endRun();
+    }
+  }
+}
 updateSilentTutorial();
 updateEnvironment(worldDt);
 starColorUpdateFrame=(starColorUpdateFrame+1)%1200;
@@ -11683,6 +11845,7 @@ updateWarpFlowOpportunity();
 
 
 if(
+  !personalBestMode &&
   distance>=nextPowerOrbOpportunity &&
   !fluxOrbActive &&
   !chronoOrbActive &&
@@ -11700,6 +11863,7 @@ if(silentTutorialComplete || PROTOTYPE_FORCE_GAMEPLAY_SYSTEMS){
   voidSpawnCooldown-=worldDt;
 
   if(
+    !personalBestMode &&
     voidSpawnCooldown<=0 &&
     distance>=55
   ){
@@ -11763,6 +11927,7 @@ if(silentTutorialComplete || PROTOTYPE_FORCE_GAMEPLAY_SYSTEMS){
   goldRingSpawnCooldown-=worldDt;
 
   if(
+    !personalBestMode &&
     goldRingSpawnCooldown<=0 &&
     distance>=70
   ){
