@@ -901,6 +901,12 @@ canvas{
 #warpBurstFx.fire{animation:warpBurstFlash .48s cubic-bezier(.12,.65,.2,1) forwards}
 #warpBurstFx.flux{background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.92) 0%,rgba(85,234,255,.48) 16%,rgba(255,102,221,.12) 42%,transparent 72%)}
 @keyframes warpBurstFlash{0%{opacity:0;transform:scale(.68)}12%{opacity:.92;transform:scale(.88)}38%{opacity:.34;transform:scale(1.16)}100%{opacity:0;transform:scale(1.45)}}
+/* SHIFTVIX V47 — TRAVEL MILESTONE BREAKTHROUGH.
+   Every 500m in TRAVEL gets a brief distance marker using Warp's visual DNA,
+   without behaving like a Warp power-up. */
+#travelMilestone{position:absolute;left:50%;top:43%;transform:translate(-50%,-50%) scale(.9);z-index:66;pointer-events:none;opacity:0;color:rgba(245,252,255,.98);font-size:clamp(28px,6vw,64px);font-weight:1000;letter-spacing:.12em;text-shadow:0 0 8px rgba(255,255,255,.92),0 0 28px rgba(115,210,255,.72),0 0 64px rgba(80,145,255,.34);white-space:nowrap}
+#travelMilestone.show{animation:travelMilestoneFlash .78s cubic-bezier(.12,.65,.2,1) forwards}
+@keyframes travelMilestoneFlash{0%{opacity:0;transform:translate(-50%,-50%) scale(.78)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}58%{opacity:.94;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-58%) scale(1.04)}}
 /* SHIFTVIX 5.6 — Chrono Orb. Calm ice-blue time dilation. */
 /* SHIFTVIX 5.6 — Chrono Orb. No blue fog overlay. */
 #chronoFx{
@@ -3297,7 +3303,7 @@ body.uiModalOpen #center{pointer-events:none}
   </div>
 </div>
 <div id="challengeHud"><div id="challengeName">SURVIVE THE FLOW</div><div id="challengeText">LOADING…</div><div id="challengeBar"><div id="challengeFill"></div><div id="challengePct">0%</div></div></div>
-<div id="tutorialPrompt" aria-live="polite"></div><div id="powerAnnouncement" aria-live="polite"></div><div id="modeBanner"></div><div id="chronoMultiplier">×2 SCORE</div><div id="warpBurstFx"></div><div id="flowFx"></div><div id="fluxFx"></div><div id="chronoFx"></div><div id="midasFx"></div><div id="prismFx"></div><div id="pulseWaves"></div>
+<div id="tutorialPrompt" aria-live="polite"></div><div id="powerAnnouncement" aria-live="polite"></div><div id="modeBanner"></div><div id="travelMilestone" aria-live="polite"></div><div id="chronoMultiplier">×2 SCORE</div><div id="warpBurstFx"></div><div id="flowFx"></div><div id="fluxFx"></div><div id="chronoFx"></div><div id="midasFx"></div><div id="prismFx"></div><div id="pulseWaves"></div>
 <div id="flowArchive" aria-hidden="true"><div class="archiveCard" role="dialog" aria-modal="true" aria-labelledby="flowPathTitle"><div class="archiveHeader"><h2 id="flowPathTitle">SHIFTVIX</h2></div><div id="archiveList"></div></div></div>
 
 <!-- SHIFTVIX CHRONO 2.0 — SLOW TIME + PRISM VISION + 2X SCORE -->
@@ -3829,6 +3835,8 @@ const TARGET_CAMERA_Z=72;
 let warpAmount = 0;
 let launchSurge = 0;
 let lastWarpBreakthrough = 0;
+// V47: last 500m TRAVEL threshold celebrated during the current run.
+let lastTravelMilestone = 0;
 
 /* Star positions remain 60fps. Color interpolation is visually slow enough
    to update less often on mobile without changing the look. */
@@ -4158,6 +4166,31 @@ function triggerWarpBreakthrough(kind="warp"){
   warpCurveVelocityX+=(Math.random()-.5)*5;
   warpCurveVelocityY+=(Math.random()-.5)*3;
   if(navigator.vibrate)navigator.vibrate(kind==="flux"?[18,24,34]:[28,36,52]);
+}
+
+// SHIFTVIX V47 — TRAVEL turns distance into visible 500m breakthroughs.
+// This borrows Warp's flash language, but it does NOT activate Warp, change
+// speed, add distance, or count toward WARP Flow progress.
+function triggerTravelMilestone(meters){
+  fireWarpBurst("travel");
+  playWarpBoom(.72);
+  launchSurge=Math.max(launchSurge,4.5);
+
+  const el=document.getElementById("travelMilestone");
+  if(el){
+    el.textContent=Math.floor(meters).toLocaleString()+" M";
+    el.classList.remove("show");
+    void el.offsetWidth;
+    el.classList.add("show");
+  }
+
+  if(navigator.vibrate)navigator.vibrate([18,18,28]);
+
+  trackGame("travel_milestone",{
+    milestone_meters:Math.floor(meters),
+    distance:Math.floor(distance),
+    flow_number:currentFlowIndex+1
+  });
 }
 
 function playFluxSound(){
@@ -7191,6 +7224,9 @@ function beginCurrentFlow(){
     updateStrikes();
 
     activeChallenge=createFlow(currentFlowIndex);
+
+    // V47: each TRAVEL Flow begins with a fresh 500m milestone sequence.
+    lastTravelMilestone=Math.floor(distance/500);
 
     // V45: a new DRIFT starts from the Traveler's current position, so
     // no movement from the previous Flow can leak into its meter.
@@ -11183,7 +11219,7 @@ title.style.transform = "translate(-50%,-50%)";
 
 const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;shiftCountRun=0;shiftLastArrivalLane=null;shiftPreviousArrivalLane=null;lastRegularTrainContact=null;pendingTrainShift=null;warpFlowNextWarpDistance=Infinity;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;warpBoostTime=0;warpBoostAmount=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;breakVoidsDestroyed=0;driftDistance=0;driftAudioMeterCarry=0;driftAudioLastLane=-1;driftAudioPhraseStep=0;prototypeLastScore=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;goldRingLastLane=null;goldRingSequenceAnchor=null;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
 
-lastLevel = 1;strikes = 0;milestonesReached = {};lastWarpBreakthrough=0;starColorUpdateFrame=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();applyFrozenGameViewport(stableViewportWidth,stableViewportHeight);resetEnvironmentForRun();beginCurrentFlow();updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
+lastLevel = 1;strikes = 0;milestonesReached = {};lastWarpBreakthrough=0;lastTravelMilestone=0;starColorUpdateFrame=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();applyFrozenGameViewport(stableViewportWidth,stableViewportHeight);resetEnvironmentForRun();beginCurrentFlow();updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
 const title = document.getElementById("gameTitle");
 const shift = document.getElementById("shift");
 const vix = document.getElementById("vix");
@@ -11456,6 +11492,20 @@ if(activeChallenge?.category==="TRAVEL"){
     "TRAVEL",
     prototypeDistanceDelta
   );
+}
+
+// SHIFTVIX V47 — every 500m of a TRAVEL Flow becomes an event instead of
+// invisible progress. The threshold is based on Flow-relative distance so
+// every fresh TRAVEL starts at 500m, 1,000m, 1,500m, etc.
+if(activeChallenge?.category==="TRAVEL" && challengeStart){
+  const travelMeters=Math.max(0,distance-(challengeStart.distance||0));
+  const milestoneIndex=Math.floor(travelMeters/500);
+  if(milestoneIndex>lastTravelMilestone && milestoneIndex>0){
+    // If an unusually large frame crosses more than one threshold, celebrate
+    // the newest one once rather than stacking flashes/audio.
+    lastTravelMilestone=milestoneIndex;
+    triggerTravelMilestone(milestoneIndex*500);
+  }
 }
 
 // SHIFTVIX V46 — NEGATIVE SPACE DRIFT.
