@@ -6530,10 +6530,6 @@ let highestUnlockedBlock = Math.max(
 );
     
 let objectiveOrbsCollected = 0;
-// V48: objective-only distance earned through active TRAVEL play.
-let travelEarnedMeters = 0;
-const TRAVEL_ORB_METERS = 5;
-const TRAVEL_CONNECTION_METERS = 25;
 let activeChallenge = null;
 let challengeStart = null;
 let challengeAdvanceTimer = null;
@@ -7101,20 +7097,15 @@ function createFlow(index){
   }
 
   if(category==="TRAVEL"){
-    /* SHIFTVIX V48 — EARNED TRAVEL.
-       TRAVEL no longer advances just because the world moves forward.
-       The player earns journey meters by collecting normal train orbs and
-       making real train-to-train connections. Targets are intentionally
-       shorter because every meter now has to be worked for. */
-    const target=Math.min(2000,500+categoryStep*50);
+    const target=1500+categoryStep*350;
 
     flow={
       id:`travel_${n}`,
       name,
       category,
-      label:`EARN ${target.toLocaleString()}m TRAVEL`,
+      label:`TRAVEL ${target.toLocaleString()}m`,
       target,
-      metric:"travel"
+      metric:"distance"
     };
 
     return applyFlowStrikeAllowance(flow,index);
@@ -7234,8 +7225,8 @@ function beginCurrentFlow(){
 
     activeChallenge=createFlow(currentFlowIndex);
 
-    // V48: each TRAVEL Flow begins with a fresh earned-distance milestone sequence.
-    lastTravelMilestone=0;
+    // V47: each TRAVEL Flow begins with a fresh 500m milestone sequence.
+    lastTravelMilestone=Math.floor(distance/500);
 
     // V45: a new DRIFT starts from the Traveler's current position, so
     // no movement from the previous Flow can leak into its meter.
@@ -7254,16 +7245,11 @@ function beginCurrentFlow(){
         warps:warpCollectedThisRun,
         breaks:breakVoidsDestroyed,
         drift:driftDistance,
-        travel:travelEarnedMeters,
         tierCounts:{...tierCounts}
     };
 
     if(activeChallenge.metric==="rings"){
         goldRingSpawnCooldown=Math.min(goldRingSpawnCooldown,.35);
-    }
-
-    if(activeChallenge.metric==="travel"){
-        showModeBanner("TRAVEL: EARN THE JOURNEY");
     }
 
     if(activeChallenge.metric==="warp"){
@@ -7294,7 +7280,6 @@ function challengeBaseValue(ch){
   if(ch.metric==="color")return colorOrbs;
   if(ch.metric==="score")return Math.max(0,score-challengeStart.score);
   if(ch.metric==="distance")return Math.max(0,distance-challengeStart.distance);
-  if(ch.metric==="travel")return Math.max(0,travelEarnedMeters-(challengeStart.travel||0));
   if(ch.metric==="rings")return Math.max(0,goldRingsPassed-(challengeStart.rings||0));
   if(ch.metric==="shift")return Math.max(0,shiftCountRun-(challengeStart.shifts||0));
   if(ch.metric==="warp")return Math.max(0,warpCollectedThisRun-(challengeStart.warps||0));
@@ -7714,7 +7699,7 @@ function updateChallenge(){
   updateHUD();
   if(!activeChallenge){
     activeChallenge=createFlow(currentFlowIndex);
-    challengeStart={found:foundCount,score,distance,strikes,rings:goldRingsPassed,shifts:shiftCountRun,warps:warpCollectedThisRun,breaks:breakVoidsDestroyed,drift:driftDistance,travel:travelEarnedMeters,tierCounts:{...tierCounts}};
+    challengeStart={found:foundCount,score,distance,strikes,rings:goldRingsPassed,shifts:shiftCountRun,warps:warpCollectedThisRun,breaks:breakVoidsDestroyed,drift:driftDistance,tierCounts:{...tierCounts}};
     updateHUD();
   }
   const raw=challengeValue(activeChallenge);
@@ -10321,12 +10306,6 @@ function scoreTrainToTrainShift(
 
   shiftCountRun++;
 
-  // V48: a genuine train-to-train reconnection advances the active journey.
-  if(activeChallenge?.category==="TRAVEL"){
-    travelEarnedMeters+=TRAVEL_CONNECTION_METERS;
-    addPrototypeTotal("TRAVEL",TRAVEL_CONNECTION_METERS);
-  }
-
   if(activeChallenge?.category==="SHIFT"){
     addPrototypeTotal("SHIFT",1);
   }
@@ -10351,8 +10330,8 @@ function scoreTrainToTrainShift(
   );
 
   if(
-    activeChallenge?.metric==="shift" ||
-    activeChallenge?.metric==="travel"
+    activeChallenge?.metric===
+      "shift"
   ){
     updateChallenge();
   }
@@ -10796,13 +10775,6 @@ if(fluxCollectionStreak>=FLUX_COLLECTION_STREAK_TARGET){
 
 objectiveOrbsCollected++;
 
-// V48: normal train-orb collection is the second way to earn TRAVEL meters.
-// Passive forward flight earns nothing.
-if(activeChallenge?.category==="TRAVEL"){
-  travelEarnedMeters+=TRAVEL_ORB_METERS;
-  addPrototypeTotal("TRAVEL",TRAVEL_ORB_METERS);
-}
-
 if(activeChallenge?.category==="COLLECT"){
   addPrototypeTotal("COLLECT",1);
 }
@@ -10860,13 +10832,6 @@ function objectiveHudData(){
     if(activeChallenge.metric==="distance"){
         return {
             label:"DISTANCE",
-            value:`${current.toLocaleString()}m / ${target.toLocaleString()}m`
-        };
-    }
-
-    if(activeChallenge.metric==="travel"){
-        return {
-            label:"TRAVEL",
             value:`${current.toLocaleString()}m / ${target.toLocaleString()}m`
         };
     }
@@ -11252,7 +11217,7 @@ vix.style.transform = "translateY(0)";
 
 title.style.transform = "translate(-50%,-50%)";
 
-const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;shiftCountRun=0;shiftLastArrivalLane=null;shiftPreviousArrivalLane=null;lastRegularTrainContact=null;pendingTrainShift=null;warpFlowNextWarpDistance=Infinity;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;warpBoostTime=0;warpBoostAmount=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;breakVoidsDestroyed=0;driftDistance=0;travelEarnedMeters=0;driftAudioMeterCarry=0;driftAudioLastLane=-1;driftAudioPhraseStep=0;prototypeLastScore=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;goldRingLastLane=null;goldRingSequenceAnchor=null;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
+const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;shiftCountRun=0;shiftLastArrivalLane=null;shiftPreviousArrivalLane=null;lastRegularTrainContact=null;pendingTrainShift=null;warpFlowNextWarpDistance=Infinity;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;warpBoostTime=0;warpBoostAmount=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;breakVoidsDestroyed=0;driftDistance=0;driftAudioMeterCarry=0;driftAudioLastLane=-1;driftAudioPhraseStep=0;prototypeLastScore=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;goldRingLastLane=null;goldRingSequenceAnchor=null;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
 
 lastLevel = 1;strikes = 0;milestonesReached = {};lastWarpBreakthrough=0;lastTravelMilestone=0;starColorUpdateFrame=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();applyFrozenGameViewport(stableViewportWidth,stableViewportHeight);resetEnvironmentForRun();beginCurrentFlow();updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
 const title = document.getElementById("gameTitle");
@@ -11522,14 +11487,18 @@ const coreR=(7.2+intensity*2.1)*pulse*TRAVELER_VISUAL_SCALE;
 
 function animate(){requestAnimationFrame(animate);updateGamepad();const dt = Math.min(clock.getDelta(), .05);if(gameStarted&&!gameOver&&!paused){updateFluxBoost(dt);updateWarpBoost(dt);updateChronoState(dt);updateMidasState(dt);updateIonicThruster(dt);const worldTimeScale=THREE.MathUtils.lerp(1,CHRONO_WORLD_SCALE,chronoAmount);const worldDt=dt*worldTimeScale;const baseRunSpeed=SPEED_START+Math.min(150,distance*.018);speed=baseRunSpeed*(1+fluxBoostAmount*FLUX_SPEED_BOOST+warpBoostAmount*WARP_SPEED_BOOST);const prototypeDistanceDelta=speed*worldDt*.08;distance+=prototypeDistanceDelta;
 
-// SHIFTVIX V48 — physical world distance remains visual/speed progression,
-// but it does NOT advance the TRAVEL objective. Journey meters are earned
-// only by normal orb collection and genuine train-to-train reconnections.
+if(activeChallenge?.category==="TRAVEL"){
+  addPrototypeTotal(
+    "TRAVEL",
+    prototypeDistanceDelta
+  );
+}
 
-// Every 500 EARNED meters remains a breakthrough event, so the V47 marker
-// now celebrates work the player actually performed rather than passive time.
+// SHIFTVIX V47 — every 500m of a TRAVEL Flow becomes an event instead of
+// invisible progress. The threshold is based on Flow-relative distance so
+// every fresh TRAVEL starts at 500m, 1,000m, 1,500m, etc.
 if(activeChallenge?.category==="TRAVEL" && challengeStart){
-  const travelMeters=Math.max(0,travelEarnedMeters-(challengeStart.travel||0));
+  const travelMeters=Math.max(0,distance-(challengeStart.distance||0));
   const milestoneIndex=Math.floor(travelMeters/500);
   if(milestoneIndex>lastTravelMilestone && milestoneIndex>0){
     // If an unusually large frame crosses more than one threshold, celebrate
