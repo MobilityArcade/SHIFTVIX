@@ -7716,15 +7716,17 @@ function wireCycleChoiceButtons(root,source){
 function flowHubStatusHtml(){
   const context=flowHubContext||{mode:"browse"};
 
-  if(context.mode==="run_complete"){
+  if(context.mode==="run_complete" || context.mode==="failed"){
+    const failed=context.mode==="failed";
     return `
       <div class="hubStatus hubStatusRun">
-        <div class="hubStatusEyebrow">RUN COMPLETE</div>
+        <div class="hubStatusEyebrow">${failed?"FLOW FAILED":"RUN COMPLETE"}</div>
         <div class="hubStatusLabel">${context.resultLabel||""}</div>
         <div class="hubStatusValue">${context.resultValue||""}</div>
         <div class="hubStatusMessage">
-          ${context.message||"PICK ANY FLOW AND GO AGAIN"}
+          ${context.message||(failed?"TRY AGAIN OR PICK ANOTHER FLOW":"PICK ANY FLOW AND GO AGAIN")}
         </div>
+        ${failed?`<button class="hubResumeButton" id="hubRetryButton" type="button">RETRY</button>`:""}
       </div>
     `;
   }
@@ -7880,6 +7882,19 @@ function renderFlowArchive(){
     ?.addEventListener("click",event=>{
       event.stopPropagation();
       closeFlowArchive();
+    });
+
+  document
+    .getElementById("hubRetryButton")
+    ?.addEventListener("click",event=>{
+      event.stopPropagation();
+      // V42 — retry the exact failed Flow from a clean launch state.
+      const archive=document.getElementById("flowArchive");
+      archive?.classList.remove("show");
+      archive?.setAttribute("aria-hidden","true");
+      document.body.classList.remove("uiModalOpen");
+      replayReturnFlowIndex=null;
+      resetRun();
     });
 
   list.scrollTop=0;
@@ -11008,12 +11023,12 @@ function endRun(){
     }
 
     setFlowHubContext(
-      "run_complete",
+      "failed",
       {
         resultLabel:runFlowLabel,
         resultValue:runFlowProgress,
         message:
-          "PICK ANY FLOW AND GO AGAIN"
+          "RETRY THIS FLOW OR PICK ANOTHER BELOW"
       }
     );
 
@@ -11267,58 +11282,45 @@ function updateCometTraveler(dt){
   // V29 Traveler: V27 geometry/motion unchanged; responsive glass presence raised on iPhone/iPad for readability.
   // Presence comes from a faint perimeter, soft internal sheen and motion wake — not a solid neon fill.
   const pulse=1+Math.sin(now*.006)*.035;
-    // V36 — Departure Spark: a deliberate residual marker at the oldest visible point.
-  // The transparent ribbon remains unchanged. Only its departure end receives light:
-  // a tiny white-energy LED/sparkler that switches on late, stays visible through the
-  // final fade, breathes subtly, and is the last readable trace of where the Traveler was.
+    // V42 — Traveler Endpoint Light: a steady stylus-like departure marker.
+  // It does not flicker. The dot turns on at the oldest visible end of the wake,
+  // stays illuminated while that end retracts inward as history expires, then
+  // switches off only when the final trace is gone.
   if(cometTraveler.history.length>6){
     const oldest=cometTraveler.history[cometTraveler.history.length-1];
     const ageSec=Math.max(0,(now-oldest.t)/1000);
     const fadeRatio=life>0 ? ageSec/life : 1;
-    if(fadeRatio>0.66 && fadeRatio<1.58){
+    if(fadeRatio>0.58 && fadeRatio<1.62){
       const bp=cometPointForSample(oldest,now,cx,cy,tailPx,life);
-      const turnOn=Math.min(1,Math.max(0,(fadeRatio-0.66)/0.08));
-      // Hold strongly through most of the final second, then disappear cleanly.
-      const finalFade=fadeRatio>1.42 ? Math.max(0,1-(fadeRatio-1.42)/0.16) : 1;
-      const breathe=0.93+0.07*Math.sin(now*.018);
-      const sparkFlicker=0.90+0.10*Math.sin(now*.061+1.3);
-      const strength=turnOn*finalFade*breathe*sparkFlicker;
+      const turnOn=Math.min(1,Math.max(0,(fadeRatio-0.58)/0.06));
+      const finalFade=fadeRatio>1.57 ? Math.max(0,1-(fadeRatio-1.57)/0.05) : 1;
+      const strength=turnOn*finalFade;
       if(strength>0.01){
         ctx.save();
         ctx.globalCompositeOperation='screen';
 
-        // Compact neon-white halo: visible on phone/tablet, but never a trail of light.
-        const br=(4.25+0.62*Math.sin(now*.026))*TRAVELER_VISUAL_SCALE;
-        const halo=ctx.createRadialGradient(bp.x,bp.y,0,bp.x,bp.y,br*3.4);
+        // Clear, round white-light halo. Large enough to read on phone/tablet,
+        // but localized so the ribbon itself remains transparent.
+        const br=5.0*TRAVELER_VISUAL_SCALE;
+        const halo=ctx.createRadialGradient(bp.x,bp.y,0,bp.x,bp.y,br*3.15);
         halo.addColorStop(0,`rgba(255,255,255,${1.00*strength})`);
-        halo.addColorStop(.12,`rgba(252,255,255,${0.92*strength})`);
-        halo.addColorStop(.34,`rgba(235,251,255,${0.58*strength})`);
-        halo.addColorStop(.70,`rgba(215,246,255,${0.20*strength})`);
-        halo.addColorStop(1,'rgba(200,240,255,0)');
+        halo.addColorStop(.18,`rgba(255,255,255,${0.88*strength})`);
+        halo.addColorStop(.44,`rgba(238,252,255,${0.44*strength})`);
+        halo.addColorStop(.76,`rgba(220,248,255,${0.16*strength})`);
+        halo.addColorStop(1,'rgba(210,245,255,0)');
         ctx.fillStyle=halo;
         ctx.beginPath();
-        ctx.arc(bp.x,bp.y,br*3.4,0,Math.PI*2);
+        ctx.arc(bp.x,bp.y,br*3.15,0,Math.PI*2);
         ctx.fill();
 
-        // Deliberate LED core — the persistent point that says “I was here.”
-        ctx.globalAlpha=Math.min(1,0.96*strength);
-        ctx.fillStyle='rgba(255,255,255,.98)';
-        ctx.shadowBlur=13*TRAVELER_VISUAL_SCALE;
-        ctx.shadowColor='rgba(235,252,255,.95)';
+        // Solid endpoint light: the stylus mark showing exactly where the Traveler was.
+        ctx.globalAlpha=Math.min(1,0.99*strength);
+        ctx.fillStyle='rgba(255,255,255,1)';
+        ctx.shadowBlur=15*TRAVELER_VISUAL_SCALE;
+        ctx.shadowColor='rgba(238,253,255,.98)';
         ctx.beginPath();
-        ctx.arc(bp.x,bp.y,Math.max(1.65,1.95*TRAVELER_VISUAL_SCALE),0,Math.PI*2);
+        ctx.arc(bp.x,bp.y,Math.max(2.4,2.65*TRAVELER_VISUAL_SCALE),0,Math.PI*2);
         ctx.fill();
-
-        // Tiny sparkler cross-glint; restrained so the departure marker stays organic.
-        ctx.globalAlpha=0.78*strength;
-        ctx.strokeStyle='rgba(255,255,255,.96)';
-        ctx.lineWidth=.55*TRAVELER_VISUAL_SCALE;
-        ctx.shadowBlur=4*TRAVELER_VISUAL_SCALE;
-        const ray=br*(1.15+0.12*Math.sin(now*.043));
-        ctx.beginPath();
-        ctx.moveTo(bp.x-ray,bp.y); ctx.lineTo(bp.x+ray,bp.y);
-        ctx.moveTo(bp.x,bp.y-ray); ctx.lineTo(bp.x,bp.y+ray);
-        ctx.stroke();
         ctx.restore();
       }
     }
