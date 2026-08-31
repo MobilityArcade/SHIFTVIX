@@ -7164,12 +7164,12 @@ function createFlow(index){
     return applyFlowStrikeAllowance(flow,index);
   }
 
-  // SHIFTVIX V45 — DRIFT is no longer another distance Flow.
-  // It rewards the Traveler's actual lateral/vertical movement: drawing
-  // the glass ribbon through space is now the objective itself.
+  // SHIFTVIX V46 — DRIFT rewards movement through NEGATIVE SPACE only.
+  // Targets are 50% higher than V45 because purposeful open-space weaving
+  // should feel like a sustained Flow rather than a quick movement spam.
   const target=Math.min(
-    1200,
-    300 + categoryStep*30
+    1800,
+    450 + categoryStep*45
   );
 
   flow={
@@ -11458,9 +11458,9 @@ if(activeChallenge?.category==="TRAVEL"){
   );
 }
 
-// SHIFTVIX V45 — DRIFT measures the Traveler's actual screen-space
-// movement, not forward distance. A stationary lane earns nothing.
-// The existing ribbon therefore becomes the visible record of progress.
+// SHIFTVIX V46 — NEGATIVE SPACE DRIFT.
+// Movement only earns DRIFT while the Traveler is physically in open space
+// near the player plane. Moving train-to-train belongs to SHIFT, not DRIFT.
 const driftActive=activeChallenge?.category==="DRIFT";
 const driftMoveDelta=driftActive
   ? Math.hypot(playerX-(window.__shiftvixDriftPrevX ?? playerX),playerY-(window.__shiftvixDriftPrevY ?? playerY))
@@ -11468,16 +11468,36 @@ const driftMoveDelta=driftActive
 window.__shiftvixDriftPrevX=playerX;
 window.__shiftvixDriftPrevY=playerY;
 
+let driftInNegativeSpace=false;
 if(driftActive && driftMoveDelta>0){
-  // Scale world-space lane travel into readable DRIFT units.
-  const driftGain=driftMoveDelta*.35;
-  driftDistance+=driftGain;
-  addPrototypeTotal("DRIFT",driftGain);
+  // A regular train counts as occupying the Traveler's local space only when
+  // it is close in both depth and screen-space. Powerups, rings and Voids do
+  // not cancel DRIFT; this gate is specifically about train-vs-empty-space.
+  const nearRegularTrain=beacons.some(b=>{
+    if(!b?.userData || b.userData.state!=="active")return false;
+    if(
+      b.userData.isVoid || b.userData.isGoldRing || b.userData.isFlux ||
+      b.userData.isChrono || b.userData.isMidas || b.userData.isWarp
+    )return false;
+    const dz=Math.abs(b.position.z-PLAYER_Z);
+    if(dz>54)return false;
+    const dxy=Math.hypot(b.position.x-playerX,b.position.y-playerY);
+    return dxy<COLLECT_RADIUS*1.15;
+  });
+
+  driftInNegativeSpace=!nearRegularTrain;
+
+  if(driftInNegativeSpace){
+    // Preserve V45's movement-volume calculation; only eligibility changed.
+    const driftGain=driftMoveDelta*.35;
+    driftDistance+=driftGain;
+    addPrototypeTotal("DRIFT",driftGain);
+  }
 }
 
 updateDriftAudio(
-  driftMoveDelta*.35,
-  driftActive && driftMoveDelta>.01
+  driftInNegativeSpace ? driftMoveDelta*.35 : 0,
+  driftActive && driftInNegativeSpace && driftMoveDelta>.01
 );
 
 if(activeChallenge?.category==="SCORE"){
