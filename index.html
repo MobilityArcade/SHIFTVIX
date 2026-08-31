@@ -3245,6 +3245,9 @@ body.uiModalOpen #center{pointer-events:none}
 #flowCompletionCoast .flowCoastText{font:700 clamp(22px,4.2vw,46px)/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.22em;color:rgba(255,255,255,.94);text-shadow:0 0 10px rgba(255,255,255,.28),0 0 28px rgba(170,225,255,.16);transform:scale(.96);opacity:0;transition:transform .7s cubic-bezier(.2,.8,.2,1),opacity .45s ease;}
 #flowCompletionCoast.show .flowCoastText{transform:scale(1);opacity:1;}
 #flowCompletionCoast.fade .flowCoastText{opacity:0;transform:scale(1.025);}
+#flowCompletionFade{position:fixed;inset:0;z-index:10050;background:#000;pointer-events:none;opacity:0;visibility:hidden;transition:opacity 4s linear,visibility 0s linear 4s;}
+#flowCompletionFade.active{visibility:visible;opacity:1;transition:opacity 4s linear,visibility 0s linear 0s;}
+#flowCompletionFade.reveal{visibility:visible;opacity:0;transition:opacity .55s ease,visibility 0s linear .55s;}
 </style>
 
 <style id="cometTravelerPrototypeStyle">
@@ -7265,9 +7268,10 @@ function challengeValue(ch){
   // Life restrictions are checked separately so the HUD never jumps back to 0.
   return challengeBaseValue(ch);
 }
-// SHIFTVIX V41 — 6-second completion coast using the existing objective HUD.
+// SHIFTVIX V43 — 8-second completion transition: 4-second victory coast + 4-second fade to black.
 let flowCompletionCoastActive=false;
 let flowCompletionCoastTimeout=null;
+let flowCompletionFadeTimer=null;
 function setFlowCompletionCoast(show, fading=false){
   const hud=document.getElementById("objectiveHud");
   const label=document.getElementById("objectiveHudLabel");
@@ -7490,42 +7494,65 @@ function completeCurrentFlow(){
       }
     );
 
-    // V38 — HUD COMPLETION TRANSITION
-    // Objective is finished immediately, but the universe keeps moving for a few
-    // seconds. No new train waves spawn and player steering is locked, allowing
-    // existing trains, the glass ribbon, and Departure Spark to clear naturally.
+    // V43 — CINEMATIC COMPLETION TRANSITION
+    // First 4 seconds: preserve the finishing speed and let the completed run breathe.
+    // Final 4 seconds: keep the world moving underneath while the entire game fades
+    // smoothly to black. At full black the Flow hub is opened behind the veil, then
+    // the veil fades away so the menu emerges without a hard cut.
     flowCompletionCoastActive=true;
     setFlowCompletionCoast(true,false);
+
+    const completionFade=document.getElementById("flowCompletionFade");
+    if(completionFade){
+      completionFade.classList.remove("active","reveal");
+      completionFade.setAttribute("aria-hidden","false");
+    }
 
     if(flowCompletionCoastTimeout){
       clearTimeout(flowCompletionCoastTimeout);
     }
+    if(flowCompletionFadeTimer){
+      clearTimeout(flowCompletionFadeTimer);
+    }
 
-    // Let the player enjoy the completed run, then gently release the HUD near the end.
-    setTimeout(()=>{
-      if(flowCompletionCoastActive){
-        setFlowCompletionCoast(true,true);
+    flowCompletionFadeTimer=setTimeout(()=>{
+      if(!flowCompletionCoastActive)return;
+      // Fade the completion HUD with the universe rather than leaving floating text.
+      setFlowCompletionCoast(true,true);
+      if(completionFade){
+        completionFade.classList.add("active");
       }
-    },5000);
+    },4000);
 
     flowCompletionCoastTimeout=setTimeout(()=>{
       flowCompletionCoastActive=false;
       flowCompletionCoastTimeout=null;
+      flowCompletionFadeTimer=null;
       setFlowCompletionCoast(false,false);
 
       paused=true;
       applyPauseVisuals(false);
       openFlowArchive("flow_complete");
 
+      // The hub is now fully staged behind black. Reveal it softly.
+      if(completionFade){
+        completionFade.classList.remove("active");
+        completionFade.classList.add("reveal");
+        setTimeout(()=>{
+          completionFade.classList.remove("reveal");
+          completionFade.setAttribute("aria-hidden","true");
+        },620);
+      }
+
       trackGame(
         "flow_hub_after_completion",
         {
           completed_category:finished.category,
           next_flow_number:currentFlowIndex+1,
-          transition:"hud_completion_coast_6s"
+          transition:"completion_coast_4s_fade_4s"
         }
       );
-    },6000);
+    },8000);
 
     return;
 
@@ -12444,5 +12471,6 @@ makeStarField();makeFluxDustField();makeLaneGuides();resetEnvironmentForRun();up
 </script>
 
 <div id="flowCompletionCoast" aria-hidden="true"><div class="flowCoastText">FLOW COMPLETE</div></div>
+<div id="flowCompletionFade" aria-hidden="true"></div>
 </body>
 </html>
