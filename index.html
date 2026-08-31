@@ -7115,19 +7115,15 @@ function createFlow(index){
 
   if(category==="SHIFT"){
     /*
-      SHIFTVIX 2.41 — SHIFT REBALANCE
-
-      Empty space is now safe, so SHIFT needs more endurance to retain
-      its identity as the agility / train-connection Flow.
-
-      2.40: 50 + categoryStep*5, capped at 200.
-      2.41: 100 + categoryStep*10, capped at 400.
-
-      A SHIFT still counts ONLY after a real train-to-train reconnection.
+      SHIFTVIX V45 — SHIFT GENTLE PROGRESSION
+      Level 0 begins at 50 real train-to-train connections and the
+      objective rises gradually to 150 around Level 30, where it caps.
+      Difficulty beyond that comes from world speed and patterns rather
+      than ever-growing swipe counts.
     */
     const target=Math.min(
-      400,
-      100 + categoryStep*10
+      150,
+      50 + Math.floor(categoryStep*(100/30))
     );
 
     flow={
@@ -7168,15 +7164,19 @@ function createFlow(index){
     return applyFlowStrikeAllowance(flow,index);
   }
 
-  const target=
-    750+
-    categoryStep*175;
+  // SHIFTVIX V45 — DRIFT is no longer another distance Flow.
+  // It rewards the Traveler's actual lateral/vertical movement: drawing
+  // the glass ribbon through space is now the objective itself.
+  const target=Math.min(
+    1200,
+    300 + categoryStep*30
+  );
 
   flow={
     id:`drift_${n}`,
     name,
     category:"DRIFT",
-    label:`DRIFT ${target.toLocaleString()}m IN OPEN SPACE`,
+    label:`GENERATE ${target.toLocaleString()} DRIFT`,
     target,
     metric:"drift"
   };
@@ -7191,6 +7191,11 @@ function beginCurrentFlow(){
     updateStrikes();
 
     activeChallenge=createFlow(currentFlowIndex);
+
+    // V45: a new DRIFT starts from the Traveler's current position, so
+    // no movement from the previous Flow can leak into its meter.
+    window.__shiftvixDriftPrevX=playerX;
+    window.__shiftvixDriftPrevY=playerY;
 
     objectiveOrbsCollected=0;
 
@@ -7219,7 +7224,7 @@ function beginCurrentFlow(){
     }    if(activeChallenge.metric==="break"){
         showModeBanner("BREAK: FLY THROUGH THE HOLLOW VOIDS");
     }else if(activeChallenge.metric==="drift"){
-        showModeBanner("DRIFT: FIND OPEN SPACE");
+        showModeBanner("DRIFT: KEEP MOVING");
     }
 
     updateChallenge();
@@ -11453,21 +11458,26 @@ if(activeChallenge?.category==="TRAVEL"){
   );
 }
 
-const driftOpenSpace=
-  activeChallenge?.category==="DRIFT" &&
-  playerIsInOpenSpace();
+// SHIFTVIX V45 — DRIFT measures the Traveler's actual screen-space
+// movement, not forward distance. A stationary lane earns nothing.
+// The existing ribbon therefore becomes the visible record of progress.
+const driftActive=activeChallenge?.category==="DRIFT";
+const driftMoveDelta=driftActive
+  ? Math.hypot(playerX-(window.__shiftvixDriftPrevX ?? playerX),playerY-(window.__shiftvixDriftPrevY ?? playerY))
+  : 0;
+window.__shiftvixDriftPrevX=playerX;
+window.__shiftvixDriftPrevY=playerY;
 
-if(driftOpenSpace){
-  driftDistance+=prototypeDistanceDelta;
-  addPrototypeTotal(
-    "DRIFT",
-    prototypeDistanceDelta
-  );
+if(driftActive && driftMoveDelta>0){
+  // Scale world-space lane travel into readable DRIFT units.
+  const driftGain=driftMoveDelta*.35;
+  driftDistance+=driftGain;
+  addPrototypeTotal("DRIFT",driftGain);
 }
 
 updateDriftAudio(
-  prototypeDistanceDelta,
-  driftOpenSpace
+  driftMoveDelta*.35,
+  driftActive && driftMoveDelta>.01
 );
 
 if(activeChallenge?.category==="SCORE"){
