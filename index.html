@@ -58,19 +58,45 @@ const ANALYTICS_EVENT_ALIASES={
 };
 
 const ANALYTICS_ALLOWED_EVENTS=new Set([
+  // Retention / session health
   "first_run",
   "game_started",
   "player_returned",
+  "run_ended",
+  "game_paused",
+  "game_resumed",
+  "flow_hub_opened",
+
+  // Flow funnel
   "flow_selected",
   "flow_completed",
   "flow_attempt_ended",
-  "run_ended",
   "today_pick_started",
   "today_pick_completed",
+
+  // Personal Best / arcade funnel
   "personal_best",
+  "personal_best_started",
+  "personal_best_level_reached",
+  "personal_best_life_lost",
+  "personal_best_run_ended",
+
+  // Progress / meaningful mechanics
+  "level_reached",
+  "distance_milestone",
+  "travel_milestone",
   "void_hit",
+  "escape_void_passed",
   "ring_passed",
-  "warp_collected"
+  "warp_collected",
+  "flux_orb_collected",
+  "chrono_orb_collected",
+  "midas_orb_collected",
+  "midas_state_completed",
+  "bonus_score_awarded",
+  "flow_block_unlocked",
+  "vector_stage_unlocked",
+  "silent_tutorial_completed"
 ]);
 
 gtag("config","G-M88902RHLE",{
@@ -3698,7 +3724,7 @@ let lastRunDuration = 0;
 // =========================
 // SHIFTVIX 2.32 — RETENTION ANALYTICS
 // =========================
-const ANALYTICS_VERSION="3.0-retention";
+const ANALYTICS_VERSION="4.0-v52-complete";
 const analyticsSessionId=
   `${Date.now()}-${Math.random().toString(36).slice(2,10)}`;
 
@@ -3724,6 +3750,46 @@ function trackGame(eventName,data={}){
       ...data
     }
   );
+
+  // Recommended GA4 game vocabulary for the core Flow funnel.
+  if(eventName==="flow_selected"){
+    trackGA4Game("level_start",{
+      level_name:String(data.category||"FLOW"),
+      level:Number(data.flow_number||0),
+      source:String(data.source||"flow_hub")
+    });
+  }else if(eventName==="flow_completed"){
+    trackGA4Game("level_end",{
+      level_name:String(data.category||"FLOW"),
+      level:Number(data.flow_number||0),
+      success:1,
+      score:Number(data.score||0),
+      distance:Number(data.distance||0)
+    });
+  }else if(eventName==="flow_attempt_ended" && data.result==="failed"){
+    trackGA4Game("level_end",{
+      level_name:String(data.category||"FLOW"),
+      level:Number(data.flow_number||0),
+      success:0,
+      score:Number(data.score||0),
+      distance:Number(data.distance||0)
+    });
+  }
+}
+
+// V52 — GA4 recommended game events. These use Google's prescribed game
+// event names in parallel with SHIFTVIX's custom diagnostic events.
+function trackGA4Game(eventName,data={}){
+  if(isDeveloper){
+    console.log("[Developer GA4 game event blocked]",eventName,data);
+    return;
+  }
+  if(typeof gtag==="function"){
+    gtag("event",eventName,{
+      ...analyticsBaseData(),
+      ...data
+    });
+  }
 }
 
 function analyticsLocalDateKey(date=new Date()){
@@ -6050,6 +6116,16 @@ function personalBestCardHtml(){
 function startPersonalBestMode(){
   personalBestMode=true;
   playingTodayPick=false;
+  trackGame("personal_best_started",{
+    previous_best_level:Math.max(0,Number(personalBestLevelRecord)||0),
+    level_meter_size:PERSONAL_BEST_LEVEL_METERS,
+    lives:3
+  });
+  trackGA4Game("level_start",{
+    level_name:"PERSONAL_BEST",
+    level:1,
+    previous_best_level:Math.max(0,Number(personalBestLevelRecord)||0)
+  });
   personalBestLastContactAt=performance.now();
   personalBestConnected=false;
   const archive=document.getElementById("flowArchive");
@@ -11092,7 +11168,32 @@ function endRun(){
       const achievedLevel=Math.max(1,Math.floor(distance/PERSONAL_BEST_LEVEL_METERS)+1);
       const previousBest=Number(localStorage.getItem(PERSONAL_BEST_LEVEL_KEY)||0);
       const newBest=achievedLevel>previousBest;
+      trackGame("personal_best_run_ended",{
+        achieved_level:achievedLevel,
+        previous_best_level:previousBest,
+        new_personal_best:newBest?1:0,
+        distance:Math.floor(distance),
+        duration_seconds:lastRunDuration,
+        score,
+        lives_remaining:0
+      });
+      trackGA4Game("level_end",{
+        level_name:"PERSONAL_BEST",
+        level:achievedLevel,
+        success:0,
+        score,
+        distance:Math.floor(distance),
+        duration_seconds:lastRunDuration
+      });
+      trackGA4Game("post_score",{
+        score,
+        level:achievedLevel,
+        character:"TRAVELER"
+      });
       if(newBest){
+        trackGA4Game("unlock_achievement",{
+          achievement_id:`personal_best_level_${achievedLevel}`
+        });
         personalBestLevelRecord=achievedLevel;
         localStorage.setItem(PERSONAL_BEST_LEVEL_KEY,String(achievedLevel));
       }
@@ -11761,6 +11862,18 @@ if (level > lastLevel) {
 
     animateLevelNumber();
     if(personalBestMode){
+      trackGame("personal_best_level_reached",{
+        level,
+        distance:Math.floor(distance),
+        score,
+        lives_remaining:Math.max(0,3-strikes)
+      });
+      trackGA4Game("level_up",{
+        level,
+        level_name:"PERSONAL_BEST",
+        score,
+        distance:Math.floor(distance)
+      });
       if(level>personalBestLevelRecord){
         personalBestLevelRecord=level;
         localStorage.setItem(PERSONAL_BEST_LEVEL_KEY,String(level));
@@ -11826,6 +11939,13 @@ if(personalBestMode && runStarted){
        refreshes the timer. The third lost life ends the run. */
     const lostIndex=strikes;
     strikes=Math.min(3,strikes+1);
+    trackGame("personal_best_life_lost",{
+      life_number:strikes,
+      lives_remaining:Math.max(0,3-strikes),
+      level,
+      distance:Math.floor(distance),
+      score
+    });
     animateLostLife(lostIndex);
     updateStrikes();
     personalBestLastContactAt=now;
