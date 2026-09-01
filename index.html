@@ -3246,12 +3246,16 @@ body.uiModalOpen #center{pointer-events:none}
 
 
 
+/* SHIFTVIX V54 — BEST card visual hierarchy matched to the eight Flow cards; gameplay unchanged. */
 /* SHIFTVIX V50 — PERSONAL BEST three-life challenge */
 .personalBestCard{width:100%;margin-top:18px;border:1px solid rgba(255,255,255,.22);border-radius:20px;padding:20px 22px;background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(90,210,255,.08));color:#fff;text-align:left;cursor:pointer;box-shadow:0 0 30px rgba(110,220,255,.08) inset;transition:transform .16s ease,border-color .16s ease}
 .personalBestCard:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.5)}
-.personalBestTop{display:flex;justify-content:space-between;gap:12px;align-items:center;font-weight:900;letter-spacing:1.5px;font-size:13px;opacity:.78}
-.personalBestName{font-size:clamp(27px,5vw,42px);font-weight:1000;letter-spacing:2px;margin-top:8px}
-.personalBestObjective{font-size:14px;font-weight:800;letter-spacing:1.2px;opacity:.78;margin-top:4px}
+.personalBestTop{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.personalBestName{font-size:clamp(15px,1.5vw,21px);font-weight:950;letter-spacing:1.6px;color:#fff;text-shadow:0 0 14px rgba(255,255,255,.22)}
+.personalBestRecord{font-size:13px;font-weight:900;letter-spacing:1.5px;opacity:.78}
+.personalBestObjective{margin-top:10px;font-size:clamp(11px,1vw,14px);font-weight:850;line-height:1.35;letter-spacing:.45px;color:rgba(255,255,255,.70)}
+.personalBestRule{font-size:14px;font-weight:800;letter-spacing:1.2px;opacity:.78;margin-top:4px}
+@media(max-width:699px){.personalBestName{font-size:27px !important}.personalBestObjective{font-size:14px !important}}
 .personalBestBottom{display:flex;justify-content:space-between;align-items:end;gap:14px;margin-top:15px}
 .personalBestBottom span{font-size:12px;font-weight:800;letter-spacing:1px;opacity:.62}
 .personalBestBottom strong{font-size:24px;letter-spacing:1px}
@@ -3309,6 +3313,26 @@ body.uiModalOpen #center{pointer-events:none}
 #cometTravelerCanvas{
   position:fixed!important;inset:0!important;width:100%!important;height:100%!important;
   pointer-events:none!important;z-index:12!important;
+}
+
+
+/* SHIFTVIX V55 — BEST card uses the exact same title/objective scale as the Flow cards. */
+.personalBestName{
+  font-size:clamp(25px,3vw,38px) !important;
+  font-weight:950 !important;
+  letter-spacing:1.6px !important;
+  line-height:1.05 !important;
+}
+.personalBestObjective{
+  margin-top:10px !important;
+  font-size:clamp(15px,1.6vw,21px) !important;
+  font-weight:850 !important;
+  line-height:1.3 !important;
+  letter-spacing:.45px !important;
+}
+@media(max-width:699px){
+  .personalBestName{font-size:27px !important;}
+  .personalBestObjective{font-size:14px !important;}
 }
 </style>
 </head>
@@ -6106,9 +6130,9 @@ function personalBestCardHtml(){
   const best=Math.max(0,Number(personalBestLevelRecord)||0);
   return `
     <button class="personalBestCard" id="personalBestPlay" type="button" aria-label="Personal Best challenge">
-      <div class="personalBestTop"><span>PERSONAL BEST</span><span>${best?`BEST · LEVEL ${best}`:"SET YOUR RECORD"}</span></div>
-      <div class="personalBestName">HOW FAR CAN YOU GO?</div>
-      <div class="personalBestObjective">STAY CONNECTED · 250M = 1 LEVEL</div>
+      <div class="personalBestTop"><span class="personalBestName">BEST</span><span class="personalBestRecord">${best?`BEST · LEVEL ${best}`:"SET YOUR RECORD"}</span></div>
+      <div class="personalBestObjective">HOW FAR CAN YOU GO?</div>
+      <div class="personalBestRule">STAY CONNECTED · 250M = 1 LEVEL</div>
       <div class="personalBestBottom"><span>NO VOIDS · NO RINGS · PURE SHIFTVIX</span><strong>PLAY</strong></div>
     </button>`;
 }
@@ -6133,7 +6157,7 @@ function startPersonalBestMode(){
   archive?.setAttribute("aria-hidden","true");
   document.body.classList.remove("uiModalOpen");
   resetRun();
-  showModeBanner("PERSONAL BEST");
+  showModeBanner("BEST");
 }
 
 let flowHubContext={
@@ -7845,7 +7869,7 @@ function updateChallenge(){
     const text=document.getElementById("challengeText");
     const fill=document.getElementById("challengeFill");
     const pct=document.getElementById("challengePct");
-    if(heading)heading.textContent=`LEVEL ${Math.max(1,level)}`;
+    if(heading)heading.textContent="BEST";
     if(text)text.textContent="STAY CONNECTED";
     const intoLevel=((distance%PERSONAL_BEST_LEVEL_METERS)/PERSONAL_BEST_LEVEL_METERS)*100;
     if(fill)fill.style.width=intoLevel+"%";
@@ -8002,7 +8026,7 @@ function todayPickHtml(){
       class="todayPickCard todayPickMystery"
       id="todayVectorPlay"
       type="button"
-      aria-label="Today's Pick: Random Challenge"
+      aria-label="Today's Pick: Random"
       style="
         --flow-color:#ffd36a;
         --flow-glow:rgba(255,211,106,.24);
@@ -8014,13 +8038,13 @@ function todayPickHtml(){
           ${
             cleared
               ?`${cleared} CLEARED TODAY`
-              :"RANDOM CHALLENGE"
+              :"RANDOM"
           }
         </span>
       </div>
 
       <div class="todayPickName">
-        RANDOM CHALLENGE
+        RANDOM
       </div>
 
       <div class="todayPickObjective">
@@ -10971,8 +10995,9 @@ tierCounts[b.userData.tier.name] =
  if(navigator.vibrate)navigator.vibrate(4);
 }
 function objectiveHudData(){
+    // SHIFTVIX V53 — one mode = one word = one HUD identity.
     if(personalBestMode){
-        return {label:"PERSONAL BEST",value:`LEVEL ${Math.max(1,level).toLocaleString()}`};
+        return {label:"BEST",value:`LEVEL ${Math.max(1,level).toLocaleString()}`};
     }
     if(!activeChallenge){
         return {
@@ -10981,86 +11006,17 @@ function objectiveHudData(){
         };
     }
 
-    const target=Math.max(
-        1,
-        Math.floor(Number(activeChallenge.target)||1)
-    );
+    const target=Math.max(1,Math.floor(Number(activeChallenge.target)||1));
+    const raw=Math.max(0,challengeValue(activeChallenge));
+    const current=Math.min(target,Math.floor(raw));
+    const label=String(activeChallenge.category||flowDisplayLabel(activeChallenge)||"FLOW").toUpperCase();
 
-    const raw=Math.max(
-        0,
-        challengeValue(activeChallenge)
-    );
-
-    const current=Math.min(
-        target,
-        Math.floor(raw)
-    );
-
-    if(activeChallenge.metric==="level"){
-        return {
-            label:"LEVEL",
-            value:`${Math.min(level,target).toLocaleString()} / ${target.toLocaleString()}`
-        };
-    }
-
-    if(activeChallenge.metric==="score"){
-        return {
-            label:"SCORE",
-            value:`${current.toLocaleString()} / ${target.toLocaleString()}`
-        };
-    }
-
-    if(activeChallenge.metric==="distance"){
-        return {
-            label:"DISTANCE",
-            value:`${current.toLocaleString()}m / ${target.toLocaleString()}m`
-        };
-    }
-
-    if(activeChallenge.metric==="travel"){
-        return {
-            label:"TRAVEL",
-            value:`${current.toLocaleString()}m / ${target.toLocaleString()}m`
-        };
-    }
-
-    if(activeChallenge.metric==="rings"){
-        return {
-            label:"RINGS",
-            value:`${current.toLocaleString()} / ${target.toLocaleString()}`
-        };
-    }
-
-    if(activeChallenge.metric==="shift"){
-        return {
-            label:"SHIFT",
-            value:`${current.toLocaleString()} / ${target.toLocaleString()}`
-        };
-    }
-
-    if(activeChallenge.metric==="warp"){
-        return {
-            label:"WARP",
-            value:`${current.toLocaleString()} / ${target.toLocaleString()}`
-        };
-    }
-
-    if(activeChallenge.metric==="color"){
-        return {
-            label:`${activeChallenge.color} ORBS`,
-            value:`${current.toLocaleString()} / ${target.toLocaleString()}`
-        };
-    }
-
-    if(activeChallenge.metric==="orbs"){
-        return {
-            label:"ORBS",
-            value:`${current.toLocaleString()} / ${target.toLocaleString()}`
-        };
+    if(activeChallenge.metric==="distance" || activeChallenge.metric==="travel" || activeChallenge.metric==="drift"){
+        return {label,value:`${current.toLocaleString()}m / ${target.toLocaleString()}m`};
     }
 
     return {
-        label:"PROGRESS",
+        label,
         value:`${current.toLocaleString()} / ${target.toLocaleString()}`
     };
 }
@@ -11881,7 +11837,7 @@ if (level > lastLevel) {
       // V50: every 250m level earns a small visual acknowledgement.
       // TRAVEL keeps its larger 500m milestone treatment exclusively.
       fireWarpBurst("personal");
-      showModeBanner(`LEVEL ${level}`);
+      showModeBanner(`BEST · LEVEL ${level}`);
     }
 
 }
