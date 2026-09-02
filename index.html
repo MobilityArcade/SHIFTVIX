@@ -71,6 +71,9 @@ const ANALYTICS_ALLOWED_EVENTS=new Set([
   "flow_selected",
   "flow_completed",
   "flow_attempt_ended",
+  "skill_run_started",
+  "skill_run_ended",
+  "skill_best_beaten",
   "today_pick_started",
   "today_pick_completed",
 
@@ -149,6 +152,7 @@ function track(eventName,data={}){
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <!-- SHIFTVIX 2.11 — GOLD RINGS + FIVE EVEN OBJECTIVE TYPES -->
+<!-- SHIFTVIX V56 — ALL FLOWS PERSONAL BEST / ARCADE RETENTION SYSTEM -->
 <title>SHIFTVIX</title>
 <style>
 html,body{
@@ -6011,62 +6015,51 @@ function prototypeTotalLabel(
   ).toLocaleString();
 }
 
+// SHIFTVIX V56 — every core Flow is now an endless three-life Personal Best challenge.
+// The record itself is the progression system; there are no authored completion targets.
+const FLOW_BEST_OBJECTIVE={
+  COLLECT:"HOW MANY ORBS CAN YOU COLLECT?",
+  TRAVEL:"HOW FAR CAN YOU EARN?",
+  SCORE:"HOW HIGH CAN YOU SCORE?",
+  RINGS:"HOW MANY RINGS CAN YOU FLY THROUGH?",
+  SHIFT:"HOW MANY SHIFTS CAN YOU MAKE?",
+  WARP:"HOW MANY WARPS CAN YOU HIT?",
+  BREAK:"HOW MANY VOIDS CAN YOU BREAK?",
+  DRIFT:"HOW MUCH DRIFT CAN YOU GENERATE?"
+};
+function flowBestValue(category){
+  return Math.max(0,Math.floor(Number(vectorRecords?.[category])||0));
+}
+function formatFlowBest(category,value=flowBestValue(category)){
+  const v=Math.max(0,Math.floor(Number(value)||0));
+  if(category==="TRAVEL" || category==="DRIFT")return `${v.toLocaleString()}m`;
+  if(category==="SCORE")return `${v.toLocaleString()} PTS`;
+  return v.toLocaleString();
+}
+function flowRunMetricValue(flow){
+  if(!flow)return 0;
+  return Math.max(0,Math.floor(challengeBaseValue(flow)||0));
+}
 function flowCardHtml(category){
-  const flowIndex=
-    currentFamilyFlowIndex(
-      category
-    );
-
-  const flow=
-    createFlow(
-      flowIndex
-    );
-
+  const flowIndex=currentFamilyFlowIndex(category);
+  const best=flowBestValue(category);
   return `
     <button
       class="flowChoiceCard flow-${category.toLowerCase()}"
       type="button"
       data-family-flow="${category}"
       data-flow-index="${flowIndex}"
-      style="
-        --flow-color:${FLOW_COLOR_MAP[category]};
-        --flow-glow:${FLOW_GLOW_MAP[category]};
-      "
+      style="--flow-color:${FLOW_COLOR_MAP[category]};--flow-glow:${FLOW_GLOW_MAP[category]};"
     >
       <div class="flowChoiceTop">
-        <div class="flowChoiceIdentity">
-          <span class="flowChoiceName">
-            ${category}
-          </span>
-
-          <span
-            class="flowChoiceCompleted"
-            aria-label="${familyCompletedCount(category)} completed"
-          >
-            ${familyCompletedCount(category)}
-          </span>
-        </div>
-
-        <span class="flowChoiceStep">
-          PLAY
-        </span>
+        <div class="flowChoiceIdentity"><span class="flowChoiceName">${category}</span></div>
+        <span class="flowChoiceStep">PLAY</span>
       </div>
-
-      <div class="flowChoiceObjective">
-        ${flow.label}
-      </div>
-
-      <div class="flowChoiceTotal">
-        <span>TOTAL</span>
-
-        <strong>
-          ${prototypeTotalLabel(category)}
-        </strong>
-      </div>
+      <div class="flowChoiceObjective">${FLOW_BEST_OBJECTIVE[category]}</div>
+      <div class="flowChoiceTotal"><span>BEST</span><strong>${best?formatFlowBest(category,best):"—"}</strong></div>
     </button>
   `;
 }
-
 function eightIndependentFlowCardsHtml(){
   return `
     <div class="hubFlowGrid">
@@ -6129,11 +6122,11 @@ function chooseFlowFamily(
 function personalBestCardHtml(){
   const best=Math.max(0,Number(personalBestLevelRecord)||0);
   return `
-    <button class="personalBestCard" id="personalBestPlay" type="button" aria-label="Personal Best challenge">
-      <div class="personalBestTop"><span class="personalBestName">BEST</span><span class="personalBestRecord">${best?`BEST · LEVEL ${best}`:"SET YOUR RECORD"}</span></div>
+    <button class="personalBestCard" id="personalBestPlay" type="button" aria-label="Endurance personal best challenge">
+      <div class="personalBestTop"><span class="personalBestName">ENDURANCE</span><span class="personalBestRecord">${best?`BEST · LEVEL ${best}`:"SET YOUR RECORD"}</span></div>
       <div class="personalBestObjective">HOW FAR CAN YOU GO?</div>
       <div class="personalBestRule">STAY CONNECTED · 250M = 1 LEVEL</div>
-      <div class="personalBestBottom"><span>NO VOIDS · NO RINGS · PURE SHIFTVIX</span><strong>PLAY</strong></div>
+      <div class="personalBestBottom"><span>3 LIVES · NO VOIDS · NO RINGS</span><strong>PLAY</strong></div>
     </button>`;
 }
 
@@ -6146,7 +6139,7 @@ function startPersonalBestMode(){
     lives:3
   });
   trackGA4Game("level_start",{
-    level_name:"PERSONAL_BEST",
+    level_name:"ENDURANCE",
     level:1,
     previous_best_level:Math.max(0,Number(personalBestLevelRecord)||0)
   });
@@ -6157,7 +6150,7 @@ function startPersonalBestMode(){
   archive?.setAttribute("aria-hidden","true");
   document.body.classList.remove("uiModalOpen");
   resetRun();
-  showModeBanner("BEST");
+  showModeBanner("ENDURANCE");
 }
 
 let flowHubContext={
@@ -6317,7 +6310,7 @@ const FLOW_STAGES = [
 // =========================
 const VECTOR_THRESHOLDS=[34,67,100,134,167,200,234,267,300];
 const VECTOR_ROMANS=["I","II","III","IV","V","VI","VII","VIII","IX"];
-const VECTOR_RECORD_KEY="shiftvixVectorRecordsV1";
+const VECTOR_RECORD_KEY="shiftvixSkillBestRecordsV56";
 const TODAY_VECTOR_KEY="shiftvixTodayVectorV1";
 
 function vectorStageForCompleted(total=completedFlows){
@@ -6367,10 +6360,12 @@ function loadVectorRecords(){
       SCORE:Number(raw.SCORE)||0,
       RINGS:Number(raw.RINGS)||0,
       SHIFT:Number(raw.SHIFT)||0,
-      WARP:Number(raw.WARP)||Number(raw.RUSH)||0
+      WARP:Number(raw.WARP)||0,
+      BREAK:Number(raw.BREAK)||0,
+      DRIFT:Number(raw.DRIFT)||0
     };
   }catch(e){
-    return {COLLECT:0,TRAVEL:0,SCORE:0,RINGS:0,SHIFT:0,WARP:0};
+    return {COLLECT:0,TRAVEL:0,SCORE:0,RINGS:0,SHIFT:0,WARP:0,BREAK:0,DRIFT:0};
   }
 }
 
@@ -7176,204 +7171,16 @@ function applyFlowStrikeAllowance(flow,index){
 }
 
 function createFlow(index){
-  const n=index+1;
   const category=flowCategoryForIndex(index);
-  const categoryStep=Math.floor(index/8); // eight permanent Flow families
-  const name="CURRENT FLOW";
-
-  /*
-    SHIFTVIX 2.19 — THE SIX FLOW SYSTEM
-    300 Flows = 50 of each:
-
-    COLLECT = collection
-    TRAVEL  = endurance / distance
-    SCORE   = performance / value
-    RINGS   = accuracy / navigation
-    SHIFT   = agility / lane arrival
-    WARP    = acceleration / Warp activation
-
-    REACH / LEVEL has been removed as an objective family.
-    Level still exists visually in the game world, but is no longer a Flow target.
-  */
-
-  let flow;
-
-  if(category==="COLLECT"){
-    const variant=categoryStep%4;
-
-    if(variant===0 || variant===3){
-      const target=600+categoryStep*70;
-
-      flow={
-        id:`collect_${n}`,
-        name,
-        category,
-        label:`COLLECT ${target.toLocaleString()} ORBS`,
-        target,
-        metric:"orbs"
-      };
-
-      return applyFlowStrikeAllowance(flow,index);
-    }
-
-    const colors=["BLUE","GREEN","PURPLE","ORANGE","RED"];
-    const color=colors[categoryStep%colors.length];
-
-    const base={
-      BLUE:500,
-      GREEN:450,
-      PURPLE:320,
-      ORANGE:200,
-      RED:120
-    }[color];
-
-    const growth={
-      BLUE:32,
-      GREEN:29,
-      PURPLE:21,
-      ORANGE:14,
-      RED:10
-    }[color];
-
-    const target=base+categoryStep*growth;
-
-    flow={
-      id:`collect_${color.toLowerCase()}_${n}`,
-      name,
-      category,
-      label:`COLLECT ${target.toLocaleString()} ${color} ORBS`,
-      target,
-      metric:"color",
-      color
-    };
-
-    return applyFlowStrikeAllowance(flow,index);
-  }
-
-  if(category==="TRAVEL"){
-    /* SHIFTVIX V48 — EARNED TRAVEL.
-       TRAVEL no longer advances just because the world moves forward.
-       The player earns journey meters by collecting normal train orbs and
-       making real train-to-train connections. Targets are intentionally
-       shorter because every meter now has to be worked for. */
-    const target=Math.min(2000,500+categoryStep*50);
-
-    flow={
-      id:`travel_${n}`,
-      name,
-      category,
-      label:`EARN ${target.toLocaleString()}m TRAVEL`,
-      target,
-      metric:"travel"
-    };
-
-    return applyFlowStrikeAllowance(flow,index);
-  }
-
-  if(category==="SCORE"){
-    const target=15000+categoryStep*5200;
-
-    flow={
-      id:`score_${n}`,
-      name,
-      category,
-      label:`SCORE ${target.toLocaleString()} POINTS`,
-      target,
-      metric:"score"
-    };
-
-    return applyFlowStrikeAllowance(flow,index);
-  }
-
-  if(category==="RINGS"){
-    // SHIFTVIX V41 — true ring corridors make each encounter substantially
-    // richer, so Ring objectives scale upward with the increased throughput.
-    const target=Math.min(
-      240,
-      60+Math.floor(categoryStep*4.0)
-    );
-
-    flow={
-      id:`rings_${n}`,
-      name,
-      category,
-      label:`FLY THROUGH ${target.toLocaleString()} GOLD RINGS`,
-      target,
-      metric:"rings"
-    };
-
-    return applyFlowStrikeAllowance(flow,index);
-  }
-
-  if(category==="SHIFT"){
-    /*
-      SHIFTVIX V45 — SHIFT GENTLE PROGRESSION
-      Level 0 begins at 50 real train-to-train connections and the
-      objective rises gradually to 150 around Level 30, where it caps.
-      Difficulty beyond that comes from world speed and patterns rather
-      than ever-growing swipe counts.
-    */
-    const target=Math.min(
-      150,
-      50 + Math.floor(categoryStep*(100/30))
-    );
-
-    flow={
-      id:`shift_${n}`,
-      name,
-      category,
-      label:`SHIFT ${target.toLocaleString()} LANES`,
-      target,
-      metric:"shift"
-    };
-
-    return applyFlowStrikeAllowance(flow,index);
-  }
-
-  if(category==="WARP"){
-    // SHIFTVIX V41 — WARP is now about triggering discrete hyperspeed bursts,
-    // not jumping the distance counter forward. Each collected orb = one Warp.
-    const target=Math.min(16,5+Math.floor(categoryStep/4));
-    flow={id:`warp_${n}`,name,category,label:`HIT ${target.toLocaleString()} WARPS`,target,metric:"warp"};
-    return applyFlowStrikeAllowance(flow,index);
-  }
-
-  if(category==="BREAK"){
-    const target=Math.min(
-      75,
-      15+Math.floor(categoryStep*1.75)
-    );
-
-    flow={
-      id:`break_${n}`,
-      name,
-      category,
-      label:`BREAK ${target.toLocaleString()} HOLLOW VOIDS`,
-      target,
-      metric:"break"
-    };
-
-    return applyFlowStrikeAllowance(flow,index);
-  }
-
-  // SHIFTVIX V46 — DRIFT rewards movement through NEGATIVE SPACE only.
-  // Targets are 50% higher than V45 because purposeful open-space weaving
-  // should feel like a sustained Flow rather than a quick movement spam.
-  const target=Math.min(
-    1800,
-    450 + categoryStep*45
-  );
-
-  flow={
-    id:`drift_${n}`,
-    name,
-    category:"DRIFT",
-    label:`GENERATE ${target.toLocaleString()} DRIFT`,
-    target,
-    metric:"drift"
+  const metric={COLLECT:"orbs",TRAVEL:"travel",SCORE:"score",RINGS:"rings",SHIFT:"shift",WARP:"warp",BREAK:"break",DRIFT:"drift"}[category]||"orbs";
+  return {
+    id:`${category.toLowerCase()}_best`,
+    name:category,
+    category,
+    label:FLOW_BEST_OBJECTIVE?.[category]||"SET YOUR BEST",
+    target:Number.MAX_SAFE_INTEGER,
+    metric
   };
-
-  return applyFlowStrikeAllowance(flow,index);
 }
 function beginCurrentFlow(){
     refreshTodayVector();
@@ -7383,6 +7190,8 @@ function beginCurrentFlow(){
     updateStrikes();
 
     activeChallenge=createFlow(currentFlowIndex);
+
+    trackGame("skill_run_started",{category:activeChallenge.category,previous_best:flowBestValue(activeChallenge.category),source:playingTodayPick?"today_pick":"flow_hub",lives:3});
 
     // V48: each TRAVEL Flow begins with a fresh earned-distance milestone sequence.
     lastTravelMilestone=0;
@@ -7869,7 +7678,7 @@ function updateChallenge(){
     const text=document.getElementById("challengeText");
     const fill=document.getElementById("challengeFill");
     const pct=document.getElementById("challengePct");
-    if(heading)heading.textContent="BEST";
+    if(heading)heading.textContent="ENDURANCE";
     if(text)text.textContent="STAY CONNECTED";
     const intoLevel=((distance%PERSONAL_BEST_LEVEL_METERS)/PERSONAL_BEST_LEVEL_METERS)*100;
     if(fill)fill.style.width=intoLevel+"%";
@@ -7879,26 +7688,14 @@ function updateChallenge(){
   if(!activeChallenge){
     activeChallenge=createFlow(currentFlowIndex);
     challengeStart={found:foundCount,score,distance,strikes,rings:goldRingsPassed,shifts:shiftCountRun,warps:warpCollectedThisRun,breaks:breakVoidsDestroyed,drift:driftDistance,travel:travelEarnedMeters,tierCounts:{...tierCounts}};
-    updateHUD();
   }
-  const raw=challengeValue(activeChallenge);
-  const value=Math.max(0,Math.min(activeChallenge.target,raw));
-  const pct=Math.max(0,Math.min(100,(value/activeChallenge.target)*100));
-  // Keep the active-play HUD minimal. Full flow number, category, title,
-  // completion history, and exact totals remain available inside FLOW PATH.
+  const raw=flowRunMetricValue(activeChallenge);
+  const best=flowBestValue(activeChallenge.category);
   updateFlowHeading();
-  document.getElementById("challengeText").textContent=activeChallenge.label;
-  document.getElementById("challengeFill").style.width=pct+"%";
+  document.getElementById("challengeText").textContent=FLOW_BEST_OBJECTIVE[activeChallenge.category];
+  document.getElementById("challengeFill").style.width=(best>0?Math.min(100,(raw/best)*100):0)+"%";
   const challengePct=document.getElementById("challengePct");
-  if(challengePct)challengePct.textContent=`${Math.floor(pct)}%`;
-  if(
-    !challengeAdvanceTimer &&
-    !flowCompletionCoastActive &&
-    raw>=activeChallenge.target &&
-    flowConditionMet(activeChallenge)
-  ){
-    completeCurrentFlow();
-  }
+  if(challengePct)challengePct.textContent=best?`BEST ${formatFlowBest(activeChallenge.category,best)}`:"SET YOUR BEST";
 }
 // SHIFTVIX v2.5 PATCH 8 — FLOW SELECTION
 function activateCycleFlow(
@@ -8048,11 +7845,11 @@ function todayPickHtml(){
       </div>
 
       <div class="todayPickObjective">
-        TAP PLAY TO REVEAL YOUR NEXT FLOW
+        BEAT YOUR BEST IN A RANDOM FLOW
       </div>
 
       <div class="todayPickBottom">
-        <span>NO BACK-TO-BACK CATEGORY REPEATS</span>
+        <span>3 LIVES · ONE RANDOM SKILL</span>
         <strong>PLAY</strong>
       </div>
     </button>
@@ -8096,7 +7893,7 @@ function renderFlowArchive(){
 
     <div class="hubChooseHeader">
       <span>CHOOSE A FLOW</span>
-      <small>8 CORE FLOWS · TODAY'S PICK = 9TH EXPERIENCE</small>
+      <small>8 SKILLS · TODAY'S PICK · ENDURANCE</small>
     </div>
 
     ${eightIndependentFlowCardsHtml()}
@@ -10995,29 +10792,17 @@ tierCounts[b.userData.tier.name] =
  if(navigator.vibrate)navigator.vibrate(4);
 }
 function objectiveHudData(){
-    // SHIFTVIX V53 — one mode = one word = one HUD identity.
     if(personalBestMode){
-        return {label:"BEST",value:`LEVEL ${Math.max(1,level).toLocaleString()}`};
+        return {label:"ENDURANCE",value:`LEVEL ${Math.max(1,level).toLocaleString()}`};
     }
-    if(!activeChallenge){
-        return {
-            label:"DISTANCE",
-            value:`${Math.floor(distance).toLocaleString()}m`
-        };
-    }
-
-    const target=Math.max(1,Math.floor(Number(activeChallenge.target)||1));
-    const raw=Math.max(0,challengeValue(activeChallenge));
-    const current=Math.min(target,Math.floor(raw));
-    const label=String(activeChallenge.category||flowDisplayLabel(activeChallenge)||"FLOW").toUpperCase();
-
-    if(activeChallenge.metric==="distance" || activeChallenge.metric==="travel" || activeChallenge.metric==="drift"){
-        return {label,value:`${current.toLocaleString()}m / ${target.toLocaleString()}m`};
-    }
-
+    if(!activeChallenge)return {label:"SHIFTVIX",value:"READY"};
+    const category=String(activeChallenge.category||"FLOW").toUpperCase();
+    const current=flowRunMetricValue(activeChallenge);
+    const best=flowBestValue(category);
+    const unit=(category==="TRAVEL"||category==="DRIFT")?"m":"";
     return {
-        label,
-        value:`${current.toLocaleString()} / ${target.toLocaleString()}`
+      label:category,
+      value:`${current.toLocaleString()}${unit}${best?` · BEST ${formatFlowBest(category,best)}`:""}`
     };
 }
 
@@ -11079,19 +10864,11 @@ function flowDisplayLabel(flow){
 }
 
 function formatRunFlowProgress(flow,value){
-  const current=Math.max(0,Math.min(flow.target,value));
-  const whole=Math.floor(current);
-  const target=Math.floor(flow.target);
-
-  if(flow.metric==="distance" || flow.metric==="drift"){
-    return `${whole.toLocaleString()}m / ${target.toLocaleString()}m`;
-  }
-
-  if(flow.metric==="level"){
-    return `${whole.toLocaleString()} / ${target.toLocaleString()}`;
-  }
-
-  return `${whole.toLocaleString()} / ${target.toLocaleString()}`;
+  const whole=Math.max(0,Math.floor(Number(value)||0));
+  const category=flow?.category||"";
+  if(category==="TRAVEL" || category==="DRIFT")return `${whole.toLocaleString()}m`;
+  if(category==="SCORE")return `${whole.toLocaleString()} PTS`;
+  return whole.toLocaleString();
 }
 function endRun(){
 
@@ -11134,7 +10911,7 @@ function endRun(){
         lives_remaining:0
       });
       trackGA4Game("level_end",{
-        level_name:"PERSONAL_BEST",
+        level_name:"ENDURANCE",
         level:achievedLevel,
         success:0,
         score,
@@ -11200,85 +10977,54 @@ function endRun(){
       return;
     }
 
-    const endedFlow=
-        activeChallenge ||
-        createFlow(currentFlowIndex);
+    const endedFlow=activeChallenge||createFlow(currentFlowIndex);
+    const endedProgress=flowRunMetricValue(endedFlow);
+    const previousSkillBest=flowBestValue(endedFlow.category);
+    const newSkillBest=endedProgress>previousSkillBest;
 
-    const endedProgress=
-        Math.max(
-          0,
-          Math.min(
-            endedFlow.target,
-            challengeBaseValue(
-              endedFlow
-            )
-          )
-        );
-
-    const endedTarget=
-        Math.max(
-          1,
-          Math.floor(
-            Number(endedFlow.target)||1
-          )
-        );
-
-    const endedPercent=
-        Math.max(
-          0,
-          Math.min(
-            100,
-            Math.round(
-              endedProgress /
-              endedTarget *
-              100
-            )
-          )
-        );
-
-    /*
-      ONE run summary replaces:
-      death_level + run_duration + duplicate run_ended detail.
-      This is the primary gameplay-health event.
-    */
     trackGame("run_ended",{
-        result:"failed",
-        category:endedFlow.category,
-        flow_number:currentFlowIndex+1,
-        duration_seconds:lastRunDuration,
-        distance:Math.floor(distance),
-        level,
-        score,
-        strikes,
-        lives_remaining:
-          Math.max(0,3-strikes),
-        orbs_collected:foundCount,
-        rings_passed:goldRingsPassed,
-        shifts:shiftCountRun,
-        warps_collected:
-          warpCollectedThisRun,
-        progress:
-          Math.floor(endedProgress),
-        target:endedTarget,
-        progress_percent:
-          endedPercent
+        result:"three_lives_lost",category:endedFlow.category,duration_seconds:lastRunDuration,
+        distance:Math.floor(distance),level,score,strikes,lives_remaining:0,
+        orbs_collected:foundCount,rings_passed:goldRingsPassed,shifts:shiftCountRun,
+        warps_collected:warpCollectedThisRun,skill_value:endedProgress,previous_best:previousSkillBest,
+        new_personal_best:newSkillBest?1:0
+    });
+    trackGame("skill_run_ended",{
+      category:endedFlow.category,value:endedProgress,previous_best:previousSkillBest,
+      new_personal_best:newSkillBest?1:0,duration_seconds:lastRunDuration,distance:Math.floor(distance),score,lives_used:3,
+      source:playingTodayPick?"today_pick":"flow_hub"
+    });
+    trackGame("flow_attempt_ended",{
+      category:endedFlow.category,result:"three_lives_lost",progress:endedProgress,
+      duration_seconds:lastRunDuration,distance:Math.floor(distance),score,strikes:3
+    });
+    trackGA4Game("level_end",{
+      level_name:endedFlow.category,success:0,score,distance:Math.floor(distance),
+      skill_value:endedProgress,new_personal_best:newSkillBest?1:0
     });
 
-    trackGame("flow_attempt_ended",{
-        category:endedFlow.category,
-        result:"failed",
-        flow_number:currentFlowIndex+1,
-        progress:
-          Math.floor(endedProgress),
-        target:endedTarget,
-        progress_percent:
-          endedPercent,
-        duration_seconds:lastRunDuration,
-        distance:Math.floor(distance),
-        score,
-        strikes
-    });
-    
+    if(newSkillBest){
+      updateVectorRecord(endedFlow,endedProgress);
+      trackGame("skill_best_beaten",{
+        category:endedFlow.category,previous_best:previousSkillBest,new_best:endedProgress,
+        improvement:endedProgress-previousSkillBest,duration_seconds:lastRunDuration
+      });
+      trackGA4Game("unlock_achievement",{achievement_id:`${endedFlow.category.toLowerCase()}_personal_best`});
+    }
+
+    if(playingTodayPick){
+      refreshTodayVector();
+      todayVector.sequence=Math.max(0,Number(todayVector.sequence)||0)+1;
+      todayVector.completedCount=Math.max(0,Number(todayVector.completedCount)||0)+1;
+      todayVector.lastCompletedCategory=endedFlow.category;
+      saveTodayVector();
+      trackGame("today_pick_completed",{
+        category:endedFlow.category,value:endedProgress,new_personal_best:newSkillBest?1:0,
+        picks_completed_today:todayVector.completedCount
+      });
+      playingTodayPick=false;
+    }
+
     const isNewBestDistance = distance > bestDistance;
     if(isNewBestDistance){
         bestDistance = distance;
@@ -11345,14 +11091,7 @@ function endRun(){
     const runFlowRaw=
         challengeBaseValue(runFlow);
 
-    const runFlowValue=
-        Math.max(
-          0,
-          Math.min(
-            runFlow.target,
-            runFlowRaw
-          )
-        );
+    const runFlowValue=Math.max(0,Math.floor(runFlowRaw));
 
     const runFlowProgress=
         formatRunFlowProgress(
@@ -11380,7 +11119,7 @@ function endRun(){
         resultLabel:runFlowLabel,
         resultValue:runFlowProgress,
         message:
-          "RETRY THIS FLOW OR PICK ANOTHER BELOW"
+          "BEAT YOUR BEST OR PICK ANOTHER FLOW"
       }
     );
 
@@ -11826,7 +11565,7 @@ if (level > lastLevel) {
       });
       trackGA4Game("level_up",{
         level,
-        level_name:"PERSONAL_BEST",
+        level_name:"ENDURANCE",
         score,
         distance:Math.floor(distance)
       });
