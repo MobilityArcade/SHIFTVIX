@@ -153,7 +153,7 @@ function track(eventName,data={}){
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <!-- SHIFTVIX 2.11 — GOLD RINGS + FIVE EVEN OBJECTIVE TYPES -->
-<!-- SHIFTVIX V59 — KRONOS / RARE POWERS / INVINCIBLE SHIELD / UNIFIED HUB HUD -->
+<!-- SHIFTVIX V60 — FIVE-VOID PRESSURE / MIXED VOIDS / GOLD INVINCIBLE WARNING -->
 <title>SHIFTVIX</title>
 <style>
 html,body{
@@ -3344,6 +3344,18 @@ body.uiModalOpen #center{pointer-events:none}
 }
 #center.reactorInvincible.invincibleEnding::before,
 #center.reactorInvincible.invincibleEnding::after{animation-duration:.28s!important;}
+/* V60 — unmistakable Invincible expiry cue: the small reactor core turns gold
+   during the final two seconds while the shield accelerates around it. */
+#center.reactorInvincible.invincibleEnding .reactorCore{
+  background:radial-gradient(circle at 42% 38%,#fffdf0 0 18%,#ffe36b 34%,#ffb51f 62%,rgba(255,142,0,.92) 100%)!important;
+  box-shadow:0 0 9px rgba(255,255,255,1),0 0 20px rgba(255,211,78,.98),0 0 34px rgba(255,153,20,.72)!important;
+  animation:invincibleGoldWarning .28s ease-in-out infinite!important;
+}
+#center.reactorInvincible.invincibleEnding .reactorMiddle{
+  border-color:rgba(255,215,72,.92)!important;
+  box-shadow:0 0 13px rgba(255,184,35,.62)!important;
+}
+@keyframes invincibleGoldWarning{0%,100%{filter:brightness(1);transform:translate(-50%,-50%) scale(.94)}50%{filter:brightness(1.55);transform:translate(-50%,-50%) scale(1.12)}}
 #center.invincibleCollapse::before,#center.invincibleCollapse::after{animation:invincibleCollapse .34s ease-in forwards!important;}
 @keyframes invincibleShieldBreathe{0%,100%{opacity:.62;scale:.96}50%{opacity:1;scale:1.05}}
 @keyframes invincibleShieldTurn{0%{opacity:.28;transform:translate(-50%,-50%) rotate(0deg) scale(.98)}50%{opacity:.65;transform:translate(-50%,-50%) rotate(180deg) scale(1.04)}100%{opacity:.28;transform:translate(-50%,-50%) rotate(360deg) scale(.98)}}
@@ -3799,7 +3811,7 @@ let lastRunDuration = 0;
 // =========================
 // SHIFTVIX 2.32 — RETENTION ANALYTICS
 // =========================
-const ANALYTICS_VERSION="5.0-v57-flow-rules";
+const ANALYTICS_VERSION="5.2-v60-void-pressure";
 const analyticsSessionId=
   `${Date.now()}-${Math.random().toString(36).slice(2,10)}`;
 
@@ -9578,130 +9590,67 @@ function spawnVoidVolley(reason="normal"){
 
   // Unique lanes inside each volley.
   for(let i=allLanes.length-1;i>0;i--){
-    const j=Math.floor(
-      Math.random()*(i+1)
-    );
-
-    [
-      allLanes[i],
-      allLanes[j]
-    ]=[
-      allLanes[j],
-      allLanes[i]
-    ];
+    const j=Math.floor(Math.random()*(i+1));
+    [allLanes[i],allLanes[j]]=[allLanes[j],allLanes[i]];
   }
 
   let count=1;
 
   if(reason!=="tutorial"){
     /*
-      VOID PRESSURE 2.0
+      V60 — FIVE-VOID PRESSURE
 
-      Minimum: 2 hazards.
-      Maximum: 6 hazards.
-
-      Because SHIFTVIX has nine lanes, six is the hard cap:
-      every single volley always leaves at least three immediate
-      escape lanes.
-
-      Early flight mostly produces 2–3.
-      As distance/level rise, 4–6 become more common without
-      suddenly turning the opening game into a wall.
+      Solid Voids are the reason to shift. Every Flow that uses Voids can now
+      build from readable 2–3 hazard patterns into 4–5 lane pressure walls.
+      Five is the hard cap: the player is pressured into a smaller set of
+      escape choices without ever having all nine lanes sealed.
     */
-    const pressure=
-      THREE.MathUtils.clamp(
-        (
-          Math.max(0,distance-55) /
-          5000
-        ) +
-        (
-          Math.max(0,level-1) *
-          .018
-        ),
-        0,
-        1
-      );
-
+    const pressure=THREE.MathUtils.clamp(
+      (Math.max(0,distance-55)/4200)+(Math.max(0,level-1)*.022),
+      0,1
+    );
     const r=Math.random();
+    const fiveThreshold=.93-pressure*.25;
+    const fourThreshold=.72-pressure*.22;
+    const threeThreshold=.30-pressure*.08;
 
-    const sixThreshold=
-      .985-pressure*.105;
-
-    const fiveThreshold=
-      .94-pressure*.145;
-
-    const fourThreshold=
-      .78-pressure*.17;
-
-    const threeThreshold=
-      .38-pressure*.08;
-
-    if(r>=sixThreshold){
-      count=6;
-    }else if(r>=fiveThreshold){
-      count=5;
-    }else if(r>=fourThreshold){
-      count=4;
-    }else if(r>=threeThreshold){
-      count=3;
-    }else{
-      count=2;
-    }
+    if(r>=fiveThreshold)count=5;
+    else if(r>=fourThreshold)count=4;
+    else if(r>=threeThreshold)count=3;
+    else count=2;
   }
 
-  // Absolute readability/safety cap.
-  count=Math.max(
-    1,
-    Math.min(
-      reason==="tutorial"?1:6,
-      count
-    )
-  );
+  count=Math.max(1,Math.min(reason==="tutorial"?1:5,count));
 
   let spawned=0;
+  const voidsFlow=activeChallenge?.metric==="voids";
 
-  const breakFlow=
-    activeChallenge?.metric==="voids";
-
-  // SHIFTVIX V40 — BREAK gets a modest density lift without becoming RINGS.
-  // Preserve its identify/line-up/break rhythm, but occasionally present
-  // two or three hollow targets in a readable group.
-  const breakTargetCount=
-    breakFlow
-      ? Math.max(1,Math.min(count, Math.ceil(count*.72)))
-      : 0;
-
-  // V44 — Every normal non-BREAK Void volley contains one hollow escape
-  // route. The lane is still random because the volley lanes are shuffled.
-  // This gives every Flow a deliberate “thread the needle” option without
-  // removing the danger of the surrounding lethal Voids.
-  const escapeTargetCount=
-    !breakFlow && flowAllowsHollowVoids() && reason!=="tutorial" ? 1 : 0;
+  /*
+    V60 — hollow Voids are opportunities inside the pressure wall, not the
+    whole wall. A volley is either all solid, or contains ONE hollow Void.
+    VOIDS gets the hollow opportunity more often because entering them is its
+    record, but it still always has regular solid Voids whenever count >= 2.
+  */
+  let hollowTargetCount=0;
+  if(reason!=="tutorial" && flowAllowsHollowVoids()){
+    const hollowChance=voidsFlow ? .78 : .46;
+    hollowTargetCount=Math.random()<hollowChance ? 1 : 0;
+  }
 
   for(let i=0;i<count;i++){
-    if(
-      makeVoidHazard(
-        i===0
-          ? reason
-          : `meteor_group_${count}`,
-        allLanes[i],
-        {
-          breakTarget:
-            breakFlow &&
-            i<breakTargetCount,
-          escapeVoid:
-            !breakFlow &&
-            i<escapeTargetCount
-        }
-      )
-    ){
-      spawned++;
-    }
+    const hollow=i<hollowTargetCount;
+    if(makeVoidHazard(
+      i===0 ? reason : `meteor_group_${count}`,
+      allLanes[i],
+      {
+        breakTarget:voidsFlow && hollow,
+        escapeVoid:!voidsFlow && hollow
+      }
+    )) spawned++;
   }
 
   return spawned;
 }
-
 
 const BREAK_VOID_PASS_RADIUS=7.1;
 const BREAK_VOID_DAMAGE_RADIUS=17.5;
