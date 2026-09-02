@@ -100,7 +100,13 @@ const ANALYTICS_ALLOWED_EVENTS=new Set([
   "bonus_score_awarded",
   "flow_block_unlocked",
   "vector_stage_unlocked",
-  "silent_tutorial_completed"
+  "silent_tutorial_completed",
+  "leaderboard_opened",
+  "leaderboard_initials_saved",
+  "leaderboard_score_submitted",
+  "leaderboard_rank_received",
+  "leaderboard_top9_entered",
+  "leaderboard_submit_failed"
 ]);
 
 gtag("config","G-M88902RHLE",{
@@ -153,7 +159,7 @@ function track(eventName,data={}){
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <!-- SHIFTVIX 2.11 — GOLD RINGS + FIVE EVEN OBJECTIVE TYPES -->
-<!-- SHIFTVIX V60 — FIVE-VOID PRESSURE / MIXED VOIDS / GOLD INVINCIBLE WARNING -->
+<!-- SHIFTVIX V62 — WORLD TOP 9 / PLAYER INITIALS + COUNTRY FLAGS -->
 <title>SHIFTVIX</title>
 <style>
 html,body{
@@ -3361,6 +3367,28 @@ body.uiModalOpen #center{pointer-events:none}
 @keyframes invincibleShieldTurn{0%{opacity:.28;transform:translate(-50%,-50%) rotate(0deg) scale(.98)}50%{opacity:.65;transform:translate(-50%,-50%) rotate(180deg) scale(1.04)}100%{opacity:.28;transform:translate(-50%,-50%) rotate(360deg) scale(.98)}}
 @keyframes invincibleCollapse{0%{opacity:1;scale:1}100%{opacity:0;scale:.18}}
 
+
+/* SHIFTVIX V62 — WORLD TOP 9 + PLAYER IDENTITY */
+.worldBoardLaunch{width:100%;margin-top:18px;border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:17px 20px;background:linear-gradient(135deg,rgba(255,211,106,.11),rgba(110,220,255,.07));color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:14px;text-align:left;box-shadow:inset 0 0 28px rgba(255,255,255,.035)}
+.worldBoardLaunch strong{font-size:clamp(20px,2.5vw,31px);letter-spacing:1.8px;font-weight:950}.worldBoardLaunch span{font-size:15px;letter-spacing:1.4px;font-weight:950;opacity:.88}
+#worldLeaderboard{position:fixed;inset:0;z-index:13000;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;backdrop-filter:blur(12px)}
+#worldLeaderboard.show{display:flex}.worldBoardPanel{width:min(560px,100%);max-height:min(820px,92vh);overflow:auto;border:1px solid rgba(255,255,255,.25);border-radius:24px;background:linear-gradient(180deg,rgba(12,17,25,.98),rgba(0,0,0,.99));padding:22px;box-sizing:border-box;box-shadow:0 0 70px rgba(80,190,255,.12)}
+.worldBoardHead{display:flex;justify-content:space-between;align-items:center;gap:16px}.worldBoardHead h2{margin:0;font-size:clamp(25px,5vw,38px);letter-spacing:2px}.worldBoardClose{border:0;background:transparent;color:#fff;font-size:28px;cursor:pointer;opacity:.8}.worldBoardSub{margin-top:5px;font-size:12px;letter-spacing:2px;opacity:.58}
+.worldFlowTabs{display:flex;gap:7px;overflow-x:auto;padding:18px 0 12px;scrollbar-width:none}.worldFlowTabs::-webkit-scrollbar{display:none}.worldFlowTab{flex:0 0 auto;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(255,255,255,.04);color:#fff;padding:9px 12px;font-weight:900;font-size:11px;letter-spacing:1px;cursor:pointer}.worldFlowTab.active{background:#fff;color:#000}
+.worldInitials{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:5px 0 15px;padding:12px 14px;border:1px solid rgba(255,255,255,.13);border-radius:14px}.worldInitials label{font-size:11px;letter-spacing:1.5px;font-weight:900;opacity:.68}.worldInitials input{width:76px;text-align:center;text-transform:uppercase;background:#000;border:1px solid rgba(255,255,255,.32);border-radius:9px;color:#fff;font-size:20px;font-weight:950;letter-spacing:4px;padding:7px}.worldSaveInitials{border:0;border-radius:9px;background:#fff;color:#000;padding:9px 11px;font-weight:950;cursor:pointer}
+.worldRows{border-top:1px solid rgba(255,255,255,.12)}.worldRow{display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:10px;padding:13px 5px;border-bottom:1px solid rgba(255,255,255,.09)}.worldRank{font-weight:950;font-size:17px}.worldName{font-weight:950;letter-spacing:2px}.worldValue{font-weight:950;font-size:18px}.worldMine{margin-top:14px;padding:13px;border:1px solid rgba(255,211,106,.28);border-radius:13px;background:rgba(255,211,106,.06);font-size:13px;font-weight:900;letter-spacing:.7px}.worldStatus{text-align:center;padding:28px 8px;opacity:.62;font-size:13px;line-height:1.5;letter-spacing:.7px}.worldBackendNote{font-size:10px;line-height:1.45;opacity:.4;margin-top:12px;text-align:center}
+@media(max-width:699px){.worldBoardLaunch strong{font-size:22px}.worldBoardLaunch span{font-size:14px}.worldBoardPanel{padding:18px 15px;border-radius:20px}.worldInitials{flex-wrap:wrap}.worldInitials input{margin-left:auto}}
+/* V62 — one-time arcade identity setup + country flags */
+.worldInitials{display:none!important}
+.worldPlayerIdentity{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:5px 0 15px;padding:12px 14px;border:1px solid rgba(255,255,255,.13);border-radius:14px}
+.worldPlayerIdentity .identityText{font-size:12px;letter-spacing:1.4px;font-weight:950}.worldPlayerIdentity .identityFlag{font-size:22px;margin-right:8px}.worldEditIdentity{border:1px solid rgba(255,255,255,.25);border-radius:9px;background:rgba(255,255,255,.06);color:#fff;padding:8px 10px;font-weight:950;cursor:pointer}
+.worldRow{grid-template-columns:42px 1fr auto!important}.worldName{display:flex;align-items:center;gap:9px}.worldFlag{font-size:19px;letter-spacing:0}.worldMineFlag{font-size:18px;margin-right:6px}
+#worldIdentitySetup{position:fixed;inset:0;z-index:14000;background:rgba(0,0,0,.96);display:none;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;backdrop-filter:blur(14px)}
+#worldIdentitySetup.show{display:flex}.identityPanel{width:min(430px,100%);border:1px solid rgba(255,255,255,.26);border-radius:24px;background:linear-gradient(180deg,rgba(13,18,27,.99),rgba(0,0,0,.995));padding:25px;box-sizing:border-box;box-shadow:0 0 70px rgba(80,190,255,.12);text-align:center}.identityPanel h2{margin:0;font-size:clamp(26px,6vw,38px);letter-spacing:2px}.identityPanel .identitySub{margin:7px 0 22px;font-size:11px;letter-spacing:1.8px;opacity:.58}.identityField{text-align:left;margin:15px 0}.identityField label{display:block;margin-bottom:7px;font-size:11px;letter-spacing:1.5px;font-weight:950;opacity:.68}.identityInitialsInput{width:100%;box-sizing:border-box;text-align:center;text-transform:uppercase;background:#000;border:1px solid rgba(255,255,255,.34);border-radius:12px;color:#fff;font-size:30px;font-weight:950;letter-spacing:10px;padding:12px}.identityCountrySelect{width:100%;box-sizing:border-box;background:#080b10;border:1px solid rgba(255,255,255,.34);border-radius:12px;color:#fff;font-size:17px;font-weight:850;padding:13px}.identityEnter{width:100%;margin-top:10px;border:0;border-radius:12px;background:#fff;color:#000;padding:14px;font-size:17px;letter-spacing:1.5px;font-weight:950;cursor:pointer}.identityHint{margin-top:12px;font-size:10px;line-height:1.45;opacity:.43}.identityError{min-height:17px;margin-top:9px;font-size:11px;font-weight:900;letter-spacing:.8px;color:#ffd76a}
+@media(max-width:699px){.worldPlayerIdentity{padding:11px 12px}.identityPanel{padding:22px 18px}.identityInitialsInput{font-size:28px}}
+/* V61 fixes the V60 gold warning for the glass Traveler build, whose legacy reactor children are hidden. */
+#center.reactorInvincible.invincibleEnding{background:radial-gradient(circle,#fff7c7 0 16%,#ffd84c 22%,rgba(255,173,24,.55) 34%,transparent 52%)!important;box-shadow:0 0 16px rgba(255,221,92,.95),0 0 34px rgba(255,166,30,.68)!important;animation:v61GoldCenterPulse .28s ease-in-out infinite!important}
+@keyframes v61GoldCenterPulse{0%,100%{filter:brightness(.9);transform:translate(-50%,-50%) scale(.96)}50%{filter:brightness(1.5);transform:translate(-50%,-50%) scale(1.12)}}
 </style>
 
 <style id="cometTravelerPrototypeStyle">
@@ -3399,6 +3427,28 @@ body.uiModalOpen #center{pointer-events:none}
 </style>
 </head>
 <body>
+<div id="worldIdentitySetup" aria-hidden="true">
+  <div class="identityPanel" role="dialog" aria-modal="true" aria-labelledby="identityTitle">
+    <h2 id="identityTitle">ENTER THE WORLD</h2>
+    <div class="identitySub">YOUR ARCADE IDENTITY</div>
+    <div class="identityField"><label>3-LETTER INITIALS</label><input id="identityInitialsInput" class="identityInitialsInput" maxlength="3" inputmode="text" autocomplete="off" aria-label="Three arcade initials" placeholder="BRT"></div>
+    <div class="identityField"><label>COUNTRY</label><select id="identityCountrySelect" class="identityCountrySelect" aria-label="Country"></select></div>
+    <div id="identityError" class="identityError"></div>
+    <button id="identityEnter" class="identityEnter" type="button">ENTER</button>
+    <div class="identityHint">NO ACCOUNT · NO EMAIL · SAVED ON THIS DEVICE</div>
+  </div>
+</div>
+<div id="worldLeaderboard" aria-hidden="true">
+  <div class="worldBoardPanel" role="dialog" aria-modal="true" aria-labelledby="worldBoardTitle">
+    <div class="worldBoardHead"><div><h2 id="worldBoardTitle">WORLD TOP 9</h2><div class="worldBoardSub">9 LANES · 9 SKILLS · ONE WORLD</div></div><button class="worldBoardClose" id="worldBoardClose" aria-label="Close">×</button></div>
+    <div class="worldFlowTabs" id="worldFlowTabs"></div>
+    <div class="worldPlayerIdentity" id="worldPlayerIdentity"><div class="identityText" id="worldIdentityText">PLAYER NOT SET</div><button class="worldEditIdentity" id="worldEditIdentity" type="button">EDIT</button></div>
+    <div id="worldBoardRows" class="worldRows"></div>
+    <div id="worldMine" class="worldMine" style="display:none"></div>
+    <div id="worldBackendNote" class="worldBackendNote"></div>
+  </div>
+</div>
+
 <div id="gameTitle"><span id="shift">SHIFT</span><span id="vix">VIX</span></div>
 <div id="strikes"><div class="strikeDot" id="s0"></div><div class="strikeDot" id="s1"></div><div class="strikeDot" id="s2"></div></div>
 <div id="hud">
@@ -6097,6 +6147,44 @@ function prototypeTotalLabel(
   ).toLocaleString();
 }
 
+
+// SHIFTVIX V62 — WORLD TOP 9 + ARCADE IDENTITY
+// The Cloudflare endpoint remains blank until the shared backend is deployed.
+const SHIFTVIX_LEADERBOARD_API="";
+const WORLD_INITIALS_KEY="shiftvixArcadeInitialsV62";
+const WORLD_COUNTRY_KEY="shiftvixArcadeCountryV62";
+const WORLD_PLAYER_ID_KEY="shiftvixAnonymousPlayerIdV62";
+const WORLD_MODES=["COLLECT","TRAVEL","SCORE","RINGS","SHIFT","WARP","VOIDS","DRIFT","ENDURE"];
+const WORLD_COUNTRIES=[
+["US","United States"],["CA","Canada"],["MX","Mexico"],["GB","United Kingdom"],["DE","Germany"],["FR","France"],["ES","Spain"],["IT","Italy"],["PT","Portugal"],["NL","Netherlands"],["BE","Belgium"],["CH","Switzerland"],["AT","Austria"],["IE","Ireland"],["SE","Sweden"],["NO","Norway"],["DK","Denmark"],["FI","Finland"],["PL","Poland"],["CZ","Czechia"],["GR","Greece"],["RO","Romania"],["UA","Ukraine"],["TR","Türkiye"],["JP","Japan"],["KR","South Korea"],["CN","China"],["TW","Taiwan"],["HK","Hong Kong"],["IN","India"],["SG","Singapore"],["MY","Malaysia"],["TH","Thailand"],["PH","Philippines"],["ID","Indonesia"],["VN","Vietnam"],["AU","Australia"],["NZ","New Zealand"],["BR","Brazil"],["AR","Argentina"],["CL","Chile"],["CO","Colombia"],["PE","Peru"],["VE","Venezuela"],["ZA","South Africa"],["NG","Nigeria"],["KE","Kenya"],["EG","Egypt"],["MA","Morocco"],["AE","United Arab Emirates"],["SA","Saudi Arabia"],["IL","Israel"],["IR","Iran"],["SC","Seychelles"],["IS","Iceland"]
+];
+let worldBoardMode="COLLECT";
+function countryFlag(code){const c=String(code||"").toUpperCase();if(!/^[A-Z]{2}$/.test(c))return "🌐";return String.fromCodePoint(...[...c].map(ch=>127397+ch.charCodeAt(0)))}
+function countryName(code){return WORLD_COUNTRIES.find(x=>x[0]===String(code||"").toUpperCase())?.[1]||String(code||"").toUpperCase()||"World"}
+function worldPlayerId(){let id=localStorage.getItem(WORLD_PLAYER_ID_KEY);if(!id){id=(crypto?.randomUUID?.()||`svx-${Date.now()}-${Math.random().toString(36).slice(2)}`);localStorage.setItem(WORLD_PLAYER_ID_KEY,id)}return id}
+function worldInitials(){return (localStorage.getItem(WORLD_INITIALS_KEY)||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,3)}
+function worldCountry(){return (localStorage.getItem(WORLD_COUNTRY_KEY)||"").toUpperCase().slice(0,2)}
+function worldIdentityReady(){return worldInitials().length===3 && /^[A-Z]{2}$/.test(worldCountry())}
+function populateCountrySelect(){const el=document.getElementById("identityCountrySelect");if(!el||el.options.length)return;el.innerHTML='<option value="">SELECT COUNTRY</option>'+WORLD_COUNTRIES.map(([code,name])=>`<option value="${code}">${countryFlag(code)}  ${name}</option>`).join("");}
+function updateWorldIdentityDisplay(){const el=document.getElementById("worldIdentityText");if(!el)return;if(!worldIdentityReady()){el.textContent="PLAYER NOT SET";return}el.innerHTML=`<span class="identityFlag">${countryFlag(worldCountry())}</span>${worldInitials()} · ${countryName(worldCountry()).toUpperCase()}`}
+function openIdentitySetup(){populateCountrySelect();const modal=document.getElementById("worldIdentitySetup"),input=document.getElementById("identityInitialsInput"),select=document.getElementById("identityCountrySelect"),err=document.getElementById("identityError");if(input)input.value=worldInitials();if(select)select.value=worldCountry();if(err)err.textContent="";modal?.classList.add("show");modal?.setAttribute("aria-hidden","false");document.body.classList.add("uiModalOpen");setTimeout(()=>input?.focus(),60)}
+function closeIdentitySetup(){const modal=document.getElementById("worldIdentitySetup");modal?.classList.remove("show");modal?.setAttribute("aria-hidden","true");if(!document.getElementById("worldLeaderboard")?.classList.contains("show"))document.body.classList.remove("uiModalOpen")}
+function saveWorldIdentity(){const input=document.getElementById("identityInitialsInput"),select=document.getElementById("identityCountrySelect"),err=document.getElementById("identityError");const initials=(input?.value||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,3),country=(select?.value||"").toUpperCase();if(initials.length!==3){if(err)err.textContent="ENTER EXACTLY 3 INITIALS";input?.focus();return false}if(!/^[A-Z]{2}$/.test(country)){if(err)err.textContent="SELECT YOUR COUNTRY";select?.focus();return false}localStorage.setItem(WORLD_INITIALS_KEY,initials);localStorage.setItem(WORLD_COUNTRY_KEY,country);worldPlayerId();trackGame("leaderboard_initials_saved",{initials_length:3,country_code:country});updateWorldIdentityDisplay();closeIdentitySetup();loadWorldLeaderboard(worldBoardMode);return true}
+function formatWorldValue(mode,value){if(mode==="ENDURE")return `LEVEL ${Math.floor(value||0)}`;return formatFlowBest(mode,value)}
+function renderWorldTabs(){const el=document.getElementById("worldFlowTabs");if(!el)return;el.innerHTML=WORLD_MODES.map(m=>`<button class="worldFlowTab ${m===worldBoardMode?'active':''}" data-world-mode="${m}">${m}</button>`).join("");el.querySelectorAll("[data-world-mode]").forEach(b=>b.addEventListener("click",()=>{worldBoardMode=b.dataset.worldMode;renderWorldTabs();loadWorldLeaderboard(worldBoardMode)}))}
+function openWorldLeaderboard(mode="COLLECT"){worldBoardMode=WORLD_MODES.includes(mode)?mode:"COLLECT";const modal=document.getElementById("worldLeaderboard");if(!modal)return;modal.classList.add("show");modal.setAttribute("aria-hidden","false");document.body.classList.add("uiModalOpen");renderWorldTabs();updateWorldIdentityDisplay();trackGame("leaderboard_opened",{category:worldBoardMode});loadWorldLeaderboard(worldBoardMode);if(!worldIdentityReady())setTimeout(openIdentitySetup,120)}
+function closeWorldLeaderboard(){const modal=document.getElementById("worldLeaderboard");modal?.classList.remove("show");modal?.setAttribute("aria-hidden","true");if(!document.getElementById("worldIdentitySetup")?.classList.contains("show"))document.body.classList.remove("uiModalOpen")}
+async function loadWorldLeaderboard(mode){const rows=document.getElementById("worldBoardRows"),mine=document.getElementById("worldMine"),note=document.getElementById("worldBackendNote");if(!rows)return;if(!SHIFTVIX_LEADERBOARD_API){rows.innerHTML='<div class="worldStatus">WORLD TOP 9 IS READY.<br>THE GLOBAL DATABASE CONNECTS NEXT.</div>';if(mine){if(worldIdentityReady()){mine.style.display="block";mine.innerHTML=`<span class="worldMineFlag">${countryFlag(worldCountry())}</span>${worldInitials()} · YOUR LOCAL BEST · ${formatWorldValue(mode,flowBestValue(mode))}`}else mine.style.display="none"}if(note)note.textContent="Your arcade identity is saved on this device. Real world ranks begin when Cloudflare is connected.";return}rows.innerHTML='<div class="worldStatus">LOADING WORLD TOP 9…</div>';try{const r=await fetch(`${SHIFTVIX_LEADERBOARD_API}/leaderboard?mode=${encodeURIComponent(mode)}&player_id=${encodeURIComponent(worldPlayerId())}`,{cache:"no-store"});if(!r.ok)throw new Error(`HTTP ${r.status}`);const data=await r.json();const top=Array.isArray(data.top9)?data.top9:[];rows.innerHTML=top.length?top.map((x,i)=>`<div class="worldRow"><div class="worldRank">${i+1}</div><div class="worldName"><span class="worldFlag">${countryFlag(x.country)}</span><span>${String(x.initials||'---').slice(0,3)}</span></div><div class="worldValue">${formatWorldValue(mode,x.value)}</div></div>`).join(""):'<div class="worldStatus">NO WORLD RECORDS YET.<br>BE THE FIRST.</div>';if(mine&&data.player){mine.style.display="block";mine.innerHTML=`<span class="worldMineFlag">${countryFlag(data.player.country||worldCountry())}</span>${worldInitials()} · WORLD #${data.player.rank} · ${formatWorldValue(mode,data.player.value)}`;trackGame("leaderboard_rank_received",{category:mode,world_rank:Number(data.player.rank)||0,value:Number(data.player.value)||0})}else if(mine)mine.style.display="none";if(note)note.textContent=""}catch(e){rows.innerHTML='<div class="worldStatus">WORLD BOARD UNAVAILABLE.<br>YOUR LOCAL BEST IS SAFE.</div>';if(note)note.textContent="Leaderboard connection failed."}}
+async function submitWorldBest(mode,value){if(!SHIFTVIX_LEADERBOARD_API||!WORLD_MODES.includes(mode)||!(Number(value)>0)||!worldIdentityReady())return null;try{const r=await fetch(`${SHIFTVIX_LEADERBOARD_API}/submit`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({player_id:worldPlayerId(),initials:worldInitials(),country:worldCountry(),mode,value:Math.floor(Number(value)),client_version:"V62"})});if(!r.ok)throw new Error(`HTTP ${r.status}`);const data=await r.json();trackGame("leaderboard_score_submitted",{category:mode,value:Math.floor(value),world_rank:Number(data.rank)||0,country_code:worldCountry()});if(Number(data.rank)>0){trackGame("leaderboard_rank_received",{category:mode,world_rank:Number(data.rank),value:Math.floor(value)});if(Number(data.rank)<=9)trackGame("leaderboard_top9_entered",{category:mode,world_rank:Number(data.rank),value:Math.floor(value)})}return data}catch(e){trackGame("leaderboard_submit_failed",{category:mode});return null}}
+document.getElementById("worldBoardClose")?.addEventListener("click",closeWorldLeaderboard);
+document.getElementById("worldLeaderboard")?.addEventListener("click",e=>{if(e.target?.id==="worldLeaderboard")closeWorldLeaderboard()});
+document.getElementById("worldEditIdentity")?.addEventListener("click",openIdentitySetup);
+document.getElementById("identityEnter")?.addEventListener("click",saveWorldIdentity);
+document.getElementById("identityInitialsInput")?.addEventListener("input",e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,3)});
+document.getElementById("identityInitialsInput")?.addEventListener("keydown",e=>{if(e.key==="Enter")saveWorldIdentity()});
+populateCountrySelect();
+updateWorldIdentityDisplay();
+
 // SHIFTVIX V56 — every core Flow is now an endless three-life Personal Best challenge.
 // The record itself is the progression system; there are no authored completion targets.
 const FLOW_BEST_OBJECTIVE={
@@ -7983,7 +8071,11 @@ function renderFlowArchive(){
     ${eightIndependentFlowCardsHtml()}
 
     ${personalBestCardHtml()}
+
+    <button class="worldBoardLaunch" id="worldBoardLaunch" type="button"><strong>WORLD TOP 9</strong><span>VIEW RANKS</span></button>
   `;
+
+  document.getElementById("worldBoardLaunch")?.addEventListener("click",()=>openWorldLeaderboard());
 
   // Eight permanent Flow cards.
   list
@@ -11007,6 +11099,7 @@ function endRun(){
         });
         personalBestLevelRecord=achievedLevel;
         localStorage.setItem(PERSONAL_BEST_LEVEL_KEY,String(achievedLevel));
+        submitWorldBest("ENDURE",achievedLevel);
       }
       setFlowHubContext("failed",{
         resultLabel:newBest?"NEW PERSONAL BEST":"PERSONAL BEST",
@@ -11083,6 +11176,7 @@ function endRun(){
 
     if(newSkillBest){
       updateVectorRecord(endedFlow,endedProgress);
+      submitWorldBest(endedFlow.category,endedProgress);
       trackGame("skill_best_beaten",{
         category:endedFlow.category,previous_best:previousSkillBest,new_best:endedProgress,
         improvement:endedProgress-previousSkillBest,duration_seconds:lastRunDuration
