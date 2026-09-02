@@ -159,7 +159,7 @@ function track(eventName,data={}){
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <!-- SHIFTVIX 2.11 — GOLD RINGS + FIVE EVEN OBJECTIVE TYPES -->
-<!-- SHIFTVIX V62 — WORLD TOP 9 / PLAYER INITIALS + COUNTRY FLAGS -->
+<!-- SHIFTVIX V63 — WORLD TOP 9 PROMOTED / PLAYER IDENTITY -->
 <title>SHIFTVIX</title>
 <style>
 html,body{
@@ -3368,8 +3368,8 @@ body.uiModalOpen #center{pointer-events:none}
 @keyframes invincibleCollapse{0%{opacity:1;scale:1}100%{opacity:0;scale:.18}}
 
 
-/* SHIFTVIX V62 — WORLD TOP 9 + PLAYER IDENTITY */
-.worldBoardLaunch{width:100%;margin-top:18px;border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:17px 20px;background:linear-gradient(135deg,rgba(255,211,106,.11),rgba(110,220,255,.07));color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:14px;text-align:left;box-shadow:inset 0 0 28px rgba(255,255,255,.035)}
+/* SHIFTVIX V63 — WORLD TOP 9 PROMOTED + PLAYER IDENTITY */
+.worldBoardLaunch{width:100%;margin:0 0 18px;border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:17px 20px;background:linear-gradient(135deg,rgba(255,211,106,.11),rgba(110,220,255,.07));color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:14px;text-align:left;box-shadow:inset 0 0 28px rgba(255,255,255,.035)}
 .worldBoardLaunch strong{font-size:clamp(20px,2.5vw,31px);letter-spacing:1.8px;font-weight:950}.worldBoardLaunch span{font-size:15px;letter-spacing:1.4px;font-weight:950;opacity:.88}
 #worldLeaderboard{position:fixed;inset:0;z-index:13000;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;backdrop-filter:blur(12px)}
 #worldLeaderboard.show{display:flex}.worldBoardPanel{width:min(560px,100%);max-height:min(820px,92vh);overflow:auto;border:1px solid rgba(255,255,255,.25);border-radius:24px;background:linear-gradient(180deg,rgba(12,17,25,.98),rgba(0,0,0,.99));padding:22px;box-sizing:border-box;box-shadow:0 0 70px rgba(80,190,255,.12)}
@@ -6148,7 +6148,7 @@ function prototypeTotalLabel(
 }
 
 
-// SHIFTVIX V62 — WORLD TOP 9 + ARCADE IDENTITY
+// SHIFTVIX V63 — WORLD TOP 9 PROMOTED + ARCADE IDENTITY
 // The Cloudflare endpoint remains blank until the shared backend is deployed.
 const SHIFTVIX_LEADERBOARD_API="";
 const WORLD_INITIALS_KEY="shiftvixArcadeInitialsV62";
@@ -6175,7 +6175,7 @@ function renderWorldTabs(){const el=document.getElementById("worldFlowTabs");if(
 function openWorldLeaderboard(mode="COLLECT"){worldBoardMode=WORLD_MODES.includes(mode)?mode:"COLLECT";const modal=document.getElementById("worldLeaderboard");if(!modal)return;modal.classList.add("show");modal.setAttribute("aria-hidden","false");document.body.classList.add("uiModalOpen");renderWorldTabs();updateWorldIdentityDisplay();trackGame("leaderboard_opened",{category:worldBoardMode});loadWorldLeaderboard(worldBoardMode);if(!worldIdentityReady())setTimeout(openIdentitySetup,120)}
 function closeWorldLeaderboard(){const modal=document.getElementById("worldLeaderboard");modal?.classList.remove("show");modal?.setAttribute("aria-hidden","true");if(!document.getElementById("worldIdentitySetup")?.classList.contains("show"))document.body.classList.remove("uiModalOpen")}
 async function loadWorldLeaderboard(mode){const rows=document.getElementById("worldBoardRows"),mine=document.getElementById("worldMine"),note=document.getElementById("worldBackendNote");if(!rows)return;if(!SHIFTVIX_LEADERBOARD_API){rows.innerHTML='<div class="worldStatus">WORLD TOP 9 IS READY.<br>THE GLOBAL DATABASE CONNECTS NEXT.</div>';if(mine){if(worldIdentityReady()){mine.style.display="block";mine.innerHTML=`<span class="worldMineFlag">${countryFlag(worldCountry())}</span>${worldInitials()} · YOUR LOCAL BEST · ${formatWorldValue(mode,flowBestValue(mode))}`}else mine.style.display="none"}if(note)note.textContent="Your arcade identity is saved on this device. Real world ranks begin when Cloudflare is connected.";return}rows.innerHTML='<div class="worldStatus">LOADING WORLD TOP 9…</div>';try{const r=await fetch(`${SHIFTVIX_LEADERBOARD_API}/leaderboard?mode=${encodeURIComponent(mode)}&player_id=${encodeURIComponent(worldPlayerId())}`,{cache:"no-store"});if(!r.ok)throw new Error(`HTTP ${r.status}`);const data=await r.json();const top=Array.isArray(data.top9)?data.top9:[];rows.innerHTML=top.length?top.map((x,i)=>`<div class="worldRow"><div class="worldRank">${i+1}</div><div class="worldName"><span class="worldFlag">${countryFlag(x.country)}</span><span>${String(x.initials||'---').slice(0,3)}</span></div><div class="worldValue">${formatWorldValue(mode,x.value)}</div></div>`).join(""):'<div class="worldStatus">NO WORLD RECORDS YET.<br>BE THE FIRST.</div>';if(mine&&data.player){mine.style.display="block";mine.innerHTML=`<span class="worldMineFlag">${countryFlag(data.player.country||worldCountry())}</span>${worldInitials()} · WORLD #${data.player.rank} · ${formatWorldValue(mode,data.player.value)}`;trackGame("leaderboard_rank_received",{category:mode,world_rank:Number(data.player.rank)||0,value:Number(data.player.value)||0})}else if(mine)mine.style.display="none";if(note)note.textContent=""}catch(e){rows.innerHTML='<div class="worldStatus">WORLD BOARD UNAVAILABLE.<br>YOUR LOCAL BEST IS SAFE.</div>';if(note)note.textContent="Leaderboard connection failed."}}
-async function submitWorldBest(mode,value){if(!SHIFTVIX_LEADERBOARD_API||!WORLD_MODES.includes(mode)||!(Number(value)>0)||!worldIdentityReady())return null;try{const r=await fetch(`${SHIFTVIX_LEADERBOARD_API}/submit`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({player_id:worldPlayerId(),initials:worldInitials(),country:worldCountry(),mode,value:Math.floor(Number(value)),client_version:"V62"})});if(!r.ok)throw new Error(`HTTP ${r.status}`);const data=await r.json();trackGame("leaderboard_score_submitted",{category:mode,value:Math.floor(value),world_rank:Number(data.rank)||0,country_code:worldCountry()});if(Number(data.rank)>0){trackGame("leaderboard_rank_received",{category:mode,world_rank:Number(data.rank),value:Math.floor(value)});if(Number(data.rank)<=9)trackGame("leaderboard_top9_entered",{category:mode,world_rank:Number(data.rank),value:Math.floor(value)})}return data}catch(e){trackGame("leaderboard_submit_failed",{category:mode});return null}}
+async function submitWorldBest(mode,value){if(!SHIFTVIX_LEADERBOARD_API||!WORLD_MODES.includes(mode)||!(Number(value)>0)||!worldIdentityReady())return null;try{const r=await fetch(`${SHIFTVIX_LEADERBOARD_API}/submit`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({player_id:worldPlayerId(),initials:worldInitials(),country:worldCountry(),mode,value:Math.floor(Number(value)),client_version:"V63"})});if(!r.ok)throw new Error(`HTTP ${r.status}`);const data=await r.json();trackGame("leaderboard_score_submitted",{category:mode,value:Math.floor(value),world_rank:Number(data.rank)||0,country_code:worldCountry()});if(Number(data.rank)>0){trackGame("leaderboard_rank_received",{category:mode,world_rank:Number(data.rank),value:Math.floor(value)});if(Number(data.rank)<=9)trackGame("leaderboard_top9_entered",{category:mode,world_rank:Number(data.rank),value:Math.floor(value)})}return data}catch(e){trackGame("leaderboard_submit_failed",{category:mode});return null}}
 document.getElementById("worldBoardClose")?.addEventListener("click",closeWorldLeaderboard);
 document.getElementById("worldLeaderboard")?.addEventListener("click",e=>{if(e.target?.id==="worldLeaderboard")closeWorldLeaderboard()});
 document.getElementById("worldEditIdentity")?.addEventListener("click",openIdentitySetup);
@@ -8059,6 +8059,8 @@ function renderFlowArchive(){
   if(!list)return;
 
   list.innerHTML=`
+    <button class="worldBoardLaunch" id="worldBoardLaunch" type="button"><strong>WORLD TOP 9</strong><span>VIEW RANKS</span></button>
+
     ${flowHubStatusHtml()}
 
     ${todayPickHtml()}
@@ -8071,8 +8073,6 @@ function renderFlowArchive(){
     ${eightIndependentFlowCardsHtml()}
 
     ${personalBestCardHtml()}
-
-    <button class="worldBoardLaunch" id="worldBoardLaunch" type="button"><strong>WORLD TOP 9</strong><span>VIEW RANKS</span></button>
   `;
 
   document.getElementById("worldBoardLaunch")?.addEventListener("click",()=>openWorldLeaderboard());
