@@ -89,6 +89,7 @@ const ANALYTICS_ALLOWED_EVENTS=new Set([
   "distance_milestone",
   "travel_milestone",
   "void_hit",
+  "void_entered",
   "escape_void_passed",
   "ring_passed",
   "warp_collected",
@@ -152,7 +153,7 @@ function track(eventName,data={}){
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <!-- SHIFTVIX 2.11 — GOLD RINGS + FIVE EVEN OBJECTIVE TYPES -->
-<!-- SHIFTVIX V56 — ALL FLOWS PERSONAL BEST / ARCADE RETENTION SYSTEM -->
+<!-- SHIFTVIX V59 — KRONOS / RARE POWERS / INVINCIBLE SHIELD / UNIFIED HUB HUD -->
 <title>SHIFTVIX</title>
 <style>
 html,body{
@@ -1419,6 +1420,7 @@ body.uiModalOpen #center{pointer-events:none}
 }
 
 #objectiveHud{
+  text-align:center;
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -3303,6 +3305,50 @@ body.uiModalOpen #center{pointer-events:none}
 #flowCompletionFade{position:fixed;inset:0;z-index:10050;background:#000;pointer-events:none;opacity:0;visibility:hidden;transition:opacity 4s linear,visibility 0s linear 4s;}
 #flowCompletionFade.active{visibility:visible;opacity:1;transition:opacity 4s linear,visibility 0s linear 0s;}
 #flowCompletionFade.reveal{visibility:visible;opacity:0;transition:opacity .55s ease,visibility 0s linear .55s;}
+
+/* V59 — unified hub anchors + readable Invincible state */
+.flowChoiceStep,
+.flowChoiceTotal span,
+.todayPickTop span:last-child,
+.todayPickBottom span{
+  font-size:17px !important;
+  font-weight:950 !important;
+  letter-spacing:1.6px !important;
+  line-height:1 !important;
+}
+.todayPickBottom strong:empty{display:none!important;}
+#center.reactorInvincible{
+  --reactor-scale:1.08;
+  border-color:rgba(235,255,255,1)!important;
+  box-shadow:
+    0 0 10px rgba(255,255,255,.95),
+    0 0 24px rgba(175,245,255,.72),
+    0 0 0 10px rgba(210,252,255,.10),
+    0 0 0 18px rgba(255,255,255,.055),
+    inset 0 0 12px rgba(210,252,255,.65)!important;
+}
+#center.reactorInvincible::before,
+#center.reactorInvincible::after{
+  content:"";position:absolute;left:50%;top:50%;border-radius:50%;pointer-events:none;
+  transform:translate(-50%,-50%);box-sizing:border-box;
+}
+#center.reactorInvincible::before{
+  width:62px;height:62px;border:2px solid rgba(220,252,255,.78);
+  box-shadow:0 0 16px rgba(170,240,255,.45),inset 0 0 13px rgba(255,255,255,.12);
+  animation:invincibleShieldBreathe 1.05s ease-in-out infinite;
+}
+#center.reactorInvincible::after{
+  width:82px;height:82px;border:1px solid rgba(255,255,255,.34);
+  box-shadow:0 0 20px rgba(180,245,255,.22);
+  animation:invincibleShieldTurn 3.2s linear infinite;
+}
+#center.reactorInvincible.invincibleEnding::before,
+#center.reactorInvincible.invincibleEnding::after{animation-duration:.28s!important;}
+#center.invincibleCollapse::before,#center.invincibleCollapse::after{animation:invincibleCollapse .34s ease-in forwards!important;}
+@keyframes invincibleShieldBreathe{0%,100%{opacity:.62;scale:.96}50%{opacity:1;scale:1.05}}
+@keyframes invincibleShieldTurn{0%{opacity:.28;transform:translate(-50%,-50%) rotate(0deg) scale(.98)}50%{opacity:.65;transform:translate(-50%,-50%) rotate(180deg) scale(1.04)}100%{opacity:.28;transform:translate(-50%,-50%) rotate(360deg) scale(.98)}}
+@keyframes invincibleCollapse{0%{opacity:1;scale:1}100%{opacity:0;scale:.18}}
+
 </style>
 
 <style id="cometTravelerPrototypeStyle">
@@ -3639,7 +3685,7 @@ let prototypeLastScore=0;
 let prototypeTotals=(()=>{
   const empty={
     COLLECT:0,TRAVEL:0,SCORE:0,RINGS:0,
-    SHIFT:0,WARP:0,BREAK:0,DRIFT:0
+    SHIFT:0,WARP:0,VOIDS:0,DRIFT:0
   };
 
   try{
@@ -3691,7 +3737,8 @@ function isRegularTrainBeacon(b){
     !u.isFlux &&
     !u.isChrono &&
     !u.isMidas &&
-    !u.isWarp
+    !u.isWarp &&
+    !u.isInvincible
   );
 }
 
@@ -3752,7 +3799,7 @@ let lastRunDuration = 0;
 // =========================
 // SHIFTVIX 2.32 — RETENTION ANALYTICS
 // =========================
-const ANALYTICS_VERSION="4.0-v52-complete";
+const ANALYTICS_VERSION="5.0-v57-flow-rules";
 const analyticsSessionId=
   `${Date.now()}-${Math.random().toString(36).slice(2,10)}`;
 
@@ -3968,9 +4015,9 @@ const STAR_COLOR_UPDATE_INTERVAL=
 // Legendary effects never overlap; collecting another legendary during an
 // active effect consumes that orb but does not replace the current effect.
 // =========================
-const LEGENDARY_SPAWN_CHANCE_PER_WAVE=.052;
-const LEGENDARY_MIN_GAP_MS=8500;
-const LEGENDARY_MAX_GAP_MS=15000;
+const LEGENDARY_SPAWN_CHANCE_PER_WAVE=.026;
+const LEGENDARY_MIN_GAP_MS=18000;
+const LEGENDARY_MAX_GAP_MS=32000;
 let legendaryNextAllowedAt=0;
 let legendarySpawnCount=0;
 legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;
@@ -3979,6 +4026,7 @@ function currentLegendaryEffect(){
   if(fluxBoostTime>0)return "flux";
   if(chronoTime>0)return "chrono";
   if(midasTime>0)return "midas";
+  if(typeof invincibleTime!=="undefined" && invincibleTime>0)return "invincible";
   return null;
 }
 
@@ -3994,12 +4042,15 @@ function updateCenterReactor(){
   const fluxActive=!damageActive&&fluxBoostTime>0;
   const chronoActive=!damageActive&&chronoTime>0;
   const midasActive=!damageActive&&midasTime>0;
-  const normalActive=!damageActive&&!fluxActive&&!chronoActive&&!midasActive;
+  const invincibleActive=!damageActive&&typeof invincibleTime!=="undefined"&&invincibleTime>0;
+  const normalActive=!damageActive&&!fluxActive&&!chronoActive&&!midasActive&&!invincibleActive;
 
   center.classList.toggle("reactorDamage",damageActive);
   center.classList.toggle("reactorFlux",fluxActive);
   center.classList.toggle("reactorChrono",chronoActive);
   center.classList.toggle("reactorMidas",midasActive);
+  center.classList.toggle("reactorInvincible",invincibleActive);
+  center.classList.toggle("invincibleEnding",invincibleActive&&invincibleTime<=2.0);
   center.classList.toggle("reactorNormal",normalActive);
 }
 
@@ -4089,12 +4140,13 @@ const POWER_ORB_SCORE_VALUES=[25,50,100];
 const GOLD_RING_SCORE_VALUE=250;
 
 // SHIFTVIX POWER ORB FREQUENCY 2.0
-// First opportunity: 180–300m.
-// Then another opportunity roughly every 260–430m.
-const POWER_ORB_FIRST_MIN=180;
-const POWER_ORB_FIRST_MAX=300;
-const POWER_ORB_GAP_MIN=260;
-const POWER_ORB_GAP_MAX=430;
+// V59 — signature powers should feel discovered, not scheduled.
+// First opportunity: 500–900m. Later opportunities: 850–1500m apart.
+// WARP keeps its own intentionally more frequent objective cadence.
+const POWER_ORB_FIRST_MIN=500;
+const POWER_ORB_FIRST_MAX=900;
+const POWER_ORB_GAP_MIN=850;
+const POWER_ORB_GAP_MAX=1500;
 let nextPowerOrbOpportunity=
   POWER_ORB_FIRST_MIN+
   Math.random()*(POWER_ORB_FIRST_MAX-POWER_ORB_FIRST_MIN);
@@ -4514,7 +4566,7 @@ function activateFluxBoost(reason,tier=1){
 // =========================
 const CHRONO_DURATION_SECONDS=8; // fallback; tier activation uses 4/8/12
 const CHRONO_MIN_DISTANCE=1800;
-const CHRONO_WORLD_SCALE=.40;
+const CHRONO_WORLD_SCALE=1; // V59 KRONOS: score doubles without slowing time
 const CHRONO_COLOR=0xbff6ff;
 const CHRONO_GLOW_COLOR=0x45cfff;
 
@@ -4639,11 +4691,11 @@ function activateChrono(reason,tier=1){
   chronoPendingReasons.length=0;
 
   playChronoSound();
-  showPowerAnnouncement("CHRONO",tier);
+  showPowerAnnouncement("KRONOS",tier);
 
   /*
-    CHRONO UI SEQUENCE:
-    1) Player first reads CHRONO 1 / CHRONO 2 / CHRONO 3.
+    KRONOS UI SEQUENCE:
+    1) Player first reads KRONOS 1 / KRONOS 2 / KRONOS 3.
     2) After that announcement clears, ×2 SCORE appears.
     This prevents both messages from competing for the same screen space.
   */
@@ -4662,7 +4714,7 @@ function activateChrono(reason,tier=1){
 
   if(navigator.vibrate)navigator.vibrate([22,45,22]);
 
-  trackGame("chrono_orb_collected",{
+  trackGame("kronos_orb_collected",{
     trigger_reason:reason||"unknown",
     distance:Math.floor(distance),
     flow_number:currentFlowIndex+1,
@@ -5888,8 +5940,26 @@ function startMusic(){
 const FLOW_TOTAL = 320;
 const FLOW_TYPES=[
   "COLLECT","TRAVEL","SCORE","RINGS",
-  "SHIFT","WARP","BREAK","DRIFT"
+  "SHIFT","WARP","VOIDS","DRIFT"
 ];
+// V58 — one cohesive SHIFTVIX universe. The Flow changes the record being chased,
+// while rings and hollow/solid Voids can remain part of the shared world. ENDURE stays pure.
+function activeFlowCategory(){
+  if(personalBestMode)return "ENDURE";
+  return String(activeChallenge?.category||flowCategoryForIndex(currentFlowIndex)||"").toUpperCase();
+}
+function flowAllowsRings(){ return !personalBestMode; }
+function flowAllowsHollowVoids(){ return !personalBestMode; }
+function flowAllowedSpecials(){
+  const c=activeFlowCategory();
+  if(c==="COLLECT")return ["midas"];
+  if(c==="TRAVEL" || c==="SHIFT")return ["flux"];
+  if(c==="SCORE")return ["doubler"];
+  if(c==="RINGS" || c==="VOIDS" || c==="DRIFT")return ["invincible"];
+  if(c==="WARP")return ["warp"];
+  return [];
+}
+function flowAllowsSpecial(type){return flowAllowedSpecials().includes(type);}
 const FLOWS_PER_CYCLE=8;
 const TOTAL_CYCLES=Math.ceil(FLOW_TOTAL/FLOWS_PER_CYCLE);
 
@@ -5900,7 +5970,7 @@ const FLOW_COLOR_MAP={
   RINGS:"#ffd34e",
   SHIFT:"#ff5f6d",
   WARP:"#35f2ff",
-  BREAK:"#ff7a35",
+  VOIDS:"#ff7a35",
   DRIFT:"#72e6d1"
 };
 
@@ -5911,7 +5981,7 @@ const FLOW_GLOW_MAP={
   RINGS:"rgba(255,211,78,.22)",
   SHIFT:"rgba(255,95,109,.22)",
   WARP:"rgba(53,242,255,.22)",
-  BREAK:"rgba(255,122,53,.24)",
+  VOIDS:"rgba(255,122,53,.24)",
   DRIFT:"rgba(114,230,209,.22)"
 };
 
@@ -6024,7 +6094,7 @@ const FLOW_BEST_OBJECTIVE={
   RINGS:"HOW MANY RINGS CAN YOU FLY THROUGH?",
   SHIFT:"HOW MANY SHIFTS CAN YOU MAKE?",
   WARP:"HOW MANY WARPS CAN YOU HIT?",
-  BREAK:"HOW MANY VOIDS CAN YOU BREAK?",
+  VOIDS:"HOW MANY VOIDS CAN YOU ENTER?",
   DRIFT:"HOW MUCH DRIFT CAN YOU GENERATE?"
 };
 function flowBestValue(category){
@@ -6122,11 +6192,13 @@ function chooseFlowFamily(
 function personalBestCardHtml(){
   const best=Math.max(0,Number(personalBestLevelRecord)||0);
   return `
-    <button class="personalBestCard" id="personalBestPlay" type="button" aria-label="Endurance personal best challenge">
-      <div class="personalBestTop"><span class="personalBestName">ENDURANCE</span><span class="personalBestRecord">${best?`BEST · LEVEL ${best}`:"SET YOUR RECORD"}</span></div>
-      <div class="personalBestObjective">HOW FAR CAN YOU GO?</div>
-      <div class="personalBestRule">STAY CONNECTED · 250M = 1 LEVEL</div>
-      <div class="personalBestBottom"><span>3 LIVES · NO VOIDS · NO RINGS</span><strong>PLAY</strong></div>
+    <button class="flowChoiceCard personalBestCard" id="personalBestPlay" type="button" aria-label="Endure personal best challenge">
+      <div class="flowChoiceTop">
+        <div class="flowChoiceIdentity"><span class="flowChoiceName personalBestName">ENDURE</span></div>
+        <span class="flowChoiceStep">PLAY</span>
+      </div>
+      <div class="flowChoiceObjective personalBestObjective">HOW FAR CAN YOU GO?</div>
+      <div class="flowChoiceTotal"><span>BEST</span><strong>${best?`LEVEL ${best}`:"—"}</strong></div>
     </button>`;
 }
 
@@ -6139,7 +6211,7 @@ function startPersonalBestMode(){
     lives:3
   });
   trackGA4Game("level_start",{
-    level_name:"ENDURANCE",
+    level_name:"ENDURE",
     level:1,
     previous_best_level:Math.max(0,Number(personalBestLevelRecord)||0)
   });
@@ -6150,7 +6222,7 @@ function startPersonalBestMode(){
   archive?.setAttribute("aria-hidden","true");
   document.body.classList.remove("uiModalOpen");
   resetRun();
-  showModeBanner("ENDURANCE");
+  showModeBanner("ENDURE");
 }
 
 let flowHubContext={
@@ -6361,11 +6433,11 @@ function loadVectorRecords(){
       RINGS:Number(raw.RINGS)||0,
       SHIFT:Number(raw.SHIFT)||0,
       WARP:Number(raw.WARP)||0,
-      BREAK:Number(raw.BREAK)||0,
+      VOIDS:Number(raw.VOIDS ?? raw.BREAK)||0,
       DRIFT:Number(raw.DRIFT)||0
     };
   }catch(e){
-    return {COLLECT:0,TRAVEL:0,SCORE:0,RINGS:0,SHIFT:0,WARP:0,BREAK:0,DRIFT:0};
+    return {COLLECT:0,TRAVEL:0,SCORE:0,RINGS:0,SHIFT:0,WARP:0,VOIDS:0,DRIFT:0};
   }
 }
 
@@ -7146,7 +7218,7 @@ function flowCategoryForIndex(index){
     "RINGS",
     "SHIFT",
     "WARP",
-    "BREAK",
+    "VOIDS",
     "DRIFT"
   ][index%8];
 }
@@ -7172,7 +7244,7 @@ function applyFlowStrikeAllowance(flow,index){
 
 function createFlow(index){
   const category=flowCategoryForIndex(index);
-  const metric={COLLECT:"orbs",TRAVEL:"travel",SCORE:"score",RINGS:"rings",SHIFT:"shift",WARP:"warp",BREAK:"break",DRIFT:"drift"}[category]||"orbs";
+  const metric={COLLECT:"orbs",TRAVEL:"travel",SCORE:"score",RINGS:"rings",SHIFT:"shift",WARP:"warp",VOIDS:"voids",DRIFT:"drift"}[category]||"orbs";
   return {
     id:`${category.toLowerCase()}_best`,
     name:category,
@@ -7230,8 +7302,8 @@ function beginCurrentFlow(){
         showModeBanner("WARP");
     }else{
         warpFlowNextWarpDistance=Infinity;
-    }    if(activeChallenge.metric==="break"){
-        showModeBanner("BREAK: FLY THROUGH THE HOLLOW VOIDS");
+    }    if(activeChallenge.metric==="voids"){
+        showModeBanner("VOIDS: ENTER THE HOLLOW VOIDS");
     }else if(activeChallenge.metric==="drift"){
         showModeBanner("DRIFT: KEEP MOVING");
     }
@@ -7257,7 +7329,7 @@ function challengeBaseValue(ch){
   if(ch.metric==="rings")return Math.max(0,goldRingsPassed-(challengeStart.rings||0));
   if(ch.metric==="shift")return Math.max(0,shiftCountRun-(challengeStart.shifts||0));
   if(ch.metric==="warp")return Math.max(0,warpCollectedThisRun-(challengeStart.warps||0));
-  if(ch.metric==="break")return Math.max(0,breakVoidsDestroyed-(challengeStart.breaks||0));
+  if(ch.metric==="voids")return Math.max(0,breakVoidsDestroyed-(challengeStart.breaks||0));
   if(ch.metric==="drift")return Math.max(0,driftDistance-(challengeStart.drift||0));
 
   return 0;
@@ -7678,7 +7750,7 @@ function updateChallenge(){
     const text=document.getElementById("challengeText");
     const fill=document.getElementById("challengeFill");
     const pct=document.getElementById("challengePct");
-    if(heading)heading.textContent="ENDURANCE";
+    if(heading)heading.textContent="ENDURE";
     if(text)text.textContent="STAY CONNECTED";
     const intoLevel=((distance%PERSONAL_BEST_LEVEL_METERS)/PERSONAL_BEST_LEVEL_METERS)*100;
     if(fill)fill.style.width=intoLevel+"%";
@@ -7835,7 +7907,7 @@ function todayPickHtml(){
           ${
             cleared
               ?`${cleared} CLEARED TODAY`
-              :"RANDOM"
+              :"PLAY"
           }
         </span>
       </div>
@@ -7849,8 +7921,8 @@ function todayPickHtml(){
       </div>
 
       <div class="todayPickBottom">
-        <span>3 LIVES · ONE RANDOM SKILL</span>
-        <strong>PLAY</strong>
+        <span>RANDOM</span>
+        <strong></strong>
       </div>
     </button>
   `;
@@ -7893,7 +7965,7 @@ function renderFlowArchive(){
 
     <div class="hubChooseHeader">
       <span>CHOOSE A FLOW</span>
-      <small>8 SKILLS · TODAY'S PICK · ENDURANCE</small>
+      <small>8 SKILLS · TODAY'S PICK · ENDURE</small>
     </div>
 
     ${eightIndependentFlowCardsHtml()}
@@ -8592,6 +8664,7 @@ function chooseTier(){
     return TIERS[0];
 }
 function makeFluxOrb(reason="random"){
+  if(reason!=="tutorial" && !flowAllowsSpecial("flux"))return false;
   if(fluxOrbActive)return false;
   const powerTier=choosePowerTier();
   trainId++;
@@ -8633,6 +8706,7 @@ function makeFluxOrb(reason="random"){
 }
 
 function makeChronoOrb(reason="random"){
+  if(reason!=="tutorial" && !flowAllowsSpecial("doubler"))return false;
   if(chronoOrbActive)return false;
   const powerTier=choosePowerTier();
 
@@ -8686,7 +8760,7 @@ function makeChronoOrb(reason="random"){
   beacons.push(group);
   chronoOrbActive=true;
 
-  trackGame("chrono_orb_spawned",{
+  trackGame("kronos_orb_spawned",{
     trigger_reason:group.userData.chronoReason,
     distance:Math.floor(distance),
     flow_number:currentFlowIndex+1,
@@ -8699,6 +8773,7 @@ function makeChronoOrb(reason="random"){
 }
 
 function makeMidasOrb(reason="random"){
+  if(reason!=="tutorial" && !flowAllowsSpecial("midas"))return false;
   if(midasOrbActive)return false;
   const powerTier=choosePowerTier();
 
@@ -9586,17 +9661,14 @@ function spawnVoidVolley(reason="normal"){
   let spawned=0;
 
   const breakFlow=
-    activeChallenge?.metric==="break";
+    activeChallenge?.metric==="voids";
 
   // SHIFTVIX V40 — BREAK gets a modest density lift without becoming RINGS.
   // Preserve its identify/line-up/break rhythm, but occasionally present
   // two or three hollow targets in a readable group.
   const breakTargetCount=
     breakFlow
-      ? (
-          count>=5 && Math.random()<.24 ? 3 :
-          count>=3 && Math.random()<.68 ? 2 : 1
-        )
+      ? Math.max(1,Math.min(count, Math.ceil(count*.72)))
       : 0;
 
   // V44 — Every normal non-BREAK Void volley contains one hollow escape
@@ -9604,7 +9676,7 @@ function spawnVoidVolley(reason="normal"){
   // This gives every Flow a deliberate “thread the needle” option without
   // removing the danger of the surrounding lethal Voids.
   const escapeTargetCount=
-    !breakFlow && reason!=="tutorial" ? 1 : 0;
+    !breakFlow && flowAllowsHollowVoids() && reason!=="tutorial" ? 1 : 0;
 
   for(let i=0;i<count;i++){
     if(
@@ -9674,7 +9746,7 @@ function passEscapeVoid(b){
   return true;
 }
 
-function breakHollowVoid(b){
+function enterHollowVoid(b){
   if(
     !b?.userData ||
     b.userData.state!=="active" ||
@@ -9691,22 +9763,30 @@ function breakHollowVoid(b){
   const points=
     awardBonusScore(
       400,
-      "break_void"
+      "void_enter"
     );
 
-  if(activeChallenge?.category==="BREAK"){
-    addPrototypeTotal("BREAK",1);
+  if(activeChallenge?.category==="VOIDS"){
+    addPrototypeTotal("VOIDS",1);
   }
 
   playRingPass();
   pulseObjectiveHud();
   showModeBanner(
-    `BREAK +1  +${points}`
+    `VOID +1  +${points}`
   );
 
   if(navigator.vibrate){
     navigator.vibrate([12,22,24]);
   }
+
+  trackGame("void_entered",{
+    distance:Math.floor(distance),
+    level,
+    flow_number:currentFlowIndex+1,
+    voids_run:breakVoidsDestroyed,
+    category:"VOIDS"
+  });
 
   updateHUD();
   updateChallenge();
@@ -9720,6 +9800,14 @@ function hitVoidHazard(b){
   // Hazards remain visible and can pass through the Traveler, but cannot
   // remove lives or trigger strike feedback after FLOW COMPLETE.
   if(flowCompletionCoastActive)return;
+
+  if(invincibleTime>0){
+    b.userData.state="collected";
+    b.userData.fade=1;
+    trackGame("void_blocked_by_invincible",{distance:Math.floor(distance),level,flow_number:currentFlowIndex+1});
+    if(navigator.vibrate)navigator.vibrate(6);
+    return;
+  }
 
   b.userData.state="collected";
   b.userData.fade=1;
@@ -9902,6 +9990,7 @@ function activateWarp(reason,tier=1){
 }
 
 function makeWarpOrb(reason="random"){
+  if(reason!=="tutorial" && !flowAllowsSpecial("warp"))return false;
   if(warpOrbActive || distance<warpCooldownUntilDistance)return false;
 
   /*
@@ -9970,27 +10059,62 @@ function makeWarpOrb(reason="random"){
 }
 
 
+// V59 — INVINCIBLE: transparent force-field orb. Protection only; solid Voids
+// award no points and never count toward VOIDS while the shield is active.
+const INVINCIBLE_DURATION_SECONDS=8;
+let invincibleOrbActive=false;
+let invincibleTime=0;
+function makeInvincibleOrb(reason="random"){
+  if(reason!=="tutorial" && !flowAllowsSpecial("invincible"))return false;
+  if(invincibleOrbActive || invincibleTime>0)return false;
+  trainId++;
+  const xIndex=Math.floor(Math.random()*3), yIndex=Math.floor(Math.random()*3);
+  const x=LANE_X[xIndex], y=LANE_Y[yIndex];
+  const group=new THREE.Group();
+  const core=new THREE.Mesh(new THREE.SphereGeometry(4.2,24,24),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.82,blending:THREE.AdditiveBlending,depthWrite:false}));
+  const shell1=new THREE.Mesh(new THREE.SphereGeometry(9.0,24,24),new THREE.MeshBasicMaterial({color:0xcffcff,wireframe:true,transparent:true,opacity:.34,blending:THREE.AdditiveBlending,depthWrite:false}));
+  const shell2=new THREE.Mesh(new THREE.SphereGeometry(12.2,24,24),new THREE.MeshBasicMaterial({color:0xffffff,wireframe:true,transparent:true,opacity:.16,blending:THREE.AdditiveBlending,depthWrite:false}));
+  shell2.rotation.set(.55,.35,.2); group.add(shell2);group.add(shell1);group.add(core);
+  group.position.set(x,y,FAR_Z+90); group.scale.setScalar(introScale);
+  group.userData={core,glow:shell2,state:"active",fade:1,train:trainId,speedMult:1,roadX:x,roadY:y,isInvincible:true,invincibleReason:reason};
+  scene.add(group);beacons.push(group);invincibleOrbActive=true;
+  trackGame("invincible_orb_spawned",{trigger_reason:reason,distance:Math.floor(distance),flow_number:currentFlowIndex+1,lane_x:xIndex,lane_y:yIndex});
+  return true;
+}
+function activateInvincible(reason){
+  invincibleTime=INVINCIBLE_DURATION_SECONDS;
+  updateCenterReactor();
+  showPowerAnnouncement("INVINCIBLE",1);
+  if(navigator.vibrate)navigator.vibrate([18,28,18]);
+  trackGame("invincible_orb_collected",{trigger_reason:reason||"unknown",duration_seconds:INVINCIBLE_DURATION_SECONDS,distance:Math.floor(distance),flow_number:currentFlowIndex+1});
+}
+
 function makeLegendaryOrb(){
   const available=[];
 
   // Different legendary orb objects may exist on screen together.
   // Their effects still cannot overlap after collection.
-  if(!fluxOrbActive)available.push({
+  if(flowAllowsSpecial("flux") && !fluxOrbActive)available.push({
     type:"flux",
     spawn:()=>makeFluxOrb("random_wave")
   });
 
-  if(!chronoOrbActive)available.push({
-    type:"chrono",
+  if(flowAllowsSpecial("doubler") && !chronoOrbActive)available.push({
+    type:"doubler",
     spawn:()=>makeChronoOrb("random_wave")
   });
 
-  if(!midasOrbActive)available.push({
+  if(flowAllowsSpecial("midas") && !midasOrbActive)available.push({
     type:"midas",
     spawn:()=>makeMidasOrb("random_wave")
   });
 
-  if(!warpOrbActive && distance>=warpCooldownUntilDistance)available.push({
+  if(flowAllowsSpecial("invincible") && !invincibleOrbActive)available.push({
+    type:"invincible",
+    spawn:()=>makeInvincibleOrb("random_wave")
+  });
+
+  if(flowAllowsSpecial("warp") && !warpOrbActive && distance>=warpCooldownUntilDistance)available.push({
     type:"warp",
     spawn:()=>makeWarpOrb("random_wave")
   });
@@ -10147,7 +10271,7 @@ function spawnWave(){
 
   // Important 5.8 repair:
   // Legendary orbs never replace or subtract from normal coin trains.
-  const trains=heroMode?2:(Math.random()<.78?2:3);
+  const trains=activeFlowCategory()==="COLLECT"?3:(heroMode?2:(Math.random()<.78?2:3));
 
   for(let i=0;i<trains;i++){
     setTimeout(spawnTrain,i*120);
@@ -10683,18 +10807,21 @@ function collectBeacon(b){
    b.userData.isFlux||
    b.userData.isChrono||
    b.userData.isMidas||
-   b.userData.isWarp
+   b.userData.isWarp||
+   b.userData.isInvincible
  ){
    const collectedType=
      b.userData.isFlux?"flux":
      b.userData.isChrono?"chrono":
      b.userData.isMidas?"midas":
+     b.userData.isInvincible?"invincible":
      "warp";
 
    if(b.userData.isFlux)fluxOrbActive=false;
    if(b.userData.isChrono)chronoOrbActive=false;
    if(b.userData.isMidas)midasOrbActive=false;
    if(b.userData.isWarp)warpOrbActive=false;
+   if(b.userData.isInvincible)invincibleOrbActive=false;
 
    const powerTier=b.userData.powerTier||1;
    const powerPoints=
@@ -10737,6 +10864,9 @@ function collectBeacon(b){
    }else if(collectedType==="midas"){
      if(!silentTutorialComplete)tutorialPowerSeen=true;
      activateMidas(b.userData.midasReason,powerTier);
+   }else if(collectedType==="invincible"){
+     if(!silentTutorialComplete)tutorialPowerSeen=true;
+     activateInvincible(b.userData.invincibleReason);
    }else{
      if(!silentTutorialComplete)tutorialPowerSeen=true;
      activateWarp(b.userData.warpReason,powerTier);
@@ -10793,16 +10923,18 @@ tierCounts[b.userData.tier.name] =
 }
 function objectiveHudData(){
     if(personalBestMode){
-        return {label:"ENDURANCE",value:`LEVEL ${Math.max(1,level).toLocaleString()}`};
+        const best=Math.max(0,personalBestLevelRecord||0);
+        return {label:"ENDURE",value:`LEVEL ${Math.max(1,level).toLocaleString()}`,condition:best?`BEST · LEVEL ${best.toLocaleString()}`:""};
     }
-    if(!activeChallenge)return {label:"SHIFTVIX",value:"READY"};
+    if(!activeChallenge)return {label:"SHIFTVIX",value:"READY",condition:""};
     const category=String(activeChallenge.category||"FLOW").toUpperCase();
     const current=flowRunMetricValue(activeChallenge);
     const best=flowBestValue(category);
     const unit=(category==="TRAVEL"||category==="DRIFT")?"m":"";
     return {
       label:category,
-      value:`${current.toLocaleString()}${unit}${best?` · BEST ${formatFlowBest(category,best)}`:""}`
+      value:`${current.toLocaleString()}${unit}`,
+      condition:best?`BEST · ${formatFlowBest(category,best)}`:""
     };
 }
 
@@ -10827,10 +10959,7 @@ function updateHUD(){
     valueEl.textContent=hud.value;
 
     if(conditionEl){
-        conditionEl.textContent=
-            activeChallenge
-                ? flowConditionText(activeChallenge)
-                : "";
+        conditionEl.textContent=hud.condition||"";
     }
 }
 
@@ -10855,7 +10984,7 @@ function flowDisplayLabel(flow){
   if(flow.metric==="rings")return "RINGS";
   if(flow.metric==="shift")return "SHIFT";
   if(flow.metric==="warp")return "WARP";
-  if(flow.metric==="break")return "BREAK";
+  if(flow.metric==="voids")return "VOIDS";
   if(flow.metric==="drift")return "DRIFT";
   if(flow.metric==="distance")return "DISTANCE";
   if(flow.metric==="score")return "SCORE";
@@ -10911,7 +11040,7 @@ function endRun(){
         lives_remaining:0
       });
       trackGA4Game("level_end",{
-        level_name:"ENDURANCE",
+        level_name:"ENDURE",
         level:achievedLevel,
         success:0,
         score,
@@ -11183,7 +11312,7 @@ vix.style.transform = "translateY(0)";
 
 title.style.transform = "translate(-50%,-50%)";
 
-const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;shiftCountRun=0;shiftLastArrivalLane=null;shiftPreviousArrivalLane=null;lastRegularTrainContact=null;pendingTrainShift=null;warpFlowNextWarpDistance=Infinity;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;warpBoostTime=0;warpBoostAmount=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;breakVoidsDestroyed=0;driftDistance=0;travelEarnedMeters=0;driftAudioMeterCarry=0;driftAudioLastLane=-1;driftAudioPhraseStep=0;prototypeLastScore=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;goldRingLastLane=null;goldRingSequenceAnchor=null;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
+const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorInvincible","invincibleEnding","invincibleCollapse","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;shiftCountRun=0;shiftLastArrivalLane=null;shiftPreviousArrivalLane=null;lastRegularTrainContact=null;pendingTrainShift=null;warpFlowNextWarpDistance=Infinity;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;invincibleOrbActive=false;invincibleTime=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;warpBoostTime=0;warpBoostAmount=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;breakVoidsDestroyed=0;driftDistance=0;travelEarnedMeters=0;driftAudioMeterCarry=0;driftAudioLastLane=-1;driftAudioPhraseStep=0;prototypeLastScore=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;goldRingLastLane=null;goldRingSequenceAnchor=null;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
 
 lastLevel = 1;strikes = 0;milestonesReached = {};personalBestLastContactAt=performance.now();personalBestConnected=false;lastWarpBreakthrough=0;lastTravelMilestone=0;starColorUpdateFrame=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();applyFrozenGameViewport(stableViewportWidth,stableViewportHeight);resetEnvironmentForRun();if(personalBestMode){activeChallenge=null;challengeStart=null;}else{beginCurrentFlow();}updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
 const title = document.getElementById("gameTitle");
@@ -11500,7 +11629,7 @@ if(driftActive && driftMoveDelta>0){
     if(!b?.userData || b.userData.state!=="active")return false;
     if(
       b.userData.isVoid || b.userData.isGoldRing || b.userData.isFlux ||
-      b.userData.isChrono || b.userData.isMidas || b.userData.isWarp
+      b.userData.isChrono || b.userData.isMidas || b.userData.isWarp || b.userData.isInvincible
     )return false;
     const dz=Math.abs(b.position.z-PLAYER_Z);
     if(dz>54)return false;
@@ -11565,7 +11694,7 @@ if (level > lastLevel) {
       });
       trackGA4Game("level_up",{
         level,
-        level_name:"ENDURANCE",
+        level_name:"ENDURE",
         score,
         distance:Math.floor(distance)
       });
@@ -11655,6 +11784,22 @@ updateSilentTutorial();
 updateEnvironment(worldDt);
 starColorUpdateFrame=(starColorUpdateFrame+1)%1200;
 updateFluxDust(worldDt);
+if(invincibleTime>0){
+  const invincibleWasActive=invincibleTime>0;
+  invincibleTime=Math.max(0,invincibleTime-worldDt);
+  if(invincibleWasActive && invincibleTime<=0){
+    const center=document.getElementById("center");
+    if(center){
+      center.classList.remove("reactorInvincible","invincibleEnding");
+      center.classList.add("invincibleCollapse");
+      setTimeout(()=>{center.classList.remove("invincibleCollapse");updateCenterReactor();},360);
+    }
+    if(navigator.vibrate)navigator.vibrate(18);
+    trackGame("invincible_expired",{distance:Math.floor(distance),flow_number:currentFlowIndex+1});
+  }else{
+    updateCenterReactor();
+  }
+}
 
 updateWarpFlowOpportunity();
 
@@ -11668,7 +11813,8 @@ if(
   !warpOrbActive &&
   fluxBoostTime<=0 &&
   chronoTime<=0 &&
-  midasTime<=0
+  midasTime<=0 &&
+  invincibleTime<=0
 ){
   makeLegendaryOrb();
   scheduleNextPowerOrbOpportunity(false);
@@ -11743,6 +11889,7 @@ if(silentTutorialComplete || PROTOTYPE_FORCE_GAMEPLAY_SYSTEMS){
 
   if(
     !personalBestMode &&
+    flowAllowsRings() &&
     goldRingSpawnCooldown<=0 &&
     distance>=70
   ){
@@ -11932,6 +12079,7 @@ const isRegularCollectible=
   !b.userData.isFlux&&
   !b.userData.isChrono&&
   !b.userData.isMidas&&
+  !b.userData.isInvincible&&
   !b.userData.isWarp&&
   !b.userData.isVoid&&
   !b.userData.isGoldRing;
@@ -12129,7 +12277,7 @@ if(
 ){
   if(dxy<=BREAK_VOID_PASS_RADIUS){
     if(b.userData.isBreakTarget){
-      breakHollowVoid(b);
+      enterHollowVoid(b);
     }else{
       passEscapeVoid(b);
     }
