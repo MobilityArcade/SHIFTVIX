@@ -159,7 +159,7 @@ function track(eventName,data={}){
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <!-- SHIFTVIX 2.11 — GOLD RINGS + FIVE EVEN OBJECTIVE TYPES -->
-<!-- SHIFTVIX V63 — WORLD TOP 9 PROMOTED / PLAYER IDENTITY -->
+<!-- SHIFTVIX V64 — LIVING FLOW HUD / WORLD TOP 9 -->
 <title>SHIFTVIX</title>
 <style>
 html,body{
@@ -3425,6 +3425,20 @@ body.uiModalOpen #center{pointer-events:none}
   .personalBestObjective{font-size:14px !important;}
 }
 </style>
+<style id="v64LivingHud">
+.flowChoiceCard,.todayPickCard,.personalBestCard,.worldBoardLaunch{position:relative;overflow:hidden;isolation:isolate}.flowChoiceCard>*:not(.flowVisual),.todayPickCard>*:not(.flowVisual),.personalBestCard>*:not(.flowVisual),.worldBoardLaunch>*:not(.worldTopArt){position:relative;z-index:3}.flowChoiceCard:after,.todayPickCard:after,.personalBestCard:after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(0,0,0,.02),rgba(0,0,0,.12) 48%,transparent)}.flowVisual{position:absolute;right:-1%;top:4%;width:46%;height:92%;z-index:2;pointer-events:none;opacity:.7;filter:drop-shadow(0 0 12px var(--flow-glow));-webkit-mask-image:linear-gradient(90deg,transparent,#000 30%);mask-image:linear-gradient(90deg,transparent,#000 30%)}.flowVisual i{position:absolute;display:block;box-sizing:border-box}
+.flowVisual-collect i{border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0 8%,var(--flow-color) 18%,transparent 68%);box-shadow:0 0 13px var(--flow-color),0 0 28px var(--flow-glow)}.flowVisual-collect i:nth-child(1){width:58px;height:58px;right:16%;top:23%}.flowVisual-collect i:nth-child(2){width:38px;height:38px;right:2%;top:56%}.flowVisual-collect i:nth-child(3){width:29px;height:29px;right:44%;top:62%}.flowVisual-collect i:nth-child(4){width:21px;height:21px;right:3%;top:15%}.flowVisual-collect i:nth-child(5){width:15px;height:15px;right:55%;top:21%}
+.flowVisual-travel i,.flowVisual-warp i{height:3px;right:-4%;top:50%;transform-origin:100% 50%;background:linear-gradient(90deg,transparent,var(--flow-color),#fff);box-shadow:0 0 11px var(--flow-color)}.flowVisual-travel i:nth-child(1),.flowVisual-warp i:nth-child(1){width:95%;transform:rotate(-20deg)}.flowVisual-travel i:nth-child(2),.flowVisual-warp i:nth-child(2){width:90%;transform:rotate(19deg)}.flowVisual-travel i:nth-child(3),.flowVisual-warp i:nth-child(3){width:77%;transform:rotate(-7deg)}.flowVisual-travel i:nth-child(4),.flowVisual-warp i:nth-child(4){width:68%;transform:rotate(7deg)}.flowVisual-travel i:nth-child(5),.flowVisual-warp i:nth-child(5){width:62px;height:62px;right:6%;top:30%;border:2px solid var(--flow-color);border-radius:50%;background:radial-gradient(circle,#fff 0 6%,transparent 9% 55%,var(--flow-glow) 58% 66%,transparent 69%);box-shadow:0 0 20px var(--flow-color)}
+.flowVisual-score i:nth-child(1){width:72px;height:72px;right:10%;top:25%;border:2px solid var(--flow-color);border-radius:50%;background:radial-gradient(circle,#fff 0 7%,var(--flow-color) 10% 18%,transparent 21% 55%,var(--flow-glow) 58% 66%,transparent 69%);box-shadow:0 0 22px var(--flow-color)}.flowVisual-score i:nth-child(2){width:96px;height:38px;right:5%;top:37%;border:1px solid var(--flow-color);border-radius:50%;transform:rotate(-18deg)}.flowVisual-score i:nth-child(3):after{content:"×2";position:absolute;right:4px;top:4px;color:#fff;font:950 25px/1 system-ui;text-shadow:0 0 12px var(--flow-color)}
+.flowVisual-rings i{border:3px solid var(--flow-color);border-radius:50%;box-shadow:0 0 11px var(--flow-color),inset 0 0 8px var(--flow-glow);top:50%;transform:translateY(-50%)}.flowVisual-rings i:nth-child(1){width:80px;height:80px;right:-2%}.flowVisual-rings i:nth-child(2){width:59px;height:59px;right:24%}.flowVisual-rings i:nth-child(3){width:41px;height:41px;right:45%}.flowVisual-rings i:nth-child(4){width:26px;height:26px;right:63%}.flowVisual-rings i:nth-child(5){width:14px;height:14px;right:77%}
+.flowVisual-shift i{right:-8%;top:50%;width:104%;height:5px;transform-origin:100% 50%;border-radius:99px;background:linear-gradient(90deg,transparent,var(--flow-color),#fff);box-shadow:0 0 12px var(--flow-color)}.flowVisual-shift i:nth-child(1){transform:rotate(19deg)}.flowVisual-shift i:nth-child(2){transform:rotate(-19deg)}.flowVisual-shift i:nth-child(3){transform:rotate(7deg);opacity:.5}.flowVisual-shift i:nth-child(4){transform:rotate(-7deg);opacity:.5}.flowVisual-shift i:nth-child(5){width:18px;height:18px;right:37%;top:45%;border-radius:50%;background:#fff;box-shadow:0 0 18px var(--flow-color)}
+.flowVisual-voids i:nth-child(1){width:76px;height:76px;right:5%;top:24%;border:8px solid var(--flow-color);border-radius:50%;background:#010103;box-shadow:0 0 0 3px rgba(255,80,30,.22),0 0 24px var(--flow-color),inset 0 0 13px var(--flow-color)}.flowVisual-voids i:nth-child(2),.flowVisual-voids i:nth-child(3){width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0 5%,var(--flow-color) 10%,#240704 58%,#000 72%);box-shadow:0 0 15px var(--flow-color)}.flowVisual-voids i:nth-child(2){right:43%;top:16%}.flowVisual-voids i:nth-child(3){right:48%;top:62%}
+.flowVisual-drift i{width:96%;height:48%;right:-8%;top:28%;border-top:7px solid color-mix(in srgb,var(--flow-color) 76%,white 24%);border-radius:50%;transform:rotate(-13deg);box-shadow:0 -4px 14px var(--flow-glow)}.flowVisual-drift i:nth-child(2){top:39%;opacity:.45;transform:rotate(9deg)}.flowVisual-drift i:nth-child(3){width:45px;height:45px;right:5%;top:33%;border:1px solid #fff;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.42),transparent 64%);box-shadow:0 0 20px var(--flow-color)}
+.flowVisual-endure{--flow-color:#fff;--flow-glow:rgba(110,220,255,.28)}.flowVisual-endure i:nth-child(1){width:74px;height:74px;right:8%;top:24%;border:2px solid rgba(255,255,255,.85);border-radius:50%;background:radial-gradient(circle,#fff 0 8%,rgba(110,220,255,.72) 11% 18%,transparent 21% 54%,rgba(255,255,255,.18) 57% 65%,transparent 68%);box-shadow:0 0 22px rgba(110,220,255,.45)}.flowVisual-endure i:nth-child(2){width:78%;height:3px;right:18%;top:50%;background:linear-gradient(90deg,transparent,rgba(110,220,255,.65),#fff);transform:rotate(14deg);box-shadow:0 0 9px rgba(110,220,255,.45)}
+.flowVisual-random i:nth-child(1){width:60px;height:60px;right:8%;top:24%;border:2px solid #ffd36a;border-radius:50%;box-shadow:0 0 18px #ffd36a}.flowVisual-random i:nth-child(2){width:35px;height:35px;right:44%;top:17%;border-radius:50%;background:#4ef2ff;box-shadow:0 0 15px #4ef2ff}.flowVisual-random i:nth-child(3){width:29px;height:29px;right:38%;top:63%;border:5px solid #ff6a39;border-radius:50%;background:#010103;box-shadow:0 0 12px #ff6a39}.flowVisual-random i:nth-child(4){width:68%;height:4px;right:-2%;top:60%;background:linear-gradient(90deg,transparent,#ff4eea,#fff);transform:rotate(-18deg);box-shadow:0 0 9px #ff4eea}.flowVisual-random i:nth-child(5){width:18px;height:18px;right:1%;top:12%;border-radius:50%;background:#7cff63;box-shadow:0 0 12px #7cff63}
+.worldTopArt{position:absolute;left:50%;top:2px;width:145px;height:56px;transform:translateX(-50%);opacity:.46;z-index:1;pointer-events:none}.worldTopArt i{position:absolute;bottom:3px;width:25px;border:1px solid rgba(110,220,255,.65);background:linear-gradient(180deg,rgba(110,220,255,.24),transparent);box-shadow:0 0 12px rgba(110,220,255,.18)}.worldTopArt i:nth-child(1){height:31px;left:61px}.worldTopArt i:nth-child(2){height:21px;left:34px}.worldTopArt i:nth-child(3){height:15px;left:88px}.worldTopArt i:nth-child(4){width:43px;height:43px;left:52px;bottom:10px;border-radius:50%;background:radial-gradient(circle,#fff 0 5%,#4ef2ff 8% 16%,transparent 19% 57%,rgba(78,242,255,.3) 60% 67%,transparent 70%)}
+.flowVisual-collect,.flowVisual-rings,.flowVisual-score,.flowVisual-drift,.flowVisual-endure,.flowVisual-random{animation:v64Breathe 5.6s ease-in-out infinite}.flowVisual-warp{animation:v64Warp 4.2s ease-in-out infinite}@keyframes v64Breathe{0%,100%{opacity:.58;transform:translateY(0)}50%{opacity:.78;transform:translateY(-2px)}}@keyframes v64Warp{0%,72%,100%{transform:scaleX(.94);opacity:.56}82%{transform:scaleX(1.08);opacity:.9}}@media(max-width:699px){.flowVisual{width:49%;right:-4%;opacity:.67}.flowChoiceCard,.todayPickCard,.personalBestCard{min-height:154px!important}.flowChoiceObjective,.todayPickObjective{max-width:72%}.worldTopArt{width:112px;opacity:.34}}@media(prefers-reduced-motion:reduce){.flowVisual{animation:none!important}}
+</style>
 </head>
 <body>
 <div id="worldIdentitySetup" aria-hidden="true">
@@ -6227,6 +6241,7 @@ function flowCardHtml(category){
       </div>
       <div class="flowChoiceObjective">${FLOW_BEST_OBJECTIVE[category]}</div>
       <div class="flowChoiceTotal"><span>BEST</span><strong>${best?formatFlowBest(category,best):"—"}</strong></div>
+      <div class="flowVisual flowVisual-${category.toLowerCase()}" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
     </button>
   `;
 }
@@ -6299,6 +6314,7 @@ function personalBestCardHtml(){
       </div>
       <div class="flowChoiceObjective personalBestObjective">HOW FAR CAN YOU GO?</div>
       <div class="flowChoiceTotal"><span>BEST</span><strong>${best?`LEVEL ${best}`:"—"}</strong></div>
+      <div class="flowVisual flowVisual-endure" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
     </button>`;
 }
 
@@ -8024,6 +8040,7 @@ function todayPickHtml(){
         <span>RANDOM</span>
         <strong></strong>
       </div>
+      <div class="flowVisual flowVisual-random" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
     </button>
   `;
 }
@@ -8059,7 +8076,7 @@ function renderFlowArchive(){
   if(!list)return;
 
   list.innerHTML=`
-    <button class="worldBoardLaunch" id="worldBoardLaunch" type="button"><strong>WORLD TOP 9</strong><span>VIEW RANKS</span></button>
+    <button class="worldBoardLaunch" id="worldBoardLaunch" type="button"><strong>WORLD TOP 9</strong><span>VIEW RANKS</span><div class="worldTopArt" aria-hidden="true"><i></i><i></i><i></i><i></i></div></button>
 
     ${flowHubStatusHtml()}
 
