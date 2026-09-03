@@ -160,6 +160,7 @@ function track(eventName,data={}){
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <!-- SHIFTVIX 2.11 — GOLD RINGS + FIVE EVEN OBJECTIVE TYPES -->
 <!-- SHIFTVIX V65 — LIVE WORLD TOP 9 / CLOUDFLARE D1 -->
+<!-- SHIFTVIX V67 — WORLD TOP 9 FLOW HUB + LIVING FLOW ANIMATIONS -->
 <title>SHIFTVIX</title>
 <style>
 html,body{
@@ -3438,6 +3439,41 @@ body.uiModalOpen #center{pointer-events:none}
 .flowVisual-random i:nth-child(1){width:60px;height:60px;right:8%;top:24%;border:2px solid #ffd36a;border-radius:50%;box-shadow:0 0 18px #ffd36a}.flowVisual-random i:nth-child(2){width:35px;height:35px;right:44%;top:17%;border-radius:50%;background:#4ef2ff;box-shadow:0 0 15px #4ef2ff}.flowVisual-random i:nth-child(3){width:29px;height:29px;right:38%;top:63%;border:5px solid #ff6a39;border-radius:50%;background:#010103;box-shadow:0 0 12px #ff6a39}.flowVisual-random i:nth-child(4){width:68%;height:4px;right:-2%;top:60%;background:linear-gradient(90deg,transparent,#ff4eea,#fff);transform:rotate(-18deg);box-shadow:0 0 9px #ff4eea}.flowVisual-random i:nth-child(5){width:18px;height:18px;right:1%;top:12%;border-radius:50%;background:#7cff63;box-shadow:0 0 12px #7cff63}
 .worldTopArt{position:absolute;left:50%;top:2px;width:145px;height:56px;transform:translateX(-50%);opacity:.46;z-index:1;pointer-events:none}.worldTopArt i{position:absolute;bottom:3px;width:25px;border:1px solid rgba(110,220,255,.65);background:linear-gradient(180deg,rgba(110,220,255,.24),transparent);box-shadow:0 0 12px rgba(110,220,255,.18)}.worldTopArt i:nth-child(1){height:31px;left:61px}.worldTopArt i:nth-child(2){height:21px;left:34px}.worldTopArt i:nth-child(3){height:15px;left:88px}.worldTopArt i:nth-child(4){width:43px;height:43px;left:52px;bottom:10px;border-radius:50%;background:radial-gradient(circle,#fff 0 5%,#4ef2ff 8% 16%,transparent 19% 57%,rgba(78,242,255,.3) 60% 67%,transparent 70%)}
 .flowVisual-collect,.flowVisual-rings,.flowVisual-score,.flowVisual-drift,.flowVisual-endure,.flowVisual-random{animation:v64Breathe 5.6s ease-in-out infinite}.flowVisual-warp{animation:v64Warp 4.2s ease-in-out infinite}@keyframes v64Breathe{0%,100%{opacity:.58;transform:translateY(0)}50%{opacity:.78;transform:translateY(-2px)}}@keyframes v64Warp{0%,72%,100%{transform:scaleX(.94);opacity:.56}82%{transform:scaleX(1.08);opacity:.9}}@media(max-width:699px){.flowVisual{width:49%;right:-4%;opacity:.67}.flowChoiceCard,.todayPickCard,.personalBestCard{min-height:154px!important}.flowChoiceObjective,.todayPickObjective{max-width:72%}.worldTopArt{width:112px;opacity:.34}}@media(prefers-reduced-motion:reduce){.flowVisual{animation:none!important}}
+
+/* SHIFTVIX V67 — living Flow art + WORLD TOP 9 Flow Hub */
+.worldBoardPanel{width:min(620px,94vw)!important;max-height:92vh!important;padding:22px!important;background:rgba(0,0,0,.97)!important}
+.worldPlayerIdentity{margin:16px 0 20px!important}
+.worldHubHeader{display:flex;flex-direction:column;gap:5px;margin:2px 2px 14px}.worldHubHeader span{font-size:17px;font-weight:1000;letter-spacing:2.2px;color:#ffd36a}.worldHubHeader small{font-size:9px;font-weight:900;letter-spacing:1.3px;color:rgba(255,255,255,.38)}
+.worldFlowHub{display:grid;gap:14px;padding-bottom:12px}.worldHubCard{width:100%;min-height:154px;padding:18px 19px;border-radius:20px;border:1px solid var(--flow-color);background:linear-gradient(135deg,color-mix(in srgb,var(--flow-color) 16%,transparent),rgba(0,0,0,.92) 58%);color:#fff;text-align:left;cursor:pointer;position:relative;overflow:hidden;isolation:isolate;box-shadow:inset 0 0 34px var(--flow-glow),0 0 18px rgba(0,0,0,.5)}
+.worldHubCard>*:not(.flowVisual){position:relative;z-index:3}.worldHubCard:after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(0,0,0,.03),rgba(0,0,0,.28) 52%,transparent)}
+.worldHubCardTop{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.worldHubCardName{font-size:27px;font-weight:1000;letter-spacing:1px;color:var(--flow-color);text-shadow:0 0 14px var(--flow-glow)}.worldHubCardAction{font-size:15px;font-weight:950;letter-spacing:1.7px;color:rgba(255,255,255,.58)}
+.worldHubCardObjective{margin-top:12px;max-width:72%;font-size:14px;line-height:1.3;font-weight:900;letter-spacing:.6px;color:rgba(255,255,255,.78)}.worldHubCardBottom{display:flex;justify-content:space-between;align-items:end;gap:15px;margin-top:23px;padding-top:14px;border-top:1px solid rgba(255,255,255,.10)}.worldHubCardBottom span{font-size:15px;font-weight:950;letter-spacing:1.7px;color:rgba(255,255,255,.52)}.worldHubCardBottom strong{font-size:22px;font-weight:1000;color:var(--flow-color);text-shadow:0 0 12px var(--flow-glow)}
+.worldRankView[hidden]{display:none!important}.worldRankBack{border:0;background:transparent;color:#ffd36a;font:950 12px Arial;letter-spacing:1.7px;padding:3px 0 12px;cursor:pointer}.worldRankHero{margin-bottom:15px}.worldRankHero .worldHubCard{cursor:default;min-height:140px}.worldRankHero .worldHubCardAction{color:#fff}.worldRows{border-top:1px solid rgba(255,255,255,.12)}
+@media(max-width:699px){#worldLeaderboard{padding:10px}.worldBoardPanel{width:100%!important;max-height:94vh!important;padding:17px 14px!important;border-radius:22px!important}.worldBoardHead h2{font-size:29px!important}.worldPlayerIdentity{margin:13px 0 17px!important}.worldFlowHub{gap:12px}.worldHubCard{min-height:150px;padding:17px}.worldHubCardName{font-size:27px}.worldHubCardObjective{font-size:14px}.worldHubCardAction{font-size:14px}.worldHubCardBottom strong{font-size:21px}}
+
+/* Each Flow now has a distinct ambient motion rather than one generic breathe. */
+.flowVisual{will-change:transform,opacity,filter}.flowVisual i{will-change:transform,opacity,filter}
+.flowVisual-collect{animation:v67CollectField 4.8s ease-in-out infinite!important}.flowVisual-collect i:nth-child(1){animation:v67OrbFloat 3.8s ease-in-out infinite}.flowVisual-collect i:nth-child(2){animation:v67OrbFloat 4.6s ease-in-out -1.2s infinite}.flowVisual-collect i:nth-child(3){animation:v67OrbFloat 3.3s ease-in-out -.7s infinite}.flowVisual-collect i:nth-child(4){animation:v67OrbFloat 5.1s ease-in-out -2s infinite}.flowVisual-collect i:nth-child(5){animation:v67OrbFloat 4.1s ease-in-out -1.7s infinite}
+.flowVisual-travel{animation:v67TravelField 3.2s ease-in-out infinite!important}.flowVisual-travel i:not(:nth-child(5)){animation:v67TravelLine 2.3s ease-in-out infinite}.flowVisual-travel i:nth-child(2){animation-delay:-.55s}.flowVisual-travel i:nth-child(3){animation-delay:-1.1s}.flowVisual-travel i:nth-child(4){animation-delay:-1.65s}.flowVisual-travel i:nth-child(5){animation:v67CorePulse 2.1s ease-in-out infinite}
+.flowVisual-score{animation:v67ScoreField 4s ease-in-out infinite!important}.flowVisual-score i:nth-child(1){animation:v67CorePulse 2.2s ease-in-out infinite}.flowVisual-score i:nth-child(2){animation:v67OrbitTilt 4.8s linear infinite}.flowVisual-score i:nth-child(3){animation:v67ScoreFlash 2.7s ease-in-out infinite}
+.flowVisual-rings{animation:v67RingsField 3.7s ease-in-out infinite!important}.flowVisual-rings i{animation:v67RingDrive 3.1s ease-in-out infinite}.flowVisual-rings i:nth-child(2){animation-delay:-.35s}.flowVisual-rings i:nth-child(3){animation-delay:-.7s}.flowVisual-rings i:nth-child(4){animation-delay:-1.05s}.flowVisual-rings i:nth-child(5){animation-delay:-1.4s}
+.flowVisual-shift{animation:v67ShiftField 3.5s ease-in-out infinite!important}.flowVisual-shift i:not(:nth-child(5)){animation:v67ShiftLine 2.6s ease-in-out infinite}.flowVisual-shift i:nth-child(2){animation-delay:-.7s}.flowVisual-shift i:nth-child(3){animation-delay:-1.3s}.flowVisual-shift i:nth-child(4){animation-delay:-1.9s}.flowVisual-shift i:nth-child(5){animation:v67ShiftNode 1.8s ease-in-out infinite}
+.flowVisual-warp{animation:v67WarpField 3.1s ease-in-out infinite!important}.flowVisual-warp i:not(:nth-child(5)){animation:v67WarpLine 1.9s ease-in-out infinite}.flowVisual-warp i:nth-child(5){animation:v67WarpCore 2.2s ease-in-out infinite}
+.flowVisual-voids{animation:v67VoidField 4.2s ease-in-out infinite!important}.flowVisual-voids i:nth-child(1){animation:v67VoidBreathe 2.7s ease-in-out infinite}.flowVisual-voids i:nth-child(2){animation:v67DangerPulse 2.1s ease-in-out -.4s infinite}.flowVisual-voids i:nth-child(3){animation:v67DangerPulse 2.1s ease-in-out -1.1s infinite}
+.flowVisual-drift{animation:v67DriftField 4.5s ease-in-out infinite!important}.flowVisual-drift i:nth-child(1){animation:v67DriftWave 3.7s ease-in-out infinite}.flowVisual-drift i:nth-child(2){animation:v67DriftWave 4.3s ease-in-out -1.4s infinite}.flowVisual-drift i:nth-child(3){animation:v67CorePulse 2.8s ease-in-out infinite}
+.flowVisual-endure{animation:v67EndureField 4.2s ease-in-out infinite!important}.flowVisual-endure i:nth-child(1){animation:v67EndureCore 2.2s ease-in-out infinite}.flowVisual-endure i:nth-child(2){animation:v67EndureLine 3.1s ease-in-out infinite}
+.flowVisual-random{animation:v67RandomField 5s ease-in-out infinite!important}.flowVisual-random i:nth-child(1){animation:v67VoidBreathe 3.3s ease-in-out infinite}.flowVisual-random i:nth-child(2){animation:v67OrbFloat 3.5s ease-in-out -.5s infinite}.flowVisual-random i:nth-child(3){animation:v67VoidBreathe 2.8s ease-in-out -1s infinite}.flowVisual-random i:nth-child(4){animation:v67RandomSweep 3.6s ease-in-out infinite}.flowVisual-random i:nth-child(5){animation:v67OrbFloat 4s ease-in-out -1.4s infinite}
+@keyframes v67CollectField{0%,100%{opacity:.62;translate:0 0}50%{opacity:.88;translate:-3px -1px}}@keyframes v67OrbFloat{0%,100%{translate:0 0;scale:.94;filter:brightness(.9)}50%{translate:-7px -5px;scale:1.13;filter:brightness(1.35)}}
+@keyframes v67TravelField{0%,100%{opacity:.58;translate:4px 0}50%{opacity:.9;translate:-6px 0}}@keyframes v67TravelLine{0%,100%{translate:10px 0;opacity:.35}50%{translate:-8px 0;opacity:1}}
+@keyframes v67CorePulse{0%,100%{scale:.92;filter:brightness(.85)}50%{scale:1.12;filter:brightness(1.4)}}@keyframes v67ScoreField{0%,100%{opacity:.58}50%{opacity:.88}}@keyframes v67OrbitTilt{from{rotate:0deg}to{rotate:360deg}}@keyframes v67ScoreFlash{0%,70%,100%{opacity:.55;filter:brightness(.8)}82%{opacity:1;filter:brightness(1.6)}}
+@keyframes v67RingsField{0%,100%{opacity:.6;translate:3px 0}50%{opacity:.9;translate:-5px 0}}@keyframes v67RingDrive{0%,100%{scale:.82;opacity:.48}50%{scale:1.12;opacity:1}}
+@keyframes v67ShiftField{0%,100%{opacity:.58}50%{opacity:.9}}@keyframes v67ShiftLine{0%,100%{translate:9px 0;filter:brightness(.8)}50%{translate:-10px 0;filter:brightness(1.35)}}@keyframes v67ShiftNode{0%,100%{translate:8px -3px;scale:.82}50%{translate:-12px 4px;scale:1.2}}
+@keyframes v67WarpField{0%,68%,100%{scale:.95 1;opacity:.55}82%{scale:1.12 .96;opacity:1;filter:brightness(1.35)}}@keyframes v67WarpLine{0%,100%{translate:13px 0;opacity:.32}55%{translate:-12px 0;opacity:1}}@keyframes v67WarpCore{0%,100%{scale:.9;filter:brightness(.85)}50%{scale:1.16;filter:brightness(1.55)}}
+@keyframes v67VoidField{0%,100%{opacity:.6}50%{opacity:.9}}@keyframes v67VoidBreathe{0%,100%{scale:.92;filter:brightness(.82)}50%{scale:1.08;filter:brightness(1.32)}}@keyframes v67DangerPulse{0%,100%{scale:.9;filter:brightness(.8)}50%{scale:1.12;filter:brightness(1.55)}}
+@keyframes v67DriftField{0%,100%{translate:4px 2px;opacity:.58}50%{translate:-8px -3px;opacity:.92}}@keyframes v67DriftWave{0%,100%{translate:8px 0;scale:.96 1}50%{translate:-12px 3px;scale:1.06 .96}}
+@keyframes v67EndureField{0%,100%{opacity:.57}50%{opacity:.88}}@keyframes v67EndureCore{0%,100%{scale:.9;filter:brightness(.85)}50%{scale:1.14;filter:brightness(1.5)}}@keyframes v67EndureLine{0%,100%{translate:12px 0;opacity:.35}50%{translate:-10px 0;opacity:1}}
+@keyframes v67RandomField{0%,100%{opacity:.58;translate:2px 0}50%{opacity:.92;translate:-5px -2px}}@keyframes v67RandomSweep{0%,100%{translate:10px 5px;opacity:.35}50%{translate:-12px -4px;opacity:1}}
+@media(prefers-reduced-motion:reduce){.flowVisual,.flowVisual i{animation:none!important}}
 </style>
 </head>
 <body>
@@ -3455,11 +3491,18 @@ body.uiModalOpen #center{pointer-events:none}
 <div id="worldLeaderboard" aria-hidden="true">
   <div class="worldBoardPanel" role="dialog" aria-modal="true" aria-labelledby="worldBoardTitle">
     <div class="worldBoardHead"><div><h2 id="worldBoardTitle">WORLD TOP 9</h2><div class="worldBoardSub">9 LANES · 9 SKILLS · ONE WORLD</div></div><button class="worldBoardClose" id="worldBoardClose" aria-label="Close">×</button></div>
-    <div class="worldFlowTabs" id="worldFlowTabs"></div>
     <div class="worldPlayerIdentity" id="worldPlayerIdentity"><div class="identityText" id="worldIdentityText">PLAYER NOT SET</div><button class="worldEditIdentity" id="worldEditIdentity" type="button">EDIT</button></div>
-    <div id="worldBoardRows" class="worldRows"></div>
-    <div id="worldMine" class="worldMine" style="display:none"></div>
-    <div id="worldBackendNote" class="worldBackendNote"></div>
+    <div id="worldHubView" class="worldHubView">
+      <div class="worldHubHeader"><span>CHOOSE A FLOW</span><small>TAP A FLOW TO VIEW ITS WORLD TOP 9</small></div>
+      <div id="worldFlowHub" class="worldFlowHub"></div>
+    </div>
+    <div id="worldRankView" class="worldRankView" hidden>
+      <button id="worldRankBack" class="worldRankBack" type="button">‹ ALL FLOWS</button>
+      <div id="worldRankHero" class="worldRankHero"></div>
+      <div id="worldBoardRows" class="worldRows"></div>
+      <div id="worldMine" class="worldMine" style="display:none"></div>
+      <div id="worldBackendNote" class="worldBackendNote"></div>
+    </div>
   </div>
 </div>
 
@@ -6183,11 +6226,26 @@ function populateCountrySelect(){const el=document.getElementById("identityCount
 function updateWorldIdentityDisplay(){const el=document.getElementById("worldIdentityText");if(!el)return;if(!worldIdentityReady()){el.textContent="PLAYER NOT SET";return}el.innerHTML=`<span class="identityFlag">${countryFlag(worldCountry())}</span>${worldInitials()} · ${countryName(worldCountry()).toUpperCase()}`}
 function openIdentitySetup(){populateCountrySelect();const modal=document.getElementById("worldIdentitySetup"),input=document.getElementById("identityInitialsInput"),select=document.getElementById("identityCountrySelect"),err=document.getElementById("identityError");if(input)input.value=worldInitials();if(select)select.value=worldCountry();if(err)err.textContent="";modal?.classList.add("show");modal?.setAttribute("aria-hidden","false");document.body.classList.add("uiModalOpen");setTimeout(()=>input?.focus(),60)}
 function closeIdentitySetup(){const modal=document.getElementById("worldIdentitySetup");modal?.classList.remove("show");modal?.setAttribute("aria-hidden","true");if(!document.getElementById("worldLeaderboard")?.classList.contains("show"))document.body.classList.remove("uiModalOpen")}
-function saveWorldIdentity(){const input=document.getElementById("identityInitialsInput"),select=document.getElementById("identityCountrySelect"),err=document.getElementById("identityError");const initials=(input?.value||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,3),country=(select?.value||"").toUpperCase();if(initials.length!==3){if(err)err.textContent="ENTER EXACTLY 3 INITIALS";input?.focus();return false}if(!/^[A-Z]{2}$/.test(country)){if(err)err.textContent="SELECT YOUR COUNTRY";select?.focus();return false}localStorage.setItem(WORLD_INITIALS_KEY,initials);localStorage.setItem(WORLD_COUNTRY_KEY,country);worldPlayerId();trackGame("leaderboard_initials_saved",{initials_length:3,country_code:country});updateWorldIdentityDisplay();closeIdentitySetup();syncLocalWorldBests().finally(()=>loadWorldLeaderboard(worldBoardMode));return true}
+function saveWorldIdentity(){const input=document.getElementById("identityInitialsInput"),select=document.getElementById("identityCountrySelect"),err=document.getElementById("identityError");const initials=(input?.value||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,3),country=(select?.value||"").toUpperCase();if(initials.length!==3){if(err)err.textContent="ENTER EXACTLY 3 INITIALS";input?.focus();return false}if(!/^[A-Z]{2}$/.test(country)){if(err)err.textContent="SELECT YOUR COUNTRY";select?.focus();return false}localStorage.setItem(WORLD_INITIALS_KEY,initials);localStorage.setItem(WORLD_COUNTRY_KEY,country);worldPlayerId();trackGame("leaderboard_initials_saved",{initials_length:3,country_code:country});updateWorldIdentityDisplay();closeIdentitySetup();syncLocalWorldBests().finally(()=>{renderWorldHub();if(!document.getElementById("worldRankView")?.hasAttribute("hidden"))loadWorldLeaderboard(worldBoardMode)});return true}
 function formatWorldValue(mode,value){if(mode==="ENDURE")return `LEVEL ${Math.floor(value||0)}`;return formatFlowBest(mode,value)}
-function renderWorldTabs(){const el=document.getElementById("worldFlowTabs");if(!el)return;el.innerHTML=WORLD_MODES.map(m=>`<button class="worldFlowTab ${m===worldBoardMode?'active':''}" data-world-mode="${m}">${m}</button>`).join("");el.querySelectorAll("[data-world-mode]").forEach(b=>b.addEventListener("click",()=>{worldBoardMode=b.dataset.worldMode;renderWorldTabs();loadWorldLeaderboard(worldBoardMode)}))}
-function openWorldLeaderboard(mode="COLLECT"){worldBoardMode=WORLD_MODES.includes(mode)?mode:"COLLECT";const modal=document.getElementById("worldLeaderboard");if(!modal)return;modal.classList.add("show");modal.setAttribute("aria-hidden","false");document.body.classList.add("uiModalOpen");renderWorldTabs();updateWorldIdentityDisplay();trackGame("leaderboard_opened",{category:worldBoardMode});loadWorldLeaderboard(worldBoardMode);if(!worldIdentityReady())setTimeout(openIdentitySetup,120)}
-function closeWorldLeaderboard(){const modal=document.getElementById("worldLeaderboard");modal?.classList.remove("show");modal?.setAttribute("aria-hidden","true");if(!document.getElementById("worldIdentitySetup")?.classList.contains("show"))document.body.classList.remove("uiModalOpen")}
+function worldModeColor(mode){return mode==="ENDURE"?"#ffffff":(FLOW_COLOR_MAP?.[mode]||"#ffd36a")}
+function worldModeGlow(mode){return mode==="ENDURE"?"rgba(110,220,255,.28)":(FLOW_GLOW_MAP?.[mode]||"rgba(255,211,106,.24)")}
+function worldModeObjective(mode){return mode==="ENDURE"?"HOW FAR CAN YOU GO?":(FLOW_BEST_OBJECTIVE?.[mode]||"VIEW WORLD RANKS")}
+function worldFlowCardHtml(mode,detail=false){
+  const best=mode==="ENDURE"?Math.max(0,Number(personalBestLevelRecord)||0):flowBestValue(mode);
+  const bestText=best?formatWorldValue(mode,best):"—";
+  return `<button class="worldHubCard" type="button" ${detail?'tabindex="-1"':'data-world-mode="'+mode+'"'} style="--flow-color:${worldModeColor(mode)};--flow-glow:${worldModeGlow(mode)}">
+    <div class="worldHubCardTop"><span class="worldHubCardName">${mode}</span><span class="worldHubCardAction">${detail?'WORLD TOP 9':'VIEW RANKS'}</span></div>
+    <div class="worldHubCardObjective">${worldModeObjective(mode)}</div>
+    <div class="worldHubCardBottom"><span>${detail?'YOUR BEST':'BEST'}</span><strong>${bestText}</strong></div>
+    <div class="flowVisual flowVisual-${mode.toLowerCase()}" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+  </button>`;
+}
+function renderWorldHub(){const hub=document.getElementById("worldFlowHub");if(!hub)return;hub.innerHTML=WORLD_MODES.map(m=>worldFlowCardHtml(m,false)).join("");hub.querySelectorAll("[data-world-mode]").forEach(card=>card.addEventListener("click",()=>openWorldRank(card.dataset.worldMode)))}
+function showWorldHub(){document.getElementById("worldHubView")?.removeAttribute("hidden");document.getElementById("worldRankView")?.setAttribute("hidden","");document.getElementById("worldBoardTitle").textContent="WORLD TOP 9";renderWorldHub()}
+function openWorldRank(mode="COLLECT"){worldBoardMode=WORLD_MODES.includes(mode)?mode:"COLLECT";document.getElementById("worldHubView")?.setAttribute("hidden","");document.getElementById("worldRankView")?.removeAttribute("hidden");const hero=document.getElementById("worldRankHero");if(hero)hero.innerHTML=worldFlowCardHtml(worldBoardMode,true);document.getElementById("worldBoardTitle").textContent="WORLD TOP 9";trackGame("leaderboard_opened",{category:worldBoardMode});loadWorldLeaderboard(worldBoardMode)}
+function openWorldLeaderboard(mode=null){const modal=document.getElementById("worldLeaderboard");if(!modal)return;modal.classList.add("show");modal.setAttribute("aria-hidden","false");document.body.classList.add("uiModalOpen");updateWorldIdentityDisplay();renderWorldHub();if(mode&&WORLD_MODES.includes(mode))openWorldRank(mode);else showWorldHub();if(!worldIdentityReady())setTimeout(openIdentitySetup,120)}
+function closeWorldLeaderboard(){const modal=document.getElementById("worldLeaderboard");modal?.classList.remove("show");modal?.setAttribute("aria-hidden","true");showWorldHub();if(!document.getElementById("worldIdentitySetup")?.classList.contains("show"))document.body.classList.remove("uiModalOpen")}
 async function loadWorldLeaderboard(mode){
   const rows=document.getElementById("worldBoardRows"),mine=document.getElementById("worldMine"),note=document.getElementById("worldBackendNote");
   if(!rows)return;
@@ -6228,7 +6286,7 @@ async function submitWorldBest(mode,value){
     const r=await fetch(`${SHIFTVIX_LEADERBOARD_API}/submit`,{
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({player_id:worldPlayerId(),initials:worldInitials(),country:worldCountry(),flow:mode,score,client_version:"V65"})
+      body:JSON.stringify({player_id:worldPlayerId(),initials:worldInitials(),country:worldCountry(),flow:mode,score,client_version:"V67"})
     });
     if(!r.ok)throw new Error(`HTTP ${r.status}`);
     const data=await r.json();
@@ -6255,6 +6313,7 @@ async function syncLocalWorldBests(){
   }
 }
 document.getElementById("worldBoardClose")?.addEventListener("click",closeWorldLeaderboard);
+document.getElementById("worldRankBack")?.addEventListener("click",showWorldHub);
 document.getElementById("worldLeaderboard")?.addEventListener("click",e=>{if(e.target?.id==="worldLeaderboard")closeWorldLeaderboard()});
 document.getElementById("worldEditIdentity")?.addEventListener("click",openIdentitySetup);
 document.getElementById("identityEnter")?.addEventListener("click",saveWorldIdentity);
