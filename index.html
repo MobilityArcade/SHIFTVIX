@@ -9545,8 +9545,9 @@ function makeVoidHazard(reason="normal",forcedLane=null,options={}){
   const group=new THREE.Group();
 
   /*
-    SOLID BLACK CENTER = lethal Void.
-    HOLLOW CYAN CENTER = BREAK target.
+    V66 DANGER LANGUAGE:
+    SOLID HOT RED CENTER = lethal Void / DO NOT ENTER.
+    HOLLOW CYAN CENTER = safe/attackable passage.
   */
   const core=isHollowVoid
     ? new THREE.Mesh(
@@ -9567,7 +9568,7 @@ function makeVoidHazard(reason="normal",forcedLane=null,options={}){
     : new THREE.Mesh(
         new THREE.SphereGeometry(7.45,28,28),
         new THREE.MeshBasicMaterial({
-          color:0x000000,
+          color:0xff1018,
           transparent:false,
           opacity:1,
           depthWrite:false
@@ -9681,6 +9682,21 @@ function makeVoidHazard(reason="normal",forcedLane=null,options={}){
     spikes.add(spike);
   }
 
+// V66 — Slight hot-red danger glow around the solid lethal center.
+// Kept restrained so the center reads as a solid STOP signal, not a portal.
+const dangerCoreGlow=!isHollowVoid
+  ? new THREE.Mesh(
+      new THREE.SphereGeometry(8.10,28,28),
+      new THREE.MeshBasicMaterial({
+        color:0xff2200,
+        transparent:true,
+        opacity:.20,
+        blending:THREE.AdditiveBlending,
+        depthWrite:false
+      })
+    )
+  : null;
+
 const breakHalo=isHollowVoid
   ? new THREE.Mesh(
       new THREE.TorusGeometry(
@@ -9705,6 +9721,7 @@ group.add(aura);
   group.add(corona);
   group.add(ring);
   if(breakHalo)group.add(breakHalo);
+  if(dangerCoreGlow)group.add(dangerCoreGlow);
   group.add(core);
 
   group.position.set(x,y,FAR_Z+135);
@@ -9719,6 +9736,7 @@ group.add(aura);
     glow:aura,
     spikes,
     breakHalo,
+    dangerCoreGlow,
     isVoid:true,
     isBreakTarget,
     isEscapeVoid,
@@ -12313,7 +12331,11 @@ if(b.userData.isVoid){
     }else{
       b.userData.core.material.transparent=false;
       b.userData.core.material.opacity=1;
-      b.userData.core.material.color.setHex(0x000000);
+      b.userData.core.material.color.setHex(0xff1018);
+
+      if(b.userData.dangerCoreGlow){
+        b.userData.dangerCoreGlow.material.opacity=.14+pulse*.16;
+      }
     }
   }
 
