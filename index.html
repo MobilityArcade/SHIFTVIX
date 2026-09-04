@@ -159,6 +159,7 @@ function track(eventName,data={}){
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <!-- SHIFTVIX 2.11 — GOLD RINGS + FIVE EVEN OBJECTIVE TYPES -->
+<!-- SHIFTVIX V70 — HUD / UI POLISH ONLY: living logo, World Top 9 affordance, arcade initials placeholder, back control, unified UI click -->
 <!-- SHIFTVIX V69 — ENDURE HARD FIX: PAUSE IDENTITY + LIVE WORLD SYNC -->
 <!-- SHIFTVIX V68 — ENDURE WORLD TOP 9 / PAUSE IDENTITY FIX -->
 <!-- SHIFTVIX V67 — WORLD TOP 9 FLOW HUB + LIVING FLOW ANIMATIONS -->
@@ -3476,13 +3477,123 @@ body.uiModalOpen #center{pointer-events:none}
 @keyframes v67RandomField{0%,100%{opacity:.58;translate:2px 0}50%{opacity:.92;translate:-5px -2px}}@keyframes v67RandomSweep{0%,100%{translate:10px 5px;opacity:.35}50%{translate:-12px -4px;opacity:1}}
 @media(prefers-reduced-motion:reduce){.flowVisual,.flowVisual i{animation:none!important}}
 </style>
+
+<style id="shiftvixV70HudUiPolish">
+/* ============================================================
+   SHIFTVIX V70 — HUD / UI POLISH ONLY
+   Presentation + interaction affordance. No gameplay / Flow /
+   leaderboard / analytics logic changes.
+   ============================================================ */
+
+/* Living hollow SHIFTVIX logo: preserve the transparent interior and gold stroke. */
+#flowArchive .archiveHeader h2,
+#flowPathTitle{
+  will-change:filter,opacity;
+  animation:v70LogoShimmer 3.8s ease-in-out infinite !important;
+}
+@keyframes v70LogoShimmer{
+  0%,100%{
+    filter:drop-shadow(0 0 2px rgba(255,211,106,.22)) drop-shadow(0 0 7px rgba(255,171,36,.10)) !important;
+    opacity:.94;
+  }
+  42%{
+    filter:drop-shadow(0 0 4px rgba(255,222,125,.58)) drop-shadow(0 0 13px rgba(255,178,36,.28)) !important;
+    opacity:1;
+  }
+  58%{
+    filter:drop-shadow(0 0 6px rgba(255,239,180,.72)) drop-shadow(0 0 18px rgba(255,183,50,.36)) !important;
+    opacity:1;
+  }
+}
+
+/* WORLD TOP 9 now reads unmistakably as a tappable featured control. */
+.worldBoardLaunch{
+  border:2px solid rgba(255,211,106,.76) !important;
+  box-shadow:
+    0 0 0 1px rgba(103,225,255,.16),
+    0 0 17px rgba(255,211,106,.14),
+    0 0 28px rgba(86,214,255,.08),
+    inset 0 0 30px rgba(255,255,255,.045) !important;
+  transition:transform .11s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease;
+}
+.worldBoardLaunch:active{transform:scale(.985)}
+.worldBoardLaunch:hover,
+.worldBoardLaunch:focus-visible{
+  outline:none;
+  border-color:rgba(255,225,145,.96) !important;
+  box-shadow:
+    0 0 0 1px rgba(101,231,255,.28),
+    0 0 21px rgba(255,211,106,.22),
+    0 0 34px rgba(83,222,255,.12),
+    inset 0 0 34px rgba(255,255,255,.055) !important;
+}
+
+/* The leaderboard glyph is a living beacon, like the Flow artwork. */
+.worldTopArt{
+  transform-origin:50% 58%;
+  animation:v70WorldTopBeacon 2.7s ease-in-out infinite !important;
+  will-change:transform,opacity,filter;
+}
+.worldTopArt i:nth-child(1),
+.worldTopArt i:nth-child(2),
+.worldTopArt i:nth-child(3){animation:v70RankBars 2.4s ease-in-out infinite}
+.worldTopArt i:nth-child(2){animation-delay:-.42s}
+.worldTopArt i:nth-child(3){animation-delay:-.84s}
+.worldTopArt i:nth-child(4){animation:v70RankCore 1.9s ease-in-out infinite}
+@keyframes v70WorldTopBeacon{
+  0%,100%{opacity:.40;filter:brightness(.92);transform:translateX(-50%) scale(.96)}
+  50%{opacity:.68;filter:brightness(1.25);transform:translateX(-50%) scale(1.035)}
+}
+@keyframes v70RankBars{
+  0%,100%{filter:brightness(.80);box-shadow:0 0 8px rgba(110,220,255,.14)}
+  50%{filter:brightness(1.45);box-shadow:0 0 16px rgba(110,220,255,.36)}
+}
+@keyframes v70RankCore{
+  0%,100%{scale:.92;filter:brightness(.90)}
+  50%{scale:1.10;filter:brightness(1.45)}
+}
+
+/* Rank-detail return control: larger, obvious and comfortably tappable. */
+.worldRankBack{
+  min-height:44px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin:2px 0 15px;
+  padding:9px 14px !important;
+  border:1px solid rgba(255,211,106,.50) !important;
+  border-radius:12px;
+  background:rgba(255,211,106,.055) !important;
+  color:#ffd36a !important;
+  font:950 14px Arial !important;
+  letter-spacing:1.7px !important;
+  box-shadow:0 0 13px rgba(255,211,106,.08);
+  transition:transform .11s ease,border-color .16s ease,background .16s ease;
+}
+.worldRankBack:active{transform:scale(.985)}
+.worldRankBack:hover,
+.worldRankBack:focus-visible{outline:none;border-color:rgba(255,211,106,.82) !important;background:rgba(255,211,106,.09) !important}
+
+/* Consistent tactile press feedback across ordinary UI buttons. */
+button{-webkit-tap-highlight-color:transparent}
+button:active{transform:scale(.985)}
+
+@media(max-width:699px){
+  .worldRankBack{min-height:48px;font-size:14px !important;padding:10px 15px !important}
+}
+
+@media(prefers-reduced-motion:reduce){
+  #flowArchive .archiveHeader h2,#flowPathTitle,.worldTopArt,.worldTopArt i{animation:none !important}
+}
+</style>
+
 </head>
 <body>
 <div id="worldIdentitySetup" aria-hidden="true">
   <div class="identityPanel" role="dialog" aria-modal="true" aria-labelledby="identityTitle">
     <h2 id="identityTitle">ENTER THE WORLD</h2>
     <div class="identitySub">YOUR ARCADE IDENTITY</div>
-    <div class="identityField"><label>3-LETTER INITIALS</label><input id="identityInitialsInput" class="identityInitialsInput" maxlength="3" inputmode="text" autocomplete="off" aria-label="Three arcade initials" placeholder="BRT"></div>
+    <div class="identityField"><label>3-LETTER INITIALS</label><input id="identityInitialsInput" class="identityInitialsInput" maxlength="3" inputmode="text" autocomplete="off" aria-label="Three arcade initials" placeholder="ABC"></div>
     <div class="identityField"><label>COUNTRY</label><select id="identityCountrySelect" class="identityCountrySelect" aria-label="Country"></select></div>
     <div id="identityError" class="identityError"></div>
     <button id="identityEnter" class="identityEnter" type="button">ENTER</button>
@@ -13048,5 +13159,55 @@ makeStarField();makeFluxDustField();makeLaneGuides();resetEnvironmentForRun();up
 
 <div id="flowCompletionCoast" aria-hidden="true"><div class="flowCoastText">FLOW COMPLETE</div></div>
 <div id="flowCompletionFade" aria-hidden="true"></div>
+
+<script id="shiftvixV70UiClick">
+/* SHIFTVIX V70 — one uniform, restrained UI click for interactive controls. */
+(function(){
+  function synthV70UIClick(){
+    if(!audioCtx || audioCtx.state!=="running") return;
+    const now=audioCtx.currentTime;
+    const osc=audioCtx.createOscillator();
+    const gain=audioCtx.createGain();
+    const filter=audioCtx.createBiquadFilter();
+    osc.type="sine";
+    osc.frequency.setValueAtTime(760,now);
+    osc.frequency.exponentialRampToValueAtTime(560,now+.045);
+    filter.type="highpass";
+    filter.frequency.setValueAtTime(240,now);
+    gain.gain.setValueAtTime(.0001,now);
+    gain.gain.linearRampToValueAtTime(.024,now+.006);
+    gain.gain.exponentialRampToValueAtTime(.0001,now+.072);
+    osc.connect(filter).connect(gain).connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now+.085);
+  }
+
+  function playV70UIClick(){
+    try{
+      if(typeof initAudio==="function") initAudio();
+      if(!audioCtx) return;
+      if(audioCtx.state!=="running"){
+        audioCtx.resume().then(synthV70UIClick).catch(function(){});
+      }else{
+        synthV70UIClick();
+      }
+    }catch(e){}
+  }
+
+  const uiSelector=[
+    "button",
+    "#center",
+    ".archiveRow.selectable",
+    "[role='button']"
+  ].join(",");
+
+  document.addEventListener("click",function(event){
+    const target=event.target && event.target.closest ? event.target.closest(uiSelector) : null;
+    if(!target || target.disabled || target.getAttribute("aria-disabled")==="true") return;
+    playV70UIClick();
+  },true);
+})();
+</script>
+
 </body>
 </html>
