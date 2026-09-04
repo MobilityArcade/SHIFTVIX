@@ -159,6 +159,7 @@ function track(eventName,data={}){
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <!-- SHIFTVIX 2.11 — GOLD RINGS + FIVE EVEN OBJECTIVE TYPES -->
+<!-- SHIFTVIX V69 — ENDURE HARD FIX: PAUSE IDENTITY + LIVE WORLD SYNC -->
 <!-- SHIFTVIX V68 — ENDURE WORLD TOP 9 / PAUSE IDENTITY FIX -->
 <!-- SHIFTVIX V67 — WORLD TOP 9 FLOW HUB + LIVING FLOW ANIMATIONS -->
 <title>SHIFTVIX</title>
@@ -6228,11 +6229,18 @@ function openIdentitySetup(){populateCountrySelect();const modal=document.getEle
 function closeIdentitySetup(){const modal=document.getElementById("worldIdentitySetup");modal?.classList.remove("show");modal?.setAttribute("aria-hidden","true");if(!document.getElementById("worldLeaderboard")?.classList.contains("show"))document.body.classList.remove("uiModalOpen")}
 function saveWorldIdentity(){const input=document.getElementById("identityInitialsInput"),select=document.getElementById("identityCountrySelect"),err=document.getElementById("identityError");const initials=(input?.value||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,3),country=(select?.value||"").toUpperCase();if(initials.length!==3){if(err)err.textContent="ENTER EXACTLY 3 INITIALS";input?.focus();return false}if(!/^[A-Z]{2}$/.test(country)){if(err)err.textContent="SELECT YOUR COUNTRY";select?.focus();return false}localStorage.setItem(WORLD_INITIALS_KEY,initials);localStorage.setItem(WORLD_COUNTRY_KEY,country);worldPlayerId();trackGame("leaderboard_initials_saved",{initials_length:3,country_code:country});updateWorldIdentityDisplay();closeIdentitySetup();syncLocalWorldBests().finally(()=>{renderWorldHub();if(!document.getElementById("worldRankView")?.hasAttribute("hidden"))loadWorldLeaderboard(worldBoardMode)});return true}
 function formatWorldValue(mode,value){if(mode==="ENDURE")return `LEVEL ${Math.floor(value||0)}`;return formatFlowBest(mode,value)}
+function endureLocalBest(){
+  const stored=Math.max(0,Number(localStorage.getItem(PERSONAL_BEST_LEVEL_KEY))||0);
+  const memory=Math.max(0,Number(personalBestLevelRecord)||0);
+  const best=Math.max(stored,memory);
+  if(best!==memory)personalBestLevelRecord=best;
+  return best;
+}
 function worldModeColor(mode){return mode==="ENDURE"?"#ffffff":(FLOW_COLOR_MAP?.[mode]||"#ffd36a")}
 function worldModeGlow(mode){return mode==="ENDURE"?"rgba(110,220,255,.28)":(FLOW_GLOW_MAP?.[mode]||"rgba(255,211,106,.24)")}
 function worldModeObjective(mode){return mode==="ENDURE"?"HOW FAR CAN YOU GO?":(FLOW_BEST_OBJECTIVE?.[mode]||"VIEW WORLD RANKS")}
 function worldFlowCardHtml(mode,detail=false){
-  const best=mode==="ENDURE"?Math.max(0,Number(personalBestLevelRecord)||0):flowBestValue(mode);
+  const best=mode==="ENDURE"?endureLocalBest():flowBestValue(mode);
   const bestText=best?formatWorldValue(mode,best):"—";
   return `<button class="worldHubCard" type="button" ${detail?'tabindex="-1"':'data-world-mode="'+mode+'"'} style="--flow-color:${worldModeColor(mode)};--flow-glow:${worldModeGlow(mode)}">
     <div class="worldHubCardTop"><span class="worldHubCardName">${mode}</span><span class="worldHubCardAction">${detail?'WORLD TOP 9':'VIEW RANKS'}</span></div>
@@ -6243,7 +6251,23 @@ function worldFlowCardHtml(mode,detail=false){
 }
 function renderWorldHub(){const hub=document.getElementById("worldFlowHub");if(!hub)return;hub.innerHTML=WORLD_MODES.map(m=>worldFlowCardHtml(m,false)).join("");hub.querySelectorAll("[data-world-mode]").forEach(card=>card.addEventListener("click",()=>openWorldRank(card.dataset.worldMode)))}
 function showWorldHub(){document.getElementById("worldHubView")?.removeAttribute("hidden");document.getElementById("worldRankView")?.setAttribute("hidden","");document.getElementById("worldBoardTitle").textContent="WORLD TOP 9";renderWorldHub()}
-function openWorldRank(mode="COLLECT"){worldBoardMode=WORLD_MODES.includes(mode)?mode:"COLLECT";document.getElementById("worldHubView")?.setAttribute("hidden","");document.getElementById("worldRankView")?.removeAttribute("hidden");const hero=document.getElementById("worldRankHero");if(hero)hero.innerHTML=worldFlowCardHtml(worldBoardMode,true);document.getElementById("worldBoardTitle").textContent="WORLD TOP 9";trackGame("leaderboard_opened",{category:worldBoardMode});loadWorldLeaderboard(worldBoardMode)}
+async function openWorldRank(mode="COLLECT"){
+  worldBoardMode=WORLD_MODES.includes(mode)?mode:"COLLECT";
+  document.getElementById("worldHubView")?.setAttribute("hidden","");
+  document.getElementById("worldRankView")?.removeAttribute("hidden");
+  const hero=document.getElementById("worldRankHero");
+  if(hero)hero.innerHTML=worldFlowCardHtml(worldBoardMode,true);
+  document.getElementById("worldBoardTitle").textContent="WORLD TOP 9";
+  trackGame("leaderboard_opened",{category:worldBoardMode});
+  // V69 — ENDURE is always reconciled with Cloudflare when its board opens.
+  // This repairs older sessions where localStorage had a best but the one-time
+  // V65 sync had already run before ENDURE submission was fixed.
+  if(worldBoardMode==="ENDURE" && worldIdentityReady()){
+    const localBest=endureLocalBest();
+    if(localBest>0)await submitWorldBest("ENDURE",localBest);
+  }
+  await loadWorldLeaderboard(worldBoardMode);
+}
 function openWorldLeaderboard(mode=null){const modal=document.getElementById("worldLeaderboard");if(!modal)return;modal.classList.add("show");modal.setAttribute("aria-hidden","false");document.body.classList.add("uiModalOpen");updateWorldIdentityDisplay();renderWorldHub();if(mode&&WORLD_MODES.includes(mode))openWorldRank(mode);else showWorldHub();if(!worldIdentityReady())setTimeout(openIdentitySetup,120)}
 function closeWorldLeaderboard(){const modal=document.getElementById("worldLeaderboard");modal?.classList.remove("show");modal?.setAttribute("aria-hidden","true");showWorldHub();if(!document.getElementById("worldIdentitySetup")?.classList.contains("show"))document.body.classList.remove("uiModalOpen")}
 async function loadWorldLeaderboard(mode){
@@ -6267,7 +6291,7 @@ async function loadWorldLeaderboard(mode){
             trackGame("leaderboard_rank_received",{category:mode,world_rank:Number(rankData.rank)||0,value:Number(rankData.player.score)||0});
           }else{
             mine.style.display="block";
-            mine.innerHTML=`<span class="worldMineFlag">${countryFlag(worldCountry())}</span>${worldInitials()} · NOT RANKED YET · LOCAL BEST ${formatWorldValue(mode,mode==="ENDURE"?Math.max(0,Number(personalBestLevelRecord)||0):flowBestValue(mode))}`;
+            mine.innerHTML=`<span class="worldMineFlag">${countryFlag(worldCountry())}</span>${worldInitials()} · NOT RANKED YET · LOCAL BEST ${formatWorldValue(mode,mode==="ENDURE"?endureLocalBest():flowBestValue(mode))}`;
           }
         }else mine.style.display="none";
       }else mine.style.display="none";
@@ -6286,7 +6310,7 @@ async function submitWorldBest(mode,value){
     const r=await fetch(`${SHIFTVIX_LEADERBOARD_API}/submit`,{
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({player_id:worldPlayerId(),initials:worldInitials(),country:worldCountry(),flow:mode,score,client_version:"V68"})
+      body:JSON.stringify({player_id:worldPlayerId(),initials:worldInitials(),country:worldCountry(),flow:mode,score,client_version:"V69"})
     });
     if(!r.ok)throw new Error(`HTTP ${r.status}`);
     const data=await r.json();
@@ -6304,12 +6328,12 @@ async function submitWorldBest(mode,value){
 }
 async function syncLocalWorldBests(){
   if(!worldIdentityReady())return;
-  const syncKey=`shiftvixWorldSyncV65:${worldPlayerId()}`;
+  const syncKey=`shiftvixWorldSyncV69:${worldPlayerId()}`;
   if(sessionStorage.getItem(syncKey)==="1")return;
   sessionStorage.setItem(syncKey,"1");
   for(const mode of WORLD_MODES){
     const best=mode==="ENDURE"
-      ? Math.max(0,Number(personalBestLevelRecord)||0)
+      ? endureLocalBest()
       : (Number(flowBestValue(mode))||0);
     if(best>0)await submitWorldBest(mode,best);
   }
@@ -8102,10 +8126,21 @@ function flowHubStatusHtml(){
   }
 
   if(context.mode==="paused"){
-    const flow=
-      activeChallenge||
-      createFlow(currentFlowIndex);
+    // V69 — the unified Flow Hub pause card must respect ENDURE as its own mode.
+    // activeChallenge/currentFlowIndex intentionally remain tied to the normal
+    // 8-Flow system, so using them here makes ENDURE look like the last Flow.
+    if(personalBestMode){
+      return `
+        <div class="hubStatus hubStatusPaused">
+          <div class="hubStatusEyebrow">PAUSED</div>
+          <div class="hubStatusLabel">ENDURE</div>
+          <div class="hubStatusMessage">HOW FAR CAN YOU GO?</div>
+          <button class="hubResumeButton" id="hubResumeButton" type="button">RESUME</button>
+        </div>
+      `;
+    }
 
+    const flow=activeChallenge||createFlow(currentFlowIndex);
     return `
       <div class="hubStatus hubStatusPaused">
         <div class="hubStatusEyebrow">PAUSED</div>
@@ -8544,8 +8579,9 @@ function pauseGame(source="center"){
     "paused",
     {
       message:
-        activeChallenge?.label||
-        createFlow(currentFlowIndex).label
+        personalBestMode
+          ? "HOW FAR CAN YOU GO?"
+          : (activeChallenge?.label||createFlow(currentFlowIndex).label)
     }
   );
 
@@ -8553,7 +8589,8 @@ function pauseGame(source="center"){
 
   trackGame("game_paused",{
     source,
-    flow_number:currentFlowIndex+1
+    mode:personalBestMode?"ENDURE":(activeChallenge?.category||createFlow(currentFlowIndex).category),
+    flow_number:personalBestMode?0:currentFlowIndex+1
   });
 }
 
@@ -11280,7 +11317,7 @@ function endRun(){
       setFlowHubContext("failed",{
         resultLabel:newBest?"NEW PERSONAL BEST":"PERSONAL BEST",
         resultValue:`LEVEL ${achievedLevel}`,
-        message:`BEST · LEVEL ${Math.max(achievedLevel,personalBestLevelRecord)}`
+        message:`BEST · LEVEL ${Math.max(achievedLevel,endureLocalBest())}`
       });
 
       // endRun() normally freezes the game immediately. Personal Best instead
@@ -11920,6 +11957,10 @@ if (level > lastLevel) {
       if(level>personalBestLevelRecord){
         personalBestLevelRecord=level;
         localStorage.setItem(PERSONAL_BEST_LEVEL_KEY,String(level));
+        // V69 — publish each newly-earned ENDURE personal best immediately.
+        // The backend upsert only keeps a higher score, so this is idempotent
+        // and prevents a browser close/refresh from losing a world-ranking run.
+        if(worldIdentityReady())submitWorldBest("ENDURE",level);
       }
       // V50: every 250m level earns a small visual acknowledgement.
       // TRAVEL keeps its larger 500m milestone treatment exclusively.
