@@ -159,7 +159,7 @@ function track(eventName,data={}){
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <!-- SHIFTVIX 2.11 — GOLD RINGS + FIVE EVEN OBJECTIVE TYPES -->
-<!-- SHIFTVIX V70.1 — IDENTITY + UI AUDIO POLISH ONLY: global flags, living HUD, loud arcade navigation beep -->
+<!-- SHIFTVIX V70.4 — CLEAN UI CLICK: V70.3 audio-context fix preserved; shorter button click at roughly half perceived volume; gameplay unchanged -->
 <!-- SHIFTVIX V69 — ENDURE HARD FIX: PAUSE IDENTITY + LIVE WORLD SYNC -->
 <!-- SHIFTVIX V68 — ENDURE WORLD TOP 9 / PAUSE IDENTITY FIX -->
 <!-- SHIFTVIX V67 — WORLD TOP 9 FLOW HUB + LIVING FLOW ANIMATIONS -->
@@ -6458,7 +6458,7 @@ document.getElementById("identityInitialsInput")?.addEventListener("input",e=>{e
 document.getElementById("identityInitialsInput")?.addEventListener("keydown",e=>{if(e.key==="Enter")saveWorldIdentity()});
 populateCountrySelect();
 updateWorldIdentityDisplay();
-if(worldIdentityReady())syncLocalWorldBests();
+if(worldIdentityReady())setTimeout(()=>syncLocalWorldBests(),0);
 
 // SHIFTVIX V56 — every core Flow is now an endless three-life Personal Best challenge.
 // The record itself is the progression system; there are no authored completion targets.
@@ -13161,37 +13161,84 @@ makeStarField();makeFluxDustField();makeLaneGuides();resetEnvironmentForRun();up
 <div id="flowCompletionFade" aria-hidden="true"></div>
 
 <script id="shiftvixV70UiClick">
-/* SHIFTVIX V70.1 — loud arcade navigation beep above background music. */
+/* SHIFTVIX V70.4 — CLEAN UI CLICK ONLY.
+   V70.3 dedicated gesture-created UI AudioContext is preserved.
+   The confirmation is now a short neutral click at roughly half the prior volume. */
 (function(){
-  function synthV70UIClick(){
-    if(!audioCtx || audioCtx.state!=="running") return;
-    const now=audioCtx.currentTime;
-    const osc=audioCtx.createOscillator();
-    const gain=audioCtx.createGain();
-    const filter=audioCtx.createBiquadFilter();
-    osc.type="square";
-    osc.frequency.setValueAtTime(620,now);
-    osc.frequency.exponentialRampToValueAtTime(410,now+.075);
-    filter.type="lowpass";
-    filter.frequency.setValueAtTime(1800,now);
-    gain.gain.setValueAtTime(.0001,now);
-    gain.gain.linearRampToValueAtTime(.105,now+.006);
-    gain.gain.exponentialRampToValueAtTime(.0001,now+.105);
-    osc.connect(filter).connect(gain).connect(audioCtx.destination);
-    osc.start(now);
-    osc.stop(now+.12);
+  let uiAudioCtx=null;
+
+  function ensureUIAudioContext(){
+    if(!uiAudioCtx){
+      const Ctx=window.AudioContext||window.webkitAudioContext;
+      if(!Ctx)return null;
+      // IMPORTANT: this function is called from pointerdown, so creation is
+      // inside the browser's required user-gesture window.
+      uiAudioCtx=new Ctx();
+    }
+    return uiAudioCtx;
+  }
+
+  function synthV70UIClick(ctx){
+    if(!ctx || ctx.state!=="running")return;
+
+    const now=ctx.currentTime;
+
+    // V70.4 — short, neutral button CLICK.
+    // Deliberately much shorter and about half the perceived loudness of V70.3.
+    // No two-tone boop, no long pitch sweep.
+    const master=ctx.createGain();
+    master.gain.setValueAtTime(.0001,now);
+    master.gain.linearRampToValueAtTime(.36,now+.0015);
+    master.gain.exponentialRampToValueAtTime(.0001,now+.045);
+    master.connect(ctx.destination);
+
+    // A tiny high-frequency tick gives the physical "button press" character.
+    const tick=ctx.createOscillator();
+    const tickGain=ctx.createGain();
+    tick.type="triangle";
+    tick.frequency.setValueAtTime(1450,now);
+    tick.frequency.exponentialRampToValueAtTime(980,now+.028);
+    tickGain.gain.setValueAtTime(.18,now);
+    tickGain.gain.exponentialRampToValueAtTime(.0001,now+.034);
+    tick.connect(tickGain).connect(master);
+    tick.start(now);
+    tick.stop(now+.038);
+
+    // Very brief filtered noise adds the crisp mechanical edge without sounding musical.
+    const buffer=ctx.createBuffer(1,Math.max(1,Math.floor(ctx.sampleRate*.012)),ctx.sampleRate);
+    const data=buffer.getChannelData(0);
+    for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*(1-i/data.length);
+
+    const noise=ctx.createBufferSource();
+    const noiseFilter=ctx.createBiquadFilter();
+    const noiseGain=ctx.createGain();
+    noise.buffer=buffer;
+    noiseFilter.type="highpass";
+    noiseFilter.frequency.setValueAtTime(1150,now);
+    noiseGain.gain.setValueAtTime(.16,now);
+    noiseGain.gain.exponentialRampToValueAtTime(.0001,now+.014);
+    noise.connect(noiseFilter).connect(noiseGain).connect(master);
+    noise.start(now);
+    noise.stop(now+.016);
   }
 
   function playV70UIClick(){
     try{
-      if(typeof initAudio==="function") initAudio();
-      if(!audioCtx) return;
-      if(audioCtx.state!=="running"){
-        audioCtx.resume().then(synthV70UIClick).catch(function(){});
-      }else{
-        synthV70UIClick();
+      const ctx=ensureUIAudioContext();
+      if(!ctx)return;
+
+      if(ctx.state==="running"){
+        synthV70UIClick(ctx);
+        return;
       }
-    }catch(e){}
+
+      const resumed=ctx.resume();
+      if(resumed && typeof resumed.then==="function"){
+        resumed.then(()=>synthV70UIClick(ctx)).catch(()=>{});
+      }
+    }catch(e){
+      console.warn("SHIFTVIX UI beep unavailable",e);
+    }
   }
 
   const uiSelector=[
@@ -13207,9 +13254,22 @@ makeStarField();makeFluxDustField();makeLaneGuides();resetEnvironmentForRun();up
     "[role='button']"
   ].join(",");
 
-  document.addEventListener("click",function(event){
-    const target=event.target && event.target.closest ? event.target.closest(uiSelector) : null;
-    if(!target || target.disabled || target.getAttribute("aria-disabled")==="true") return;
+  // Capture pointerdown so the beep happens BEFORE a control rerenders/closes.
+  document.addEventListener("pointerdown",function(event){
+    const target=event.target && event.target.closest
+      ? event.target.closest(uiSelector)
+      : null;
+    if(!target || target.disabled || target.getAttribute("aria-disabled")==="true")return;
+    playV70UIClick();
+  },true);
+
+  // Keyboard accessibility: Enter/Space receives the same confirmation.
+  document.addEventListener("keydown",function(event){
+    if(event.key!=="Enter" && event.key!==" ")return;
+    const target=event.target && event.target.closest
+      ? event.target.closest(uiSelector)
+      : null;
+    if(!target || target.disabled || target.getAttribute("aria-disabled")==="true")return;
     playV70UIClick();
   },true);
 })();
