@@ -159,7 +159,7 @@ function track(eventName,data={}){
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <!-- SHIFTVIX 2.11 — GOLD RINGS + FIVE EVEN OBJECTIVE TYPES -->
-<!-- SHIFTVIX V65 — LIVE WORLD TOP 9 / CLOUDFLARE D1 -->
+<!-- SHIFTVIX V68 — ENDURE WORLD TOP 9 / PAUSE IDENTITY FIX -->
 <!-- SHIFTVIX V67 — WORLD TOP 9 FLOW HUB + LIVING FLOW ANIMATIONS -->
 <title>SHIFTVIX</title>
 <style>
@@ -6267,7 +6267,7 @@ async function loadWorldLeaderboard(mode){
             trackGame("leaderboard_rank_received",{category:mode,world_rank:Number(rankData.rank)||0,value:Number(rankData.player.score)||0});
           }else{
             mine.style.display="block";
-            mine.innerHTML=`<span class="worldMineFlag">${countryFlag(worldCountry())}</span>${worldInitials()} · NOT RANKED YET · LOCAL BEST ${formatWorldValue(mode,flowBestValue(mode))}`;
+            mine.innerHTML=`<span class="worldMineFlag">${countryFlag(worldCountry())}</span>${worldInitials()} · NOT RANKED YET · LOCAL BEST ${formatWorldValue(mode,mode==="ENDURE"?Math.max(0,Number(personalBestLevelRecord)||0):flowBestValue(mode))}`;
           }
         }else mine.style.display="none";
       }else mine.style.display="none";
@@ -6286,7 +6286,7 @@ async function submitWorldBest(mode,value){
     const r=await fetch(`${SHIFTVIX_LEADERBOARD_API}/submit`,{
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({player_id:worldPlayerId(),initials:worldInitials(),country:worldCountry(),flow:mode,score,client_version:"V67"})
+      body:JSON.stringify({player_id:worldPlayerId(),initials:worldInitials(),country:worldCountry(),flow:mode,score,client_version:"V68"})
     });
     if(!r.ok)throw new Error(`HTTP ${r.status}`);
     const data=await r.json();
@@ -6308,7 +6308,9 @@ async function syncLocalWorldBests(){
   if(sessionStorage.getItem(syncKey)==="1")return;
   sessionStorage.setItem(syncKey,"1");
   for(const mode of WORLD_MODES){
-    const best=Number(flowBestValue(mode))||0;
+    const best=mode==="ENDURE"
+      ? Math.max(0,Number(personalBestLevelRecord)||0)
+      : (Number(flowBestValue(mode))||0);
     if(best>0)await submitWorldBest(mode,best);
   }
 }
@@ -8473,14 +8475,26 @@ function pauseMusicOnly(){
 function updatePauseSelection(){
   const name=document.getElementById("pauseFlowName");
   const objective=document.getElementById("pauseFlowObjective");
+  const fill=document.getElementById("pauseFlowFill");
+  const pctLabel=document.getElementById("pauseFlowPct");
+
+  // V68 — ENDURE is a separate competitive mode, not the last selected Flow.
+  // Never fall back to currentFlowIndex while ENDURE is active.
+  if(personalBestMode){
+    const intoLevel=((distance%PERSONAL_BEST_LEVEL_METERS)/PERSONAL_BEST_LEVEL_METERS)*100;
+    if(name)name.textContent="ENDURE";
+    if(objective)objective.textContent="HOW FAR CAN YOU GO?";
+    if(fill)fill.style.width=`${Math.max(0,Math.min(100,intoLevel))}%`;
+    if(pctLabel)pctLabel.textContent=`LEVEL ${Math.max(1,level)}`;
+    return;
+  }
+
   const flow=activeChallenge||createFlow(currentFlowIndex);
   const raw=challengeValue(flow);
   const value=Math.max(0,Math.min(flow.target,raw));
   const pct=Math.max(0,Math.min(100,(value/flow.target)*100));
   if(name)name.textContent=flow.category;
   if(objective)objective.textContent=flow.label;
-  const fill=document.getElementById("pauseFlowFill");
-  const pctLabel=document.getElementById("pauseFlowPct");
   if(fill)fill.style.width=`${pct}%`;
   if(pctLabel)pctLabel.textContent=`${Math.floor(pct)}%`;
 }
@@ -11258,8 +11272,11 @@ function endRun(){
         });
         personalBestLevelRecord=achievedLevel;
         localStorage.setItem(PERSONAL_BEST_LEVEL_KEY,String(achievedLevel));
-        submitWorldBest("ENDURE",achievedLevel);
       }
+      // V68 — always offer the completed ENDURE result to WORLD TOP 9.
+      // The Cloudflare API itself only replaces the stored score when higher,
+      // so this is safe and fixes runs whose local best was updated mid-run.
+      submitWorldBest("ENDURE",achievedLevel);
       setFlowHubContext("failed",{
         resultLabel:newBest?"NEW PERSONAL BEST":"PERSONAL BEST",
         resultValue:`LEVEL ${achievedLevel}`,
