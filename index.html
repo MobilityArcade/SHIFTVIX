@@ -145,6 +145,8 @@ function track(eventName,data={}){
 
 <head>
 <!-- SHIFTVIX — 8 CORE FLOWS + RANDOM DAILY PICK + DRIFT -->
+<!-- SHIFTVIX V96.1.4 — VIX RING + HOLLOW-VOID THRESHOLD PULSE:
+Adds a subtle retriggerable “boop” depth response to the upper-right Vix HUD whenever the player passes a gold ring or successfully enters a hollow Void. Ring = light 6% contact pulse; hollow Void = slightly heavier 7% pressure pulse with tiny backward settle. Uses an independent threshold scale so directional micro-shifts and special-orb physics continue to overlap cleanly. Damage/solid-Void hit behavior, scoring, Flows, navigation and gameplay logic are unchanged. -->
 <!-- SHIFTVIX V96.1.3 — CHRONO SLOW TIME + VIX SPECIAL-ORB PHYSICS:
 Restores Chrono/Kronos world slow-time at 45% speed with the existing smooth chronoAmount ramp, while steering remains responsive. Adds small depth/physics reactions to the upper-right Vix HUD: Warp surges toward the camera, Flux double-pulses, Midas lifts/expands, and Chrono compresses/settles in slow motion. Directional micro-shifts from V96.1.2 are preserved and can overlap these power reactions. Gameplay/scoring/Flows/navigation otherwise preserved. -->
 <!-- SHIFTVIX V96.1.2 — VIX HUD DIRECTIONAL MICRO-SHIFTS:
@@ -883,6 +885,8 @@ canvas{
   --vix-hud-shift-y:0px;
   --vix-power-scale:1;
   --vix-power-y:0px;
+  --vix-threshold-scale:1;
+  --vix-threshold-y:0px;
   --vix-transform-duration:.12s;
   position:fixed;
   top:clamp(78px,9.5vmin,118px);
@@ -895,8 +899,9 @@ canvas{
   transform:
     translate(var(--vix-hud-shift-x),var(--vix-hud-shift-y))
     translateY(var(--vix-power-y))
+    translateY(var(--vix-threshold-y))
     rotate(var(--vix-cam-bank))
-    scale(calc(.96 * var(--vix-power-scale)));
+    scale(calc(.96 * var(--vix-power-scale) * var(--vix-threshold-scale)));
   transform-origin:50% 55%;
   transition:
     opacity .16s ease,
@@ -908,8 +913,9 @@ canvas{
   transform:
     translate(var(--vix-hud-shift-x),var(--vix-hud-shift-y))
     translateY(var(--vix-power-y))
+    translateY(var(--vix-threshold-y))
     rotate(var(--vix-cam-bank))
-    scale(var(--vix-power-scale));
+    scale(calc(var(--vix-power-scale) * var(--vix-threshold-scale)));
 }
 #vixReactionCam .vixCamHead{
   position:absolute;
@@ -12076,6 +12082,7 @@ function passGoldRing(b){
     );
 
   playRingPass();
+  triggerVixThresholdPulse('ring');
   showModeBanner(`RING +${ringPoints}`);
 
   if(navigator.vibrate){
@@ -12451,6 +12458,7 @@ function passEscapeVoid(b){
     );
 
   playRingPass();
+  triggerVixThresholdPulse('void');
   pulseObjectiveHud();
   showModeBanner(`ESCAPE +${points}`);
 
@@ -12497,6 +12505,7 @@ function enterHollowVoid(b){
   }
 
   playRingPass();
+  triggerVixThresholdPulse('void');
   pulseObjectiveHud();
   showModeBanner(
     `VOID +1  +${points}`
@@ -13313,6 +13322,42 @@ function triggerVixPowerReaction(kind){
     later(()=>setVixPowerPose(1,0,'.58s'),900);
     return;
   }
+}
+
+// V96.1.4 — Vix HUD threshold pulse for rings + hollow Voids.
+// Separate scale/y variables let this stack with directional swipes and orb-state physics.
+let vixThresholdPulseTimers=[];
+function clearVixThresholdPulseTimers(){
+  vixThresholdPulseTimers.forEach(clearTimeout);
+  vixThresholdPulseTimers=[];
+}
+function setVixThresholdPose(scale=1,y=0){
+  const cam=document.getElementById('vixReactionCam');
+  if(!cam)return;
+  cam.style.setProperty('--vix-threshold-scale',String(scale));
+  cam.style.setProperty('--vix-threshold-y',`${y}px`);
+}
+function triggerVixThresholdPulse(kind='ring'){
+  const cam=document.getElementById('vixReactionCam');
+  if(!cam)return;
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+
+  // Retrigger immediately so consecutive rings become a readable rhythmic “boop-boop-boop.”
+  clearVixThresholdPulseTimers();
+  const later=(fn,ms)=>vixThresholdPulseTimers.push(setTimeout(fn,ms));
+
+  if(kind==='void'){
+    // Slightly heavier pressure change: forward contact, brief inward settle, home.
+    setVixThresholdPose(1.07,-1);
+    later(()=>setVixThresholdPose(.97,1.5),85);
+    later(()=>setVixThresholdPose(1,0),205);
+    return;
+  }
+
+  // Gold ring: cleaner/light contact pulse.
+  setVixThresholdPose(1.06,0);
+  later(()=>setVixThresholdPose(.985,0),78);
+  later(()=>setVixThresholdPose(1,0),185);
 }
 
 function moveLane(dx,dy){
@@ -14170,7 +14215,7 @@ vix.style.transform = "translateY(0)";
 
 title.style.transform = "translate(-50%,-50%)";
 
-const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorInvincible","invincibleEnding","invincibleCollapse","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;shiftCountRun=0;shiftLastArrivalLane=null;shiftPreviousArrivalLane=null;lastRegularTrainContact=null;pendingTrainShift=null;warpFlowNextWarpDistance=Infinity;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;invincibleOrbActive=false;invincibleTime=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;warpBoostTime=0;warpBoostAmount=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;breakVoidsDestroyed=0;driftDistance=0;travelEarnedMeters=0;driftAudioMeterCarry=0;driftAudioLastLane=-1;driftAudioPhraseStep=0;prototypeLastScore=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;goldRingLastLane=null;goldRingSequenceAnchor=null;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");clearVixPowerReactionTimers();const vixCamReset=document.getElementById('vixReactionCam');if(vixCamReset){vixCamReset.style.setProperty('--vix-power-scale','1');vixCamReset.style.setProperty('--vix-power-y','0px');vixCamReset.style.setProperty('--vix-transform-duration','.12s');}playerX=0;playerY=0;
+const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorInvincible","invincibleEnding","invincibleCollapse","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;shiftCountRun=0;shiftLastArrivalLane=null;shiftPreviousArrivalLane=null;lastRegularTrainContact=null;pendingTrainShift=null;warpFlowNextWarpDistance=Infinity;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;invincibleOrbActive=false;invincibleTime=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;warpBoostTime=0;warpBoostAmount=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;breakVoidsDestroyed=0;driftDistance=0;travelEarnedMeters=0;driftAudioMeterCarry=0;driftAudioLastLane=-1;driftAudioPhraseStep=0;prototypeLastScore=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;goldRingLastLane=null;goldRingSequenceAnchor=null;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");clearVixPowerReactionTimers();clearVixThresholdPulseTimers();const vixCamReset=document.getElementById('vixReactionCam');if(vixCamReset){vixCamReset.style.setProperty('--vix-power-scale','1');vixCamReset.style.setProperty('--vix-power-y','0px');vixCamReset.style.setProperty('--vix-threshold-scale','1');vixCamReset.style.setProperty('--vix-threshold-y','0px');vixCamReset.style.setProperty('--vix-transform-duration','.12s');}playerX=0;playerY=0;
 
 lastLevel = 1;strikes = 0;milestonesReached = {};personalBestLastContactAt=performance.now();personalBestConnected=false;lastWarpBreakthrough=0;lastTravelMilestone=0;starColorUpdateFrame=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();applyFrozenGameViewport(stableViewportWidth,stableViewportHeight);resetEnvironmentForRun();if(personalBestMode){activeChallenge=null;challengeStart=null;}else{beginCurrentFlow();}updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
 const title = document.getElementById("gameTitle");
