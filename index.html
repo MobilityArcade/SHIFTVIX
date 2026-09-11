@@ -145,6 +145,8 @@ function track(eventName,data={}){
 
 <head>
 <!-- SHIFTVIX — 8 CORE FLOWS + RANDOM DAILY PICK + DRIFT -->
+<!-- SHIFTVIX V96.1.2 — VIX HUD DIRECTIONAL MICRO-SHIFTS:
+Reaction-cam Vix now makes a subtle spring-loaded micro movement in the exact direction of every successful lane change, including diagonals, then gently overshoots and resets to his fixed HUD home position. Gameplay, scoring, lane logic, Vix Vision and all existing reaction states are preserved. -->
 <meta charset="utf-8">
 <link rel="icon" type="image/png" href="icon-512.png">
 
@@ -875,6 +877,8 @@ canvas{
 #vixReactionCam{
   --vix-cam-rgb:105,225,255;
   --vix-cam-bank:0deg;
+  --vix-hud-shift-x:0px;
+  --vix-hud-shift-y:0px;
   position:fixed;
   top:clamp(78px,9.5vmin,118px);
   right:clamp(14px,3.0vmin,34px);
@@ -883,7 +887,10 @@ canvas{
   z-index:21;
   pointer-events:none;
   opacity:0;
-  transform:rotate(var(--vix-cam-bank)) scale(.96);
+  transform:
+    translate(var(--vix-hud-shift-x),var(--vix-hud-shift-y))
+    rotate(var(--vix-cam-bank))
+    scale(.96);
   transform-origin:50% 55%;
   transition:
     opacity .16s ease,
@@ -892,7 +899,10 @@ canvas{
 }
 #vixReactionCam.active{
   opacity:1;
-  transform:rotate(var(--vix-cam-bank)) scale(1);
+  transform:
+    translate(var(--vix-hud-shift-x),var(--vix-hud-shift-y))
+    rotate(var(--vix-cam-bank))
+    scale(1);
 }
 #vixReactionCam .vixCamHead{
   position:absolute;
@@ -13199,6 +13209,37 @@ function noteRegularTrainContact(beacon){
   }
 }
 
+// V96.1.2 — Vix HUD directional micro-shift.
+// Mirrors the exact successful lane direction, then springs home.
+let vixHudShiftTimers=[];
+function triggerVixHudDirectionalShift(dx,dy){
+  const cam=document.getElementById('vixReactionCam');
+  if(!cam || (!dx&&!dy)) return;
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  vixHudShiftTimers.forEach(clearTimeout);
+  vixHudShiftTimers=[];
+
+  // Keep the motion readable in peripheral vision without letting Vix wander.
+  const distance=(dx&&dy)?7:8;
+  const sx=dx*distance;
+  const sy=dy*distance;
+
+  cam.style.setProperty('--vix-hud-shift-x',`${sx}px`);
+  cam.style.setProperty('--vix-hud-shift-y',`${sy}px`);
+
+  // Tiny counter-motion sells the spring/inertia, then Vix returns home.
+  vixHudShiftTimers.push(setTimeout(()=>{
+    cam.style.setProperty('--vix-hud-shift-x',`${(-dx*1.5).toFixed(1)}px`);
+    cam.style.setProperty('--vix-hud-shift-y',`${(-dy*1.5).toFixed(1)}px`);
+  },105));
+
+  vixHudShiftTimers.push(setTimeout(()=>{
+    cam.style.setProperty('--vix-hud-shift-x','0px');
+    cam.style.setProperty('--vix-hud-shift-y','0px');
+  },205));
+}
+
 function moveLane(dx,dy){
   if(!gameStarted||gameOver||paused||flowCompletionCoastActive)return;
 
@@ -13231,7 +13272,12 @@ function moveLane(dx,dy){
     );
 
     // Traveler owns the sound of movement; collections keep their existing audio language.
-    playTravelerShiftSound(laneX-oldLaneX,laneY-oldLaneY);
+    const actualDx=laneX-oldLaneX;
+    const actualDy=laneY-oldLaneY;
+    playTravelerShiftSound(actualDx,actualDy);
+
+    // Vix mirrors the player's exact successful direction, including diagonals.
+    triggerVixHudDirectionalShift(actualDx,actualDy);
   }
 
   environmentEngine.updatePlayerTarget();
