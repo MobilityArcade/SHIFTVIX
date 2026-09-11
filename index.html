@@ -145,6 +145,8 @@ function track(eventName,data={}){
 
 <head>
 <!-- SHIFTVIX — 8 CORE FLOWS + RANDOM DAILY PICK + DRIFT -->
+<!-- SHIFTVIX V96.1.3 — CHRONO SLOW TIME + VIX SPECIAL-ORB PHYSICS:
+Restores Chrono/Kronos world slow-time at 45% speed with the existing smooth chronoAmount ramp, while steering remains responsive. Adds small depth/physics reactions to the upper-right Vix HUD: Warp surges toward the camera, Flux double-pulses, Midas lifts/expands, and Chrono compresses/settles in slow motion. Directional micro-shifts from V96.1.2 are preserved and can overlap these power reactions. Gameplay/scoring/Flows/navigation otherwise preserved. -->
 <!-- SHIFTVIX V96.1.2 — VIX HUD DIRECTIONAL MICRO-SHIFTS:
 Reaction-cam Vix now makes a subtle spring-loaded micro movement in the exact direction of every successful lane change, including diagonals, then gently overshoots and resets to his fixed HUD home position. Gameplay, scoring, lane logic, Vix Vision and all existing reaction states are preserved. -->
 <meta charset="utf-8">
@@ -805,7 +807,7 @@ canvas{
   transition:
     width .12s ease,
     height .12s ease,
-    transform .12s ease,
+    transform var(--vix-transform-duration) cubic-bezier(.2,.82,.25,1),
     opacity .12s ease,
     background .16s ease,
     box-shadow .16s ease;
@@ -879,6 +881,9 @@ canvas{
   --vix-cam-bank:0deg;
   --vix-hud-shift-x:0px;
   --vix-hud-shift-y:0px;
+  --vix-power-scale:1;
+  --vix-power-y:0px;
+  --vix-transform-duration:.12s;
   position:fixed;
   top:clamp(78px,9.5vmin,118px);
   right:clamp(14px,3.0vmin,34px);
@@ -889,8 +894,9 @@ canvas{
   opacity:0;
   transform:
     translate(var(--vix-hud-shift-x),var(--vix-hud-shift-y))
+    translateY(var(--vix-power-y))
     rotate(var(--vix-cam-bank))
-    scale(.96);
+    scale(calc(.96 * var(--vix-power-scale)));
   transform-origin:50% 55%;
   transition:
     opacity .16s ease,
@@ -901,8 +907,9 @@ canvas{
   opacity:1;
   transform:
     translate(var(--vix-hud-shift-x),var(--vix-hud-shift-y))
+    translateY(var(--vix-power-y))
     rotate(var(--vix-cam-bank))
-    scale(1);
+    scale(var(--vix-power-scale));
 }
 #vixReactionCam .vixCamHead{
   position:absolute;
@@ -979,6 +986,9 @@ canvas{
 }
 #vixReactionCam.flux .vixCamHead{
   box-shadow:0 0 8px rgba(255,255,255,.40),0 0 22px rgba(255,92,235,.58);
+}
+#vixReactionCam.chrono{
+  --vix-transform-duration:.24s;
 }
 #vixReactionCam.chrono .vixCamHead{
   box-shadow:0 0 8px rgba(255,255,255,.40),0 0 22px rgba(105,238,255,.62);
@@ -7123,6 +7133,7 @@ function activateFluxBoost(reason,tier=1){
   playFluxSound();
   triggerWarpBreakthrough("flux");
   showPowerAnnouncement("FLUX",tier);
+  triggerVixPowerReaction("flux");
   if(navigator.vibrate)navigator.vibrate([18,22,35]);
   trackGame("flux_orb_collected",{
     trigger_reason:reason||"unknown",
@@ -7143,7 +7154,7 @@ function activateFluxBoost(reason,tier=1){
 // =========================
 const CHRONO_DURATION_SECONDS=8; // fallback; tier activation uses 4/8/12
 const CHRONO_MIN_DISTANCE=1800;
-const CHRONO_WORLD_SCALE=1; // V59 KRONOS: score doubles without slowing time
+const CHRONO_WORLD_SCALE=.45; // V96.1.3 KRONOS: restored cinematic slow-time; steering remains real-time
 const CHRONO_COLOR=0xbff6ff;
 const CHRONO_GLOW_COLOR=0x45cfff;
 
@@ -7269,6 +7280,7 @@ function activateChrono(reason,tier=1){
 
   playChronoSound();
   showPowerAnnouncement("KRONOS",tier);
+  triggerVixPowerReaction("chrono");
 
   /*
     KRONOS UI SEQUENCE:
@@ -7465,6 +7477,7 @@ function activateMidas(reason,tier=1){
 
   playMidasSound();
   showPowerAnnouncement("MIDAS",tier);
+  triggerVixPowerReaction("midas");
 
   if(navigator.vibrate)navigator.vibrate([16,24,16,24,32]);
 
@@ -12682,6 +12695,7 @@ function activateWarp(reason,tier=1){
   triggerWarpBreakthrough("warp");
   launchSurge=Math.max(launchSurge,18+tier*3);
   showPowerAnnouncement("WARP",tier);
+  triggerVixPowerReaction("warp");
   updateHUD();
   updateChallenge();
 
@@ -13238,6 +13252,67 @@ function triggerVixHudDirectionalShift(dx,dy){
     cam.style.setProperty('--vix-hud-shift-x','0px');
     cam.style.setProperty('--vix-hud-shift-y','0px');
   },205));
+}
+
+// V96.1.3 — Vix HUD special-orb physics.
+// X/Y lane gestures remain controlled by --vix-hud-shift-*.
+// Legendary powers use independent depth/vertical variables so both systems can overlap.
+let vixPowerReactionTimers=[];
+function clearVixPowerReactionTimers(){
+  vixPowerReactionTimers.forEach(clearTimeout);
+  vixPowerReactionTimers=[];
+}
+function setVixPowerPose(scale=1,y=0,duration='.12s'){
+  const cam=document.getElementById('vixReactionCam');
+  if(!cam)return;
+  cam.style.setProperty('--vix-power-scale',String(scale));
+  cam.style.setProperty('--vix-power-y',`${y}px`);
+  // Chrono itself keeps a slower transform response via its class rule.
+  if(!cam.classList.contains('chrono')){
+    cam.style.setProperty('--vix-transform-duration',duration);
+  }
+}
+function triggerVixPowerReaction(kind){
+  const cam=document.getElementById('vixReactionCam');
+  if(!cam)return;
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+
+  clearVixPowerReactionTimers();
+  const later=(fn,ms)=>vixPowerReactionTimers.push(setTimeout(fn,ms));
+
+  if(kind==='warp'){
+    // Acceleration throws Vix toward the camera, then he stabilizes while Warp continues.
+    setVixPowerPose(1.15,-4,'.10s');
+    later(()=>setVixPowerPose(1.075,-2,'.22s'),155);
+    later(()=>setVixPowerPose(1,0,'.34s'),520);
+    return;
+  }
+
+  if(kind==='flux'){
+    // Electrical double-pulse: quick, energetic, but stays inside the HUD home area.
+    setVixPowerPose(1.075,-1,'.09s');
+    later(()=>setVixPowerPose(1.02,0,'.10s'),115);
+    later(()=>setVixPowerPose(1.09,-2,'.09s'),235);
+    later(()=>setVixPowerPose(1,0,'.28s'),390);
+    return;
+  }
+
+  if(kind==='midas'){
+    // Buoyant golden lift/expansion, then a soft settle.
+    setVixPowerPose(1.065,-4,'.18s');
+    later(()=>setVixPowerPose(1.025,-2,'.26s'),260);
+    later(()=>setVixPowerPose(1,0,'.34s'),610);
+    return;
+  }
+
+  if(kind==='chrono'){
+    // Time compression: Vix pulls inward, then returns unusually slowly.
+    cam.style.setProperty('--vix-transform-duration','.24s');
+    setVixPowerPose(.94,2,'.24s');
+    later(()=>setVixPowerPose(.975,1,'.42s'),330);
+    later(()=>setVixPowerPose(1,0,'.58s'),900);
+    return;
+  }
 }
 
 function moveLane(dx,dy){
@@ -14095,7 +14170,7 @@ vix.style.transform = "translateY(0)";
 
 title.style.transform = "translate(-50%,-50%)";
 
-const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorInvincible","invincibleEnding","invincibleCollapse","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;shiftCountRun=0;shiftLastArrivalLane=null;shiftPreviousArrivalLane=null;lastRegularTrainContact=null;pendingTrainShift=null;warpFlowNextWarpDistance=Infinity;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;invincibleOrbActive=false;invincibleTime=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;warpBoostTime=0;warpBoostAmount=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;breakVoidsDestroyed=0;driftDistance=0;travelEarnedMeters=0;driftAudioMeterCarry=0;driftAudioLastLane=-1;driftAudioPhraseStep=0;prototypeLastScore=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;goldRingLastLane=null;goldRingSequenceAnchor=null;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");playerX=0;playerY=0;
+const pauseText=document.getElementById("pauseText");if(pauseText)pauseText.style.display="none";const center=document.getElementById("center");if(center){center.classList.remove("reactorFlux","reactorChrono","reactorMidas","reactorInvincible","invincibleEnding","invincibleCollapse","reactorDamage");center.classList.add("reactorNormal");center.style.setProperty("--thrust-power","0");}reactorDamageUntil=0;ionicThrustPower=0;ionicThrustAngle=90;document.getElementById("roundComplete").style.display="none";beacons.forEach(disposeBeaconObject);beacons.length=0;score=0;foundCount=0;combo=1;distance=0;level=1;shiftCountRun=0;shiftLastArrivalLane=null;shiftPreviousArrivalLane=null;lastRegularTrainContact=null;pendingTrainShift=null;warpFlowNextWarpDistance=Infinity;tierCounts={WHITE:0,BLUE:0,GREEN:0,PURPLE:0,ORANGE:0,RED:0};heroMode=true;heroBannerShown=true;pendingModeBanner=null;fluxCollectionStreak=0;fluxPendingReasons.length=0;fluxOrbActive=false;fluxBoostTime=0;fluxBoostAmount=0;fluxDustVisualPower=0;if(fluxDust)fluxDust.material.opacity=0;fluxNextDistanceTrigger=1000+Math.random()*500;fluxCooldownUntilDistance=0;fluxCollectedThisRun=0;const fluxFx=document.getElementById("fluxFx");if(fluxFx){fluxFx.classList.remove("active");fluxFx.style.setProperty("--flux-power","0");}chronoPendingReasons.length=0;chronoOrbActive=false;chronoTime=0;chronoAmount=0;chronoNextDistanceTrigger=2000+Math.random()*650;chronoCooldownUntilDistance=0;chronoCollectedThisRun=0;chronoMultiplierRevealAt=0;const chronoFx=document.getElementById("chronoFx");if(chronoFx){chronoFx.classList.remove("active");chronoFx.style.setProperty("--chrono-power","0");}midasPendingReasons.length=0;midasOrbActive=false;midasTime=0;midasAmount=0;midasNextDistanceTrigger=900+Math.random()*500;midasCooldownUntilDistance=0;midasCollectedThisRun=0;midasAbsorbedThisState=0;invincibleOrbActive=false;invincibleTime=0;warpOrbActive=false;warpCollectedThisRun=0;warpCooldownUntilDistance=0;warpBoostTime=0;warpBoostAmount=0;voidSpawnCooldown=1.25;voidCountRun=0;goldRingsPassed=0;breakVoidsDestroyed=0;driftDistance=0;travelEarnedMeters=0;driftAudioMeterCarry=0;driftAudioLastLane=-1;driftAudioPhraseStep=0;prototypeLastScore=0;goldRingSpawnCooldown=2.5;goldRingSpawnedThisRun=0;goldRingSequenceRemaining=0;goldRingSequenceDelay=0;goldRingLastLane=null;goldRingSequenceAnchor=null;const midasFx=document.getElementById("midasFx");if(midasFx){midasFx.classList.remove("active");midasFx.style.setProperty("--midas-power","0");}legendarySpawnCount=0;legendaryNextAllowedAt=performance.now()+5000+Math.random()*5000;const prismFx=document.getElementById("prismFx");if(prismFx){prismFx.classList.remove("active");prismFx.style.setProperty("--chrono-prism-power","0");}const chronoMultiplier=document.getElementById("chronoMultiplier");if(chronoMultiplier)chronoMultiplier.classList.remove("show");clearVixPowerReactionTimers();const vixCamReset=document.getElementById('vixReactionCam');if(vixCamReset){vixCamReset.style.setProperty('--vix-power-scale','1');vixCamReset.style.setProperty('--vix-power-y','0px');vixCamReset.style.setProperty('--vix-transform-duration','.12s');}playerX=0;playerY=0;
 
 lastLevel = 1;strikes = 0;milestonesReached = {};personalBestLastContactAt=performance.now();personalBestConnected=false;lastWarpBreakthrough=0;lastTravelMilestone=0;starColorUpdateFrame=0;launchSurge=0;runStarted=false;gameOver=false;gameStarted=true;breakTimer=0;speed=SPEED_START;laneX=1;laneY=1;targetX=0;targetY=0;resetWarpBanking();applyFrozenGameViewport(stableViewportWidth,stableViewportHeight);resetEnvironmentForRun();if(personalBestMode){activeChallenge=null;challengeStart=null;}else{beginCurrentFlow();}updateStrikes();updateHUD();spawnWave();if(!musicStarted){startMusic();}else if(!musicTimer&&audioCtx){nextNoteTime=Math.max(nextNoteTime,audioCtx.currentTime+0.035);nextDrumTime=Math.max(nextDrumTime,audioCtx.currentTime+0.05);musicTimer=setInterval(musicScheduler,25);}}
 const title = document.getElementById("gameTitle");
