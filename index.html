@@ -5396,6 +5396,24 @@ html.vix-hard-blink #vixVision .vixEye{
 }
 </style>
 
+
+<style id="v96ClearFlowStyle">
+/* V96.3 — CLEAR: offensive Flow only. */
+#clearLaserFx{position:fixed;inset:0;z-index:47;pointer-events:none;overflow:visible}
+#clearLaserFx line{stroke:#7ff7ff;stroke-width:3.2;stroke-linecap:round;filter:drop-shadow(0 0 5px #25dfff) drop-shadow(0 0 10px #25dfff);opacity:0}
+#clearLaserFx.fire line{animation:clearBeamFlash .18s ease-out}
+@keyframes clearBeamFlash{0%{opacity:0}18%{opacity:1}62%{opacity:.92}100%{opacity:0}}
+#vixReactionCam.clear-charge .vixCamEye{filter:brightness(2.2) drop-shadow(0 0 7px #7ff7ff) drop-shadow(0 0 14px #25dfff)!important}
+#vixVision.clear-charge .vixEye{filter:brightness(2.1) drop-shadow(0 0 10px #7ff7ff) drop-shadow(0 0 22px #25dfff)!important}
+#vixReactionCam.clear-fire .vixCamEye{filter:brightness(3) drop-shadow(0 0 10px #fff) drop-shadow(0 0 22px #25dfff)!important}
+#vixVision.clear-fire .vixEye{filter:brightness(3) drop-shadow(0 0 13px #fff) drop-shadow(0 0 30px #25dfff)!important}
+.flowChoiceCard.flow-drift{--flow-color:#61efff!important;--flow-glow:rgba(97,239,255,.28)!important}
+.flowChoiceCard.flow-drift .flowVisual-drift i:nth-child(1),
+.flowChoiceCard.flow-drift .flowVisual-drift i:nth-child(2){height:3px;width:82%;right:3%;top:42%;border:0;background:linear-gradient(90deg,transparent,#7ff7ff,#fff);box-shadow:0 0 10px #25dfff;transform:rotate(-8deg)}
+.flowChoiceCard.flow-drift .flowVisual-drift i:nth-child(2){top:58%;transform:rotate(8deg)}
+.flowChoiceCard.flow-drift .flowVisual-drift i:nth-child(3){border:4px solid #ff493d;background:#090000;box-shadow:0 0 18px #ff493d}
+</style>
+
 </head>
 <body>
 <div id="worldIdentitySetup" aria-hidden="true">
@@ -8226,6 +8244,7 @@ function playDriftCoin(laneIndex,phraseStep=0){
 function updateDriftAudio(distanceDelta,isOpenSpace){
   if(
     activeChallenge?.category!=="DRIFT" ||
+    activeChallenge?.metric==="clear" ||
     !isOpenSpace
   ){
     driftAudioMeterCarry=0;
@@ -8973,7 +8992,8 @@ function flowAllowedSpecials(){
   if(c==="COLLECT")return ["midas"];
   if(c==="TRAVEL" || c==="SHIFT")return ["flux"];
   if(c==="SCORE")return ["doubler"];
-  if(c==="RINGS" || c==="VOIDS" || c==="DRIFT")return ["invincible"];
+  if(c==="RINGS" || c==="VOIDS")return ["invincible"];
+  if(c==="DRIFT")return [];
   if(c==="WARP")return ["warp"];
   return [];
 }
@@ -9257,14 +9277,14 @@ const FLOW_BEST_OBJECTIVE={
   SHIFT:"HOW MANY SHIFTS CAN YOU MAKE?",
   WARP:"HOW MANY WARPS CAN YOU HIT?",
   VOIDS:"HOW MANY VOIDS CAN YOU ENTER?",
-  DRIFT:"HOW MUCH DRIFT CAN YOU GENERATE?"
+  DRIFT:"HOW MANY VOIDS CAN YOU CLEAR?"
 };
 function flowBestValue(category){
   return Math.max(0,Math.floor(Number(vectorRecords?.[category])||0));
 }
 function formatFlowBest(category,value=flowBestValue(category)){
   const v=Math.max(0,Math.floor(Number(value)||0));
-  if(category==="TRAVEL" || category==="DRIFT")return `${v.toLocaleString()}m`;
+  if(category==="TRAVEL")return `${v.toLocaleString()}m`;
   if(category==="SCORE")return `${v.toLocaleString()} PTS`;
   return v.toLocaleString();
 }
@@ -9284,7 +9304,7 @@ function flowCardHtml(category){
       style="--flow-color:${FLOW_COLOR_MAP[category]};--flow-glow:${FLOW_GLOW_MAP[category]};"
     >
       <div class="flowChoiceTop">
-        <div class="flowChoiceIdentity"><span class="flowChoiceName">${category}</span></div>
+        <div class="flowChoiceIdentity"><span class="flowChoiceName">${category==="DRIFT"?"CLEAR":category}</span></div>
         <span class="flowChoiceStep">PLAY</span>
       </div>
       <div class="flowChoiceObjective">${FLOW_BEST_OBJECTIVE[category]}</div>
@@ -10408,7 +10428,7 @@ function applyFlowStrikeAllowance(flow,index){
 
 function createFlow(index){
   const category=flowCategoryForIndex(index);
-  const metric={COLLECT:"orbs",TRAVEL:"travel",SCORE:"score",RINGS:"rings",SHIFT:"shift",WARP:"warp",VOIDS:"voids",DRIFT:"drift"}[category]||"orbs";
+  const metric={COLLECT:"orbs",TRAVEL:"travel",SCORE:"score",RINGS:"rings",SHIFT:"shift",WARP:"warp",VOIDS:"voids",DRIFT:"clear"}[category]||"orbs";
   return {
     id:`${category.toLowerCase()}_best`,
     name:category,
@@ -10449,6 +10469,7 @@ function beginCurrentFlow(){
         warps:warpCollectedThisRun,
         breaks:breakVoidsDestroyed,
         drift:driftDistance,
+        clear:(typeof clearVoidsDestroyed==="number"?clearVoidsDestroyed:0),
         travel:travelEarnedMeters,
         tierCounts:{...tierCounts}
     };
@@ -10468,8 +10489,8 @@ function beginCurrentFlow(){
         warpFlowNextWarpDistance=Infinity;
     }    if(activeChallenge.metric==="voids"){
         showModeBanner("VOIDS: ENTER THE HOLLOW VOIDS");
-    }else if(activeChallenge.metric==="drift"){
-        showModeBanner("DRIFT: KEEP MOVING");
+    }else if(activeChallenge.metric==="clear"){
+        showModeBanner("CLEAR: ALIGN TO FIRE");
     }
 
     updateChallenge();
@@ -10494,6 +10515,7 @@ function challengeBaseValue(ch){
   if(ch.metric==="shift")return Math.max(0,shiftCountRun-(challengeStart.shifts||0));
   if(ch.metric==="warp")return Math.max(0,warpCollectedThisRun-(challengeStart.warps||0));
   if(ch.metric==="voids")return Math.max(0,breakVoidsDestroyed-(challengeStart.breaks||0));
+  if(ch.metric==="clear")return Math.max(0,(typeof clearVoidsDestroyed==="number"?clearVoidsDestroyed:0)-(challengeStart.clear||0));
   if(ch.metric==="drift")return Math.max(0,driftDistance-(challengeStart.drift||0));
 
   return 0;
@@ -10867,6 +10889,7 @@ if(replayReturnFlowIndex !== null){
         warps:warpCollectedThisRun,
         breaks:breakVoidsDestroyed,
         drift:driftDistance,
+        clear:(typeof clearVoidsDestroyed==="number"?clearVoidsDestroyed:0),
         travel:travelEarnedMeters,
         tierCounts:{...tierCounts}
     };
@@ -10919,6 +10942,7 @@ if(replayReturnFlowIndex !== null){
         warps:warpCollectedThisRun,
         breaks:breakVoidsDestroyed,
         drift:driftDistance,
+        clear:(typeof clearVoidsDestroyed==="number"?clearVoidsDestroyed:0),
         travel:travelEarnedMeters,
         tierCounts:{...tierCounts}
     };
@@ -10956,7 +10980,8 @@ function updateChallenge(){
   }
   if(!activeChallenge){
     activeChallenge=createFlow(currentFlowIndex);
-    challengeStart={found:foundCount,score,distance,strikes,rings:goldRingsPassed,shifts:shiftCountRun,warps:warpCollectedThisRun,breaks:breakVoidsDestroyed,drift:driftDistance,travel:travelEarnedMeters,tierCounts:{...tierCounts}};
+    challengeStart={found:foundCount,score,distance,strikes,rings:goldRingsPassed,shifts:shiftCountRun,warps:warpCollectedThisRun,breaks:breakVoidsDestroyed,drift:driftDistance,
+        clear:(typeof clearVoidsDestroyed==="number"?clearVoidsDestroyed:0),travel:travelEarnedMeters,tierCounts:{...tierCounts}};
   }
   const raw=flowRunMetricValue(activeChallenge);
   const best=flowBestValue(activeChallenge.category);
@@ -11075,7 +11100,7 @@ function flowHubStatusHtml(){
     return `
       <div class="hubStatus hubStatusPaused">
         <div class="hubStatusEyebrow">PAUSED</div>
-        <div class="hubStatusLabel">${flow.category}</div>
+        <div class="hubStatusLabel">${flow.category==="DRIFT"&&flow.metric==="clear"?"CLEAR":flow.category}</div>
         <div class="hubStatusMessage">${flow.label}</div>
         <button
           class="hubResumeButton"
@@ -11346,6 +11371,7 @@ function loadSelectedFlow(
         warps:warpCollectedThisRun,
         breaks:breakVoidsDestroyed,
         drift:driftDistance,
+        clear:(typeof clearVoidsDestroyed==="number"?clearVoidsDestroyed:0),
         travel:travelEarnedMeters,
         tierCounts:{...tierCounts}
     };
@@ -14222,6 +14248,16 @@ function collectBeacon(b){
  // connected to a real train in the current lane.
  noteRegularTrainContact(b);
 
+ // SHIFTVIX V96.3.3 — CLEAR collectible feel.
+ // In CLEAR, normal lane orbs remain tactile/audio scenery only: they disappear,
+ // play their familiar pickup sound and tiny haptic, but do NOT change score,
+ // collect totals, tier totals, challenge progress, streaks, or records.
+ if(activeChallenge?.category==="DRIFT" && activeChallenge?.metric==="clear"){
+   playCoin(b.userData.tier);
+   if(navigator.vibrate)navigator.vibrate(4);
+   return;
+ }
+
  const baseGained=b.userData.value;
  const chronoScoring=chronoTime>0;
  const gained=
@@ -14271,9 +14307,9 @@ function objectiveHudData(){
     const category=String(activeChallenge.category||"FLOW").toUpperCase();
     const current=flowRunMetricValue(activeChallenge);
     const best=flowBestValue(category);
-    const unit=(category==="TRAVEL"||category==="DRIFT")?"m":"";
+    const unit=(category==="TRAVEL")?"m":"";
     return {
-      label:category,
+      label:category==="DRIFT"?"CLEAR":category,
       value:`${current.toLocaleString()}${unit}`,
       condition:best?`BEST · ${formatFlowBest(category,best)}`:""
     };
@@ -14326,6 +14362,7 @@ function flowDisplayLabel(flow){
   if(flow.metric==="shift")return "SHIFT";
   if(flow.metric==="warp")return "WARP";
   if(flow.metric==="voids")return "VOIDS";
+  if(flow.metric==="clear")return "CLEAR";
   if(flow.metric==="drift")return "DRIFT";
   if(flow.metric==="distance")return "DISTANCE";
   if(flow.metric==="score")return "SCORE";
@@ -14336,7 +14373,7 @@ function flowDisplayLabel(flow){
 function formatRunFlowProgress(flow,value){
   const whole=Math.max(0,Math.floor(Number(value)||0));
   const category=flow?.category||"";
-  if(category==="TRAVEL" || category==="DRIFT")return `${whole.toLocaleString()}m`;
+  if(category==="TRAVEL")return `${whole.toLocaleString()}m`;
   if(category==="SCORE")return `${whole.toLocaleString()} PTS`;
   return whole.toLocaleString();
 }
@@ -15140,7 +15177,7 @@ if(activeChallenge?.category==="TRAVEL" && challengeStart){
 // SHIFTVIX V46 — NEGATIVE SPACE DRIFT.
 // Movement only earns DRIFT while the Traveler is physically in open space
 // near the player plane. Moving train-to-train belongs to SHIFT, not DRIFT.
-const driftActive=activeChallenge?.category==="DRIFT";
+const driftActive=activeChallenge?.category==="DRIFT" && activeChallenge?.metric==="drift";
 const driftMoveDelta=driftActive
   ? Math.hypot(playerX-(window.__shiftvixDriftPrevX ?? playerX),playerY-(window.__shiftvixDriftPrevY ?? playerY))
   : 0;
@@ -16342,7 +16379,175 @@ window.addEventListener("pageshow",()=>{
   },120);
 });
 
+/* SHIFTVIX V96.3.3 — CLEAR
+   Internal category remains DRIFT so existing save/rank keys survive.
+   CLEAR is the ONLY Flow with firing. Movement is still the only input:
+   align with a solid hostile Void and Vix auto-locks / auto-fires. */
+let clearVoidsDestroyed=0;
+let clearLastShotAt=0;
+let clearLockedTarget=null;
+const CLEAR_LOCK_RANGE=185;
+const CLEAR_MIN_RANGE=42;
+const CLEAR_ALIGN_RADIUS=5.8;
+const CLEAR_SHOT_COOLDOWN=310;
+
+function clearFlowActive(){
+  return !personalBestMode &&
+    activeChallenge?.category==="DRIFT" &&
+    activeChallenge?.metric==="clear" &&
+    !gameOver && !paused &&
+    !flowCompletionCoastActive && !finalLifeCoastActive;
+}
+
+function ensureClearLaserSvg(){
+  let svg=document.getElementById("clearLaserFx");
+  if(svg)return svg;
+  svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  svg.id="clearLaserFx";
+  svg.setAttribute("width","100%");
+  svg.setAttribute("height","100%");
+  svg.innerHTML='<line id="clearBeamL"/><line id="clearBeamR"/>';
+  document.body.appendChild(svg);
+  return svg;
+}
+
+function clearEyeCenters(){
+  const eyes=[...document.querySelectorAll("#vixVision .vixEye")];
+  if(eyes.length>=2){
+    return eyes.slice(0,2).map(el=>{
+      const r=el.getBoundingClientRect();
+      return {x:r.left+r.width/2,y:r.top+r.height/2};
+    });
+  }
+  const w=innerWidth,h=innerHeight;
+  return [{x:w*.39,y:h*.62},{x:w*.61,y:h*.62}];
+}
+
+function clearTargetScreen(target){
+  try{
+    const v=target.position.clone();
+    v.project(camera);
+    return {x:(v.x*.5+.5)*innerWidth,y:(-.5*v.y+.5)*innerHeight};
+  }catch(e){
+    return {x:innerWidth/2,y:innerHeight*.34};
+  }
+}
+
+function playClearLaserSound(){
+  initAudio();
+  if(!audioCtx)return;
+  try{
+    if(audioCtx.state==="suspended")audioCtx.resume();
+    const now=audioCtx.currentTime;
+    const master=audioCtx.createGain();
+    master.gain.setValueAtTime(.0001,now);
+    master.gain.linearRampToValueAtTime(.038,now+.012);
+    master.gain.exponentialRampToValueAtTime(.0001,now+.19);
+    master.connect(audioCtx.destination);
+    [1180,1510].forEach((f,i)=>{
+      const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+      o.type=i?"sine":"sawtooth";
+      o.frequency.setValueAtTime(f,now+i*.012);
+      o.frequency.exponentialRampToValueAtTime(310,now+.17);
+      g.gain.setValueAtTime(i?.34:.5,now);
+      g.gain.exponentialRampToValueAtTime(.02,now+.18);
+      o.connect(g).connect(master);o.start(now+i*.012);o.stop(now+.2);
+    });
+  }catch(e){}
+}
+
+function setClearEyeState(name,on){
+  const cam=document.getElementById("vixReactionCam");
+  const vision=document.getElementById("vixVision");
+  cam?.classList.toggle(name,on);
+  vision?.classList.toggle(name,on);
+}
+
+function flashClearBeams(target){
+  const svg=ensureClearLaserSvg();
+  const [a,b]=clearEyeCenters();
+  const p=clearTargetScreen(target);
+  const l=svg.querySelector("#clearBeamL"),r=svg.querySelector("#clearBeamR");
+  [[l,a],[r,b]].forEach(([line,s])=>{
+    line.setAttribute("x1",s.x);line.setAttribute("y1",s.y);
+    line.setAttribute("x2",p.x);line.setAttribute("y2",p.y);
+  });
+  svg.classList.remove("fire"); void svg.getBoundingClientRect(); svg.classList.add("fire");
+  setClearEyeState("clear-fire",true);
+  setTimeout(()=>setClearEyeState("clear-fire",false),190);
+}
+
+function destroyClearVoid(target){
+  if(!target?.userData || target.userData.state!=="active")return;
+  target.userData.state="collected";
+  target.userData.fade=1;
+  target.userData.clearDestroyed=true;
+  clearVoidsDestroyed++;
+  clearLastShotAt=performance.now();
+
+  flashClearBeams(target);
+  playClearLaserSound();
+  try{ playVixVoice("excited"); }catch(e){}
+  pulseObjectiveHud();
+  showModeBanner(`CLEAR +1`);
+  if(navigator.vibrate)navigator.vibrate([8,18,12]);
+
+  // Collapse inward rather than explode.
+  const startScale=target.scale.x||1;
+  const start=performance.now();
+  const collapse=()=>{
+    const q=Math.min(1,(performance.now()-start)/210);
+    const s=Math.max(.025,startScale*(1-q)*(1-q));
+    target.scale.setScalar(s);
+    if(q<1)requestAnimationFrame(collapse);
+  };
+  requestAnimationFrame(collapse);
+
+  try{
+    addPrototypeTotal("DRIFT",1);
+    trackGame("clear_void_destroyed",{
+      distance:Math.floor(distance),level,
+      flow_number:currentFlowIndex+1,
+      clears_run:clearVoidsDestroyed
+    });
+  }catch(e){}
+  updateHUD();updateChallenge();
+}
+
+function updateClearFlow(){
+  if(!clearFlowActive()){
+    clearLockedTarget=null;
+    setClearEyeState("clear-charge",false);
+    requestAnimationFrame(updateClearFlow);
+    return;
+  }
+  const now=performance.now();
+  let best=null,bestScore=Infinity;
+  for(const b of beacons){
+    if(!b?.userData || b.userData.state!=="active" || !b.userData.isVoid || b.userData.isHollowVoid)continue;
+    const ahead=PLAYER_Z-b.position.z;
+    if(ahead<CLEAR_MIN_RANGE || ahead>CLEAR_LOCK_RANGE)continue;
+    const dxy=Math.hypot(b.position.x-playerX,b.position.y-playerY);
+    if(dxy>CLEAR_ALIGN_RADIUS)continue;
+    const score=dxy*18+ahead;
+    if(score<bestScore){best=b;bestScore=score;}
+  }
+  clearLockedTarget=best;
+  setClearEyeState("clear-charge",!!best);
+  if(best && now-clearLastShotAt>=CLEAR_SHOT_COOLDOWN){
+    destroyClearVoid(best);
+    clearLockedTarget=null;
+    setClearEyeState("clear-charge",false);
+  }
+  requestAnimationFrame(updateClearFlow);
+}
+requestAnimationFrame(updateClearFlow);
+
+
 makeStarField();makeFluxDustField();makeLaneGuides();resetEnvironmentForRun();updateStrikes();updateHUD();startGame();animate();
+
+
+
 </script>
 
 <div id="flowCompletionCoast" aria-hidden="true"><div class="flowCoastText">FLOW COMPLETE</div></div>
@@ -17098,6 +17303,9 @@ makeStarField();makeFluxDustField();makeLaneGuides();resetEnvironmentForRun();up
   schedule(1200,2200);
 })();
 </script>
+
+
+
 
 </body>
 </html>
