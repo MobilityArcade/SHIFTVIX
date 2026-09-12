@@ -1,7 +1,16 @@
 <!DOCTYPE html>
 <html>
 <!-- Google Analytics — SHIFTVIX Retention Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-M88902RHLE"></script>
+<script>
+/* V96.1.5.2 — load GA only on deployed http/https builds.
+   Local file:// testing stays free of cross-origin frame/resource noise. */
+if(location.protocol==="http:" || location.protocol==="https:"){
+  const ga=document.createElement("script");
+  ga.async=true;
+  ga.src="https://www.googletagmanager.com/gtag/js?id=G-M88902RHLE";
+  document.head.appendChild(ga);
+}
+</script>
 <script>
 window.dataLayer = window.dataLayer || [];
 
@@ -152,11 +161,22 @@ Restores Chrono/Kronos world slow-time at 45% speed with the existing smooth chr
 <!-- SHIFTVIX V96.1.2 — VIX HUD DIRECTIONAL MICRO-SHIFTS:
 Reaction-cam Vix now makes a subtle spring-loaded micro movement in the exact direction of every successful lane change, including diagonals, then gently overshoots and resets to his fixed HUD home position. Gameplay, scoring, lane logic, Vix Vision and all existing reaction states are preserved. -->
 <meta charset="utf-8">
-<link rel="icon" type="image/png" href="icon-512.png">
-
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-
-<link rel="manifest" href="manifest.json">
+<!-- PWA assets are attached only on http/https so single-file local testing stays console-clean. -->
+<script>
+(()=>{
+  if(location.protocol!=="http:" && location.protocol!=="https:")return;
+  const assets=[
+    {rel:"icon",type:"image/png",href:"icon-512.png"},
+    {rel:"apple-touch-icon",sizes:"180x180",href:"apple-touch-icon.png"},
+    {rel:"manifest",href:"manifest.json"}
+  ];
+  assets.forEach(spec=>{
+    const link=document.createElement("link");
+    Object.entries(spec).forEach(([k,v])=>link.setAttribute(k,v));
+    document.head.appendChild(link);
+  });
+})();
+</script>
 
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -168,6 +188,11 @@ Reaction-cam Vix now makes a subtle spring-loaded micro movement in the exact di
 <!-- SHIFTVIX V82 — FORWARD-FLIGHT HUMANOID VIX: smaller hip-width head, tapered trapezoid torso, wider forearm gauntlets, tapered lower-leg boots, dark thruster rings with recessed cyan plasma discs, stronger Superman-style forward pitch; game-native satin finish; gameplay/world/motion preserved -->
 <!-- SHIFTVIX V81 — HUMANOID VIX + GAME-NATIVE FINISH: human-readable rear silhouette with neck, shoulders, elbows, waist/hips, thighs/knees, thruster hands and substantial boots; satin neon-game material replaces chrome; four directional ion plumes; gameplay/world/motion preserved -->
 <!-- SHIFTVIX V82.1 — SUPERMAN FLIGHT + THRUSTER UPDATE FIX: removes stale bloom reference crash and locks stronger forward flight pitch; gameplay/world preserved -->
+<!-- SHIFTVIX V96.1.5 — VIX VOICE 1.0 + HUD SCROLL PHYSICS:
+Adds a lightweight procedural Vix vocal language (ring, hollow Void, damage, Flux, Kronos, Midas, Warp, win/loss/Flow-complete and HUD greeting) using the existing Web Audio path. Flow Hub and World Top 9 Vix heads now react physically to vertical scroll velocity with a subtle 7px inertial shift and spring-home behavior; World Top 9 shared brand header remains anchored while rankings/content scroll beneath it. Gameplay scoring, lane logic, Flow rules, vertical-nav lock, special-orb physics and threshold pulses remain preserved. -->
+<!-- SHIFTVIX V96.1.5.1 — AUDIO + WORLD TOP 9 HEADER FIX: Vix Voice now waits for/resumes the shared AudioContext before synthesizing and is mixed louder against gameplay audio. Local file previews no longer request missing PWA manifest/icon assets. World Top 9 now matches the Flow Hub structure: Vix/SHIFTVIX header is physically outside the scroll body, with an opaque black separation so scrolling cards never ghost behind the header. -->
+<!-- SHIFTVIX V96.1.5.2 — VIX VOICE AUDIBILITY + STARFIELD + LOCAL ERROR CLEANUP:
+Vix Voice 1.0 is mixed substantially louder, Web Audio creation/resume is blocked until a genuine user gesture so local previews do not emit autoplay warnings, GA is not loaded from file:// previews, and World Top 9 restores the same living starfield treatment as the Flow Hub while keeping its fixed header and dedicated scroll body. -->
 <!-- SHIFTVIX V96.1 — STABLE VERTICAL NAVIGATION ONLY:
 Small stability patch on the V96 baseline. Vix Story, Vix Guide, The Nine Flows and World Top 9 are constrained to vertical scrolling only; horizontal drift/rubber-banding is blocked and horizontal scroll position is continuously reset. The dedicated Tap-to-Zoom image viewer is intentionally unchanged so zoom/pan still works only after the user opens it. No gameplay, viewport sizing, scoring, Vix reactions, Midas, Chrono, artwork, starfield or other V96 systems changed. -->
 <!-- SHIFTVIX V96 — IMAGE-BASED VIX GUIDE + NINE FLOWS:
@@ -5204,12 +5229,9 @@ button{
 
 /* World Top 9: same vertical-only behavior, with no sideways rubber-band. */
 #worldLeaderboard .worldBoardPanel{
-  overflow-y:auto!important;
-  overflow-x:hidden!important;
-  overscroll-behavior-y:contain!important;
-  overscroll-behavior-x:none!important;
+  overflow:hidden!important;
+  overscroll-behavior:none!important;
   touch-action:pan-y!important;
-  -webkit-overflow-scrolling:touch!important;
 }
 #worldLeaderboard .worldBoardPanel > *{
   max-width:100%!important;
@@ -5222,6 +5244,93 @@ button{
 #v96ImageZoom .v96ZoomStage{
   touch-action:none!important;
   overscroll-behavior:none!important;
+}
+</style>
+
+
+<style id="shiftvixV9615VixHudPersonality">
+/* SHIFTVIX V96.1.5 — shared HUD Vix scroll physics. */
+.v90Vix{
+  --vix-hud-scroll-y:0px;
+  --vix-hud-scroll-scale:1;
+  --vix-hud-scroll-tilt:0deg;
+  transition:filter .16s ease;
+  animation:v9615VixHudIdle 5.6s ease-in-out infinite!important;
+}
+@keyframes v9615VixHudIdle{
+  0%,100%{transform:translateY(calc(var(--vix-hud-scroll-y) + 0px)) rotate(calc(var(--vix-hud-scroll-tilt) + 0deg)) scale(var(--vix-hud-scroll-scale))}
+  28%{transform:translateY(calc(var(--vix-hud-scroll-y) - 1px)) rotate(calc(var(--vix-hud-scroll-tilt) - .7deg)) scale(var(--vix-hud-scroll-scale))}
+  57%{transform:translateY(calc(var(--vix-hud-scroll-y) + 1px)) rotate(calc(var(--vix-hud-scroll-tilt) + .6deg)) scale(var(--vix-hud-scroll-scale))}
+  78%{transform:translateY(var(--vix-hud-scroll-y)) rotate(calc(var(--vix-hud-scroll-tilt) - .3deg)) scale(var(--vix-hud-scroll-scale))}
+}
+/* Flow Hub already keeps its shared brand header outside #archiveList.
+   World Top 9 now follows the same anchored-header behavior while its panel scrolls. */
+#worldLeaderboard .worldBoardPanel{
+  overflow:hidden!important;
+  display:flex!important;
+  flex-direction:column!important;
+}
+#worldLeaderboard .v90WorldHeaderWrap{
+  position:relative!important;
+  flex:0 0 auto!important;
+  z-index:18!important;
+  background:rgba(0,0,0,.18)!important;
+  padding-top:1px!important;
+  padding-bottom:7px!important;
+  box-shadow:0 14px 22px rgba(0,0,0,.72)!important;
+}
+#worldLeaderboard .v9615WorldScrollBody{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior-y:contain!important;
+  overscroll-behavior-x:none!important;
+  touch-action:pan-y!important;
+  -webkit-overflow-scrolling:touch!important;
+  scrollbar-width:none!important;
+  background:transparent!important;
+  padding-top:10px!important;
+}
+#worldLeaderboard .v9615WorldScrollBody::-webkit-scrollbar{display:none!important}
+/* V96.1.5.2 — World Top 9 uses the same living star language as the Flow Hub. */
+#worldLeaderboard .v9615WorldScrollBody{
+  position:relative!important;
+  isolation:isolate!important;
+}
+#worldLeaderboard .v9615WorldScrollBody::before,
+#worldLeaderboard .v9615WorldScrollBody::after{
+  content:"";
+  position:absolute;
+  pointer-events:none;
+  z-index:-1;
+}
+#worldLeaderboard .v9615WorldScrollBody::before{
+  inset:-10%;
+  opacity:.86;
+  background-image:
+    radial-gradient(circle,rgba(255,255,255,.96) 0 1px,transparent 1.8px),
+    radial-gradient(circle,rgba(85,222,255,.74) 0 1px,transparent 1.8px),
+    radial-gradient(circle,rgba(255,211,106,.62) 0 1px,transparent 1.8px),
+    radial-gradient(circle,rgba(204,104,255,.48) 0 1px,transparent 1.7px);
+  background-size:74px 86px,121px 137px,167px 181px,211px 233px;
+  background-position:8px 17px,49px 71px,93px 29px,143px 121px;
+  animation:v93PanelStarDrift 38s linear infinite,v93PanelStarTwinkle 5.1s ease-in-out infinite alternate;
+}
+#worldLeaderboard .v9615WorldScrollBody::after{
+  inset:-14%;
+  opacity:.34;
+  background-image:
+    radial-gradient(circle,rgba(255,255,255,.90) 0 1px,transparent 1.7px),
+    radial-gradient(circle,rgba(105,225,255,.55) 0 1px,transparent 1.7px);
+  background-size:137px 149px,223px 197px;
+  background-position:31px 51px,119px 91px;
+  animation:v93PanelStarDrift 61s linear infinite reverse,v93PanelStarTwinkle 7.4s ease-in-out infinite alternate;
+}
+
+#worldLeaderboard .v9615WorldScrollBody > *{max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+@media(prefers-reduced-motion:reduce){
+  .v90Vix{animation:none!important;--vix-hud-scroll-y:0px!important;--vix-hud-scroll-scale:1!important;--vix-hud-scroll-tilt:0deg!important}
 }
 </style>
 
@@ -5255,18 +5364,20 @@ button{
 </div>
       <button class="worldBoardClose v90WorldClose" id="worldBoardClose" aria-label="Close">×</button>
     </div>
-    <div class="v90WorldSectionTitle" id="worldBoardTitle">WORLD TOP 9</div>
-    <div class="worldPlayerIdentity" id="worldPlayerIdentity"><div class="identityText" id="worldIdentityText">PLAYER NOT SET</div><button class="worldEditIdentity" id="worldEditIdentity" type="button">EDIT</button></div>
-    <div id="worldHubView" class="worldHubView">
-      <div class="worldHubHeader"><span>CHOOSE A FLOW</span><small>TAP A FLOW TO VIEW ITS WORLD TOP 9</small></div>
-      <div id="worldFlowHub" class="worldFlowHub"></div>
-    </div>
-    <div id="worldRankView" class="worldRankView" hidden>
-      <button id="worldRankBack" class="worldRankBack" type="button">‹ ALL FLOWS</button>
-      <div id="worldRankHero" class="worldRankHero"></div>
-      <div id="worldBoardRows" class="worldRows"></div>
-      <div id="worldMine" class="worldMine" style="display:none"></div>
-      <div id="worldBackendNote" class="worldBackendNote"></div>
+    <div class="v9615WorldScrollBody">
+      <div class="v90WorldSectionTitle" id="worldBoardTitle">WORLD TOP 9</div>
+      <div class="worldPlayerIdentity" id="worldPlayerIdentity"><div class="identityText" id="worldIdentityText">PLAYER NOT SET</div><button class="worldEditIdentity" id="worldEditIdentity" type="button">EDIT</button></div>
+      <div id="worldHubView" class="worldHubView">
+        <div class="worldHubHeader"><span>CHOOSE A FLOW</span><small>TAP A FLOW TO VIEW ITS WORLD TOP 9</small></div>
+        <div id="worldFlowHub" class="worldFlowHub"></div>
+      </div>
+      <div id="worldRankView" class="worldRankView" hidden>
+        <button id="worldRankBack" class="worldRankBack" type="button">‹ ALL FLOWS</button>
+        <div id="worldRankHero" class="worldRankHero"></div>
+        <div id="worldBoardRows" class="worldRows"></div>
+        <div id="worldMine" class="worldMine" style="display:none"></div>
+        <div id="worldBackendNote" class="worldBackendNote"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -7137,6 +7248,7 @@ function activateFluxBoost(reason,tier=1){
   fluxCooldownUntilDistance=distance+800+Math.random()*200;
   fluxPendingReasons.length=0;
   playFluxSound();
+  playVixVoice("flux");
   triggerWarpBreakthrough("flux");
   showPowerAnnouncement("FLUX",tier);
   triggerVixPowerReaction("flux");
@@ -7285,6 +7397,7 @@ function activateChrono(reason,tier=1){
   chronoPendingReasons.length=0;
 
   playChronoSound();
+  playVixVoice("chrono");
   showPowerAnnouncement("KRONOS",tier);
   triggerVixPowerReaction("chrono");
 
@@ -7482,6 +7595,7 @@ function activateMidas(reason,tier=1){
   );
 
   playMidasSound();
+  playVixVoice("midas");
   showPowerAnnouncement("MIDAS",tier);
   triggerVixPowerReaction("midas");
 
@@ -7912,7 +8026,41 @@ const FLUX_DUST_MAX_SPEED_MULT = 1.75;
 let fluxDust = null;
 let fluxDustVisualPower = 0;
 const TIERS=[{name:"WHITE",color:0xffffff,value:10,size:3.8,freq:880},{name:"BLUE",color:0x55ccff,value:25,size:4.3,freq:1046},{name:"GREEN",color:0x66ff66,value:50,size:4.8,freq:1174},{name:"PURPLE",color:0xcc66ff,value:75,size:5.1,freq:1240},{name:"ORANGE",color:0xff8800,value:100,size:5.4,freq:1318},{name:"RED",color:0xff4444,value:200,size:6.1,freq:1568}];
-function initAudio(){if(audioCtx){if(audioCtx.state!=="running")audioCtx.resume();return;}audioCtx=new (window.AudioContext||window.webkitAudioContext)();}
+function initAudio(){
+  try{
+    const userActivation=navigator.userActivation;
+    const userHasActivated=
+      !userActivation ||
+      userActivation.isActive ||
+      userActivation.hasBeenActive;
+
+    /* Never create/resume Web Audio during page boot, resize, or automatic HUD work.
+       Chrome/Safari otherwise log autoplay warnings before the first real gesture. */
+    if(!audioCtx && !userHasActivated){
+      return Promise.resolve(null);
+    }
+
+    if(!audioCtx){
+      const AudioCtor=window.AudioContext||window.webkitAudioContext;
+      if(!AudioCtor)return Promise.resolve(null);
+      audioCtx=new AudioCtor();
+    }
+
+    if(audioCtx.state==="running")return Promise.resolve(audioCtx);
+
+    /* resume() is only attempted after the page has received a real user gesture. */
+    if(!userHasActivated)return Promise.resolve(audioCtx);
+
+    const resumed=audioCtx.resume();
+    if(resumed&&typeof resumed.then==="function"){
+      return resumed.then(()=>audioCtx).catch(()=>audioCtx);
+    }
+    return Promise.resolve(audioCtx);
+  }catch(e){
+    console.warn("SHIFTVIX audio unavailable",e);
+    return Promise.resolve(null);
+  }
+}
 function playCoin(tier){if(window.__vixReact)window.__vixReact("happy",360);if(!audioCtx)return;const now=audioCtx.currentTime,osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type="square";osc.frequency.setValueAtTime(tier.freq,now);osc.frequency.exponentialRampToValueAtTime(tier.freq*1.55,now+.055);gain.gain.setValueAtTime(.0001,now);gain.gain.linearRampToValueAtTime(.018,now+.008);gain.gain.exponentialRampToValueAtTime(.0001,now+.105);osc.connect(gain).connect(audioCtx.destination);osc.start(now);osc.stop(now+.13);if(tier.value>=100){const osc2=audioCtx.createOscillator(),gain2=audioCtx.createGain();osc2.type="sine";osc2.frequency.setValueAtTime(tier.freq*2,now+.035);gain2.gain.setValueAtTime(.0001,now+.035);gain2.gain.linearRampToValueAtTime(.018,now+.045);gain2.gain.exponentialRampToValueAtTime(.0001,now+.16);osc2.connect(gain2).connect(audioCtx.destination);osc2.start(now+.035);osc2.stop(now+.18);}}
 
 // SHIFTVIX DRIFT AUDIO V5
@@ -8134,6 +8282,86 @@ function playTravelerShiftSound(dx=0,dy=0){
   sheen.connect(sheenGain).connect(sheenFilter).connect(master);
   sheen.start(now+.008); sheen.stop(now+duration);
 }
+// =========================
+// SHIFTVIX V96.1.5 — VIX VOICE 1.0
+// Tiny non-verbal procedural robot vocabulary. No speech samples and no copied character audio.
+// The voice rides the existing Web Audio context so it remains lightweight and game-native.
+// =========================
+let vixVoiceLastAt=0;
+let vixVoiceLastKind="";
+function playVixVoice(kind="greet",intensity=1){
+  const speak=()=>{
+    if(!audioCtx||audioCtx.state!=="running")return;
+
+    const now=audioCtx.currentTime;
+    const fastRepeat=(kind==="ring")?.052:.095;
+    if(kind===vixVoiceLastKind && now-vixVoiceLastAt<fastRepeat)return;
+    if(kind!=="ring" && now-vixVoiceLastAt<.045)return;
+    vixVoiceLastAt=now;
+    vixVoiceLastKind=kind;
+
+    const master=audioCtx.createGain();
+    const filter=audioCtx.createBiquadFilter();
+    const amount=Math.max(.55,Math.min(1.25,Number(intensity)||1));
+    master.gain.setValueAtTime(.0001,now);
+    master.gain.linearRampToValueAtTime(.145*amount,now+.012);
+    master.gain.exponentialRampToValueAtTime(.0001,now+.72);
+    filter.type="lowpass";
+    filter.frequency.setValueAtTime(5200,now);
+    filter.Q.setValueAtTime(.70,now);
+    master.connect(filter).connect(audioCtx.destination);
+
+    const chirp=(delay,duration,f0,f1,amp=.65,type="triangle",vibrato=0)=>{
+      const t=now+delay;
+      const osc=audioCtx.createOscillator();
+      const gain=audioCtx.createGain();
+      osc.type=type;
+      osc.frequency.setValueAtTime(Math.max(45,f0),t);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(45,f1),t+duration);
+      gain.gain.setValueAtTime(.0001,t);
+      gain.gain.linearRampToValueAtTime(amp,t+Math.min(.018,duration*.22));
+      gain.gain.exponentialRampToValueAtTime(.0001,t+duration);
+      if(vibrato>0){
+        const lfo=audioCtx.createOscillator();
+        const lfoGain=audioCtx.createGain();
+        lfo.type="sine";
+        lfo.frequency.setValueAtTime(vibrato,t);
+        lfoGain.gain.setValueAtTime(Math.min(28,f0*.035),t);
+        lfo.connect(lfoGain).connect(osc.frequency);
+        lfo.start(t);lfo.stop(t+duration);
+      }
+      osc.connect(gain).connect(master);
+      osc.start(t);osc.stop(t+duration+.02);
+    };
+
+    switch(kind){
+      case "ring": chirp(0,.105,780,1320,.54,"sine",10); chirp(.028,.085,1180,1640,.25,"triangle"); break;
+      case "void": chirp(0,.19,480,275,.66,"triangle",7); chirp(.028,.15,720,390,.27,"sine"); break;
+      case "damage": chirp(0,.18,310,108,.78,"sawtooth",13); chirp(.025,.11,620,210,.28,"square"); break;
+      case "flux": chirp(0,.12,690,1120,.62,"triangle",14); chirp(.135,.13,860,1510,.66,"sine",16); break;
+      case "chrono": chirp(0,.34,760,190,.66,"sine",6); chirp(.055,.30,1040,310,.26,"triangle",5); break;
+      case "midas": chirp(0,.17,420,650,.52,"triangle",7); chirp(.075,.18,610,910,.45,"sine",8); chirp(.155,.20,820,1240,.38,"sine",9); break;
+      case "warp": chirp(0,.27,430,1540,.72,"triangle",18); chirp(.055,.22,760,2020,.31,"sine",20); break;
+      case "win":
+      case "flowComplete": chirp(0,.15,610,820,.56,"triangle",7); chirp(.115,.16,790,1080,.54,"sine",8); chirp(.235,.20,1010,1510,.58,"sine",10); break;
+      case "loss": chirp(0,.27,560,245,.60,"triangle",5); chirp(.13,.26,390,185,.31,"sine",4); break;
+      case "greet":
+      default:{
+        const variant=Math.floor(Math.random()*3);
+        if(variant===0){chirp(0,.12,630,920,.50,"triangle",9);chirp(.11,.14,860,1180,.39,"sine",10);}
+        else if(variant===1){chirp(0,.14,760,540,.46,"sine",8);chirp(.115,.14,570,990,.46,"triangle",11);}
+        else{chirp(0,.11,700,1080,.46,"triangle",12);chirp(.085,.12,980,760,.34,"sine",9);chirp(.16,.13,790,1210,.36,"sine",10);}
+        break;
+      }
+    }
+  };
+
+  const ready=initAudio();
+  if(audioCtx&&audioCtx.state==="running"){speak();return;}
+  if(ready&&typeof ready.then==="function")ready.then(()=>{if(audioCtx&&audioCtx.state==="running")speak();}).catch(()=>{});
+}
+window.playVixVoice=playVixVoice;
+
 function playStrike(){if(!audioCtx)return;const now=audioCtx.currentTime,osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type="sawtooth";osc.frequency.setValueAtTime(180,now);osc.frequency.exponentialRampToValueAtTime(70,now+.22);gain.gain.setValueAtTime(.0001,now);gain.gain.linearRampToValueAtTime(.05,now+.025);gain.gain.exponentialRampToValueAtTime(.0001,now+.28);osc.connect(gain).connect(audioCtx.destination);osc.start(now);osc.stop(now+.3);}
 function playRingPass(){
   if(!audioCtx)return;
@@ -8744,7 +8972,7 @@ async function openWorldRank(mode="COLLECT"){
   }
   await loadWorldLeaderboard(worldBoardMode);
 }
-function openWorldLeaderboard(mode=null){const modal=document.getElementById("worldLeaderboard");if(!modal)return;modal.classList.add("show");modal.setAttribute("aria-hidden","false");document.body.classList.add("uiModalOpen");updateWorldIdentityDisplay();renderWorldHub();if(mode&&WORLD_MODES.includes(mode))openWorldRank(mode);else showWorldHub();const panel=modal.querySelector(".worldBoardPanel");if(panel)panel.scrollLeft=0;if(!worldIdentityReady())setTimeout(openIdentitySetup,120)}
+function openWorldLeaderboard(mode=null){const modal=document.getElementById("worldLeaderboard");if(!modal)return;modal.classList.add("show");modal.setAttribute("aria-hidden","false");document.body.classList.add("uiModalOpen");updateWorldIdentityDisplay();renderWorldHub();if(mode&&WORLD_MODES.includes(mode))openWorldRank(mode);else showWorldHub();const panel=modal.querySelector(".worldBoardPanel");if(panel)panel.scrollLeft=0;const scrollBody=modal.querySelector(".v9615WorldScrollBody");if(scrollBody){scrollBody.scrollLeft=0;scrollBody.scrollTop=0;}if(!worldIdentityReady())setTimeout(openIdentitySetup,120)}
 function closeWorldLeaderboard(){const modal=document.getElementById("worldLeaderboard");modal?.classList.remove("show");modal?.setAttribute("aria-hidden","true");showWorldHub();if(!document.getElementById("worldIdentitySetup")?.classList.contains("show"))document.body.classList.remove("uiModalOpen")}
 async function loadWorldLeaderboard(mode){
   const rows=document.getElementById("worldBoardRows"),mine=document.getElementById("worldMine"),note=document.getElementById("worldBackendNote");
@@ -10270,6 +10498,8 @@ function completeCurrentFlow(){
             )/1000
           )
         );
+
+    playVixVoice("flowComplete");
 
     trackGame("flow_completed",{
         category:finished.category,
@@ -12082,6 +12312,7 @@ function passGoldRing(b){
     );
 
   playRingPass();
+  playVixVoice("ring");
   triggerVixThresholdPulse('ring');
   showModeBanner(`RING +${ringPoints}`);
 
@@ -12458,6 +12689,7 @@ function passEscapeVoid(b){
     );
 
   playRingPass();
+  playVixVoice("void");
   triggerVixThresholdPulse('void');
   pulseObjectiveHud();
   showModeBanner(`ESCAPE +${points}`);
@@ -12505,6 +12737,7 @@ function enterHollowVoid(b){
   }
 
   playRingPass();
+  playVixVoice("void");
   triggerVixThresholdPulse('void');
   pulseObjectiveHud();
   showModeBanner(
@@ -12574,6 +12807,7 @@ function hitVoidHazard(b){
     });
 
     playStrike();
+    playVixVoice("damage");
     pulseCenterReactorDamage();
 
     if(navigator.vibrate){
@@ -12596,6 +12830,7 @@ function hitVoidHazard(b){
     // During the opening grace period, the Void still teaches avoidance
     // without ending a brand-new player's run.
     playStrike();
+    playVixVoice("damage");
     pulseCenterReactorDamage();
     if(navigator.vibrate)navigator.vibrate([18,24,18]);
   }
@@ -12701,6 +12936,7 @@ function activateWarp(reason,tier=1){
   }
 
   playWarpOrbSound(tier);
+  playVixVoice("warp");
   triggerWarpBreakthrough("warp");
   launchSurge=Math.max(launchSurge,18+tier*3);
   showPowerAnnouncement("WARP",tier);
@@ -13872,6 +14108,7 @@ function formatRunFlowProgress(flow,value){
 
 function setVixFinalReaction(isNewBest){
   finalLifeReaction=isNewBest?"win":"loss";
+  playVixVoice(isNewBest?"win":"loss");
   const cam=document.getElementById("vixReactionCam");
   if(!cam)return;
   cam.classList.remove("endingWin","endingLoss");
@@ -16277,6 +16514,94 @@ makeStarField();makeFluxDustField();makeLaneGuides();resetEnvironmentForRun();up
    v96Apply();
  },{passive:false});
 
+})();
+</script>
+
+
+<script id="shiftvixV9615VixHudScrollPhysics">
+(()=>{
+  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+  const reduced=()=>window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const bindings=new WeakMap();
+
+  function setPose(vix,y=0,scale=1,tilt=0){
+    if(!vix)return;
+    vix.style.setProperty('--vix-hud-scroll-y',`${y.toFixed(2)}px`);
+    vix.style.setProperty('--vix-hud-scroll-scale',String(scale));
+    vix.style.setProperty('--vix-hud-scroll-tilt',`${tilt.toFixed(2)}deg`);
+  }
+
+  function bindScrollVix(scroller,vix){
+    if(!scroller||!vix||bindings.has(scroller))return;
+    let lastTop=scroller.scrollTop||0;
+    let lastAt=performance.now();
+    let settleTimer=0;
+    let resetTimer=0;
+
+    const settle=()=>{
+      clearTimeout(settleTimer);clearTimeout(resetTimer);
+      // tiny counter-settle sells inertia without turning it into a bounce animation.
+      const current=parseFloat(getComputedStyle(vix).getPropertyValue('--vix-hud-scroll-y'))||0;
+      setPose(vix,clamp(-current*.20,-1.4,1.4),.995,clamp(current*.08,-.45,.45));
+      resetTimer=setTimeout(()=>setPose(vix,0,1,0),85);
+    };
+
+    const onScroll=()=>{
+      const top=scroller.scrollTop||0;
+      const now=performance.now();
+      const dy=top-lastTop;
+      const dt=Math.max(8,now-lastAt);
+      lastTop=top;lastAt=now;
+      if(reduced())return;
+
+      // Content scrolling upward (positive scrollTop delta) nudges Vix upward, and vice versa.
+      const velocity=(dy/dt)*16.67;
+      const y=clamp(-velocity*.72,-7,7);
+      const scale=1+Math.min(.022,Math.abs(y)*.0024);
+      const tilt=clamp(y*.10,-.7,.7);
+      setPose(vix,y,scale,tilt);
+
+      clearTimeout(settleTimer);clearTimeout(resetTimer);
+      settleTimer=setTimeout(settle,72);
+    };
+
+    scroller.addEventListener('scroll',onScroll,{passive:true});
+    bindings.set(scroller,{onScroll});
+  }
+
+  function wire(){
+    // Flow Hub: only #archiveList scrolls; the brand/Vix header already stays home.
+    const archive=document.querySelector('#flowArchive .archiveCard');
+    bindScrollVix(
+      document.getElementById('archiveList'),
+      archive?.querySelector('.v90Vix')
+    );
+
+    // World Top 9: Vix/header stays fixed; only the dedicated body scrolls.
+    const worldPanel=document.querySelector('#worldLeaderboard .worldBoardPanel');
+    const worldScroll=worldPanel?.querySelector('.v9615WorldScrollBody');
+    bindScrollVix(
+      worldScroll,
+      worldPanel?.querySelector('.v90Vix')
+    );
+  }
+
+  wire();
+  new MutationObserver(wire).observe(document.body,{childList:true,subtree:true});
+
+  // Vix speaks only on deliberate HUD interaction, never on every scroll tick.
+  document.addEventListener('pointerdown',event=>{
+    const vix=event.target.closest?.('.v90Vix');
+    if(!vix)return;
+    const inFlow=!!vix.closest('#flowArchive');
+    const inWorld=!!vix.closest('#worldLeaderboard');
+    if(!inFlow&&!inWorld)return;
+    if(typeof window.playVixVoice==='function')window.playVixVoice('greet',.9);
+    if(!reduced()){
+      setPose(vix,-2.5,1.045,0);
+      setTimeout(()=>setPose(vix,0,1,0),145);
+    }
+  },{passive:true});
 })();
 </script>
 
