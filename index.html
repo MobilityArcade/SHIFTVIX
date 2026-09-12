@@ -188,7 +188,7 @@ Reaction-cam Vix now makes a subtle spring-loaded micro movement in the exact di
 <!-- SHIFTVIX V82 — FORWARD-FLIGHT HUMANOID VIX: smaller hip-width head, tapered trapezoid torso, wider forearm gauntlets, tapered lower-leg boots, dark thruster rings with recessed cyan plasma discs, stronger Superman-style forward pitch; game-native satin finish; gameplay/world/motion preserved -->
 <!-- SHIFTVIX V81 — HUMANOID VIX + GAME-NATIVE FINISH: human-readable rear silhouette with neck, shoulders, elbows, waist/hips, thighs/knees, thruster hands and substantial boots; satin neon-game material replaces chrome; four directional ion plumes; gameplay/world/motion preserved -->
 <!-- SHIFTVIX V82.1 — SUPERMAN FLIGHT + THRUSTER UPDATE FIX: removes stale bloom reference crash and locks stronger forward flight pitch; gameplay/world preserved -->
-<!-- SHIFTVIX V96.1.7 — VIX VOICE 1.2 SOFT CHARACTER MIX + HUD SCROLL PHYSICS:
+<!-- SHIFTVIX V96.1.8 — VIX PERSONALITY 1.0 + HUD SCROLL PHYSICS:
 Adds a lightweight procedural Vix vocal language (ring, hollow Void, damage, Flux, Kronos, Midas, Warp, win/loss/Flow-complete and HUD greeting) using the existing Web Audio path. Flow Hub and World Top 9 Vix heads now react physically to vertical scroll velocity with a subtle 7px inertial shift and spring-home behavior; World Top 9 shared brand header remains anchored while rankings/content scroll beneath it. Gameplay scoring, lane logic, Flow rules, vertical-nav lock, special-orb physics and threshold pulses remain preserved. -->
 <!-- SHIFTVIX V96.1.5.1 — AUDIO + WORLD TOP 9 HEADER FIX: Vix Voice now waits for/resumes the shared AudioContext before synthesizing and is mixed louder against gameplay audio. Local file previews no longer request missing PWA manifest/icon assets. World Top 9 now matches the Flow Hub structure: Vix/SHIFTVIX header is physically outside the scroll body, with an opaque black separation so scrolling cards never ghost behind the header. -->
 <!-- SHIFTVIX V96.1.5.2 — VIX VOICE AUDIBILITY + STARFIELD + LOCAL ERROR CLEANUP:
@@ -5334,10 +5334,32 @@ button{
 }
 </style>
 
+\n<style id="vixPersonality10Style">
+/* V96.1.8 — Vix Personality 1.0 */
+#worldIdentitySetup{isolation:isolate!important;background:#000!important;overflow:hidden!important}
+#worldIdentitySetup::before,#worldIdentitySetup::after{content:"";position:absolute;inset:-16%;pointer-events:none;z-index:0;background-image:radial-gradient(circle,rgba(255,255,255,.96) 0 1px,transparent 1.8px),radial-gradient(circle,rgba(85,222,255,.72) 0 1px,transparent 1.8px),radial-gradient(circle,rgba(255,211,106,.60) 0 1px,transparent 1.8px),radial-gradient(circle,rgba(204,104,255,.42) 0 1px,transparent 1.7px);background-size:74px 86px,121px 137px,167px 181px,211px 233px;background-position:8px 17px,49px 71px,93px 29px,143px 121px;animation:v93PanelStarDrift 42s linear infinite,v93PanelStarTwinkle 5.4s ease-in-out infinite alternate}
+#worldIdentitySetup::after{opacity:.34;filter:blur(.25px);background-size:137px 149px,223px 197px,277px 251px,331px 307px;animation-duration:63s,7.2s;animation-direction:reverse,alternate}
+#worldIdentitySetup .identityPanel{position:relative;z-index:2;border-color:rgba(255,211,106,.34)!important;background:linear-gradient(180deg,rgba(4,8,12,.90),rgba(0,0,0,.96))!important;box-shadow:0 0 0 1px rgba(255,211,106,.06),0 0 70px rgba(80,190,255,.10)!important}
+.identityVix{display:block;width:112px;height:112px;margin:-4px auto 9px;border:0;background:transparent;padding:0;cursor:pointer;position:relative}
+.identityVix .v90Vix{position:absolute!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%) scale(.82)!important;transform-origin:center!important;margin:0!important}
+.identityVix.vixPop{animation:vixIdentityPop .34s cubic-bezier(.2,.85,.25,1)}
+@keyframes vixIdentityPop{0%{transform:scale(1)}42%{transform:scale(1.09) translateY(-3px)}100%{transform:scale(1)}}
+#worldIdentitySetup .identityPanel h2{color:#fff;text-shadow:0 0 16px rgba(255,211,106,.10)}
+#worldIdentitySetup .identityInitialsInput:focus,#worldIdentitySetup .identityCountrySelect:focus{outline:none;border-color:rgba(105,225,255,.72);box-shadow:0 0 0 3px rgba(70,190,255,.16),0 0 22px rgba(70,190,255,.10)}
+#worldIdentitySetup .identityEnter{box-shadow:0 0 24px rgba(255,255,255,.08)}
+@media(max-width:699px){.identityVix{width:96px;height:96px;margin-top:-7px}.identityVix .v90Vix{transform:translate(-50%,-50%) scale(.72)!important}}
+</style>\n
 </head>
 <body>
 <div id="worldIdentitySetup" aria-hidden="true">
   <div class="identityPanel" role="dialog" aria-modal="true" aria-labelledby="identityTitle">
+    <button class="identityVix" id="identityVix" type="button" aria-label="Vix">
+      <span class="v90Vix" aria-hidden="true">
+        <span class="v90VixShell"></span><span class="v90VixFace"></span>
+        <span class="v90VixEar left"></span><span class="v90VixEar right"></span>
+        <span class="v90VixEye left"></span><span class="v90VixEye right"></span>
+      </span>
+    </button>
     <h2 id="identityTitle">ENTER THE WORLD</h2>
     <div class="identitySub">YOUR ARCADE IDENTITY</div>
     <div class="identityField"><label>3-LETTER INITIALS</label><input id="identityInitialsInput" class="identityInitialsInput" maxlength="3" inputmode="text" autocomplete="off" aria-label="Three arcade initials" placeholder="ABC"></div>
@@ -7249,6 +7271,7 @@ function activateFluxBoost(reason,tier=1){
   fluxPendingReasons.length=0;
   playFluxSound();
   playVixVoice("flux");
+  window.vixPersonalityPowerRide?.("flux",duration);
   triggerWarpBreakthrough("flux");
   showPowerAnnouncement("FLUX",tier);
   triggerVixPowerReaction("flux");
@@ -7398,6 +7421,7 @@ function activateChrono(reason,tier=1){
 
   playChronoSound();
   playVixVoice("chrono");
+  window.vixPersonalityPowerRide?.("chrono",duration);
   showPowerAnnouncement("KRONOS",tier);
   triggerVixPowerReaction("chrono");
 
@@ -7596,6 +7620,7 @@ function activateMidas(reason,tier=1){
 
   playMidasSound();
   playVixVoice("midas");
+  window.vixPersonalityPowerRide?.("midas",duration);
   showPowerAnnouncement("MIDAS",tier);
   triggerVixPowerReaction("midas");
 
@@ -8428,6 +8453,26 @@ function playVixVoice(kind="greet",intensity=1){
         vocal(0,.62,390,185,"oh",.32,{vibrato:4,depth:8});
         vocal(.20,.50,280,145,"ooh",.18,{vibrato:4,depth:6});
         break;
+      case "encourage":{
+        const v=Math.floor(Math.random()*3);
+        if(v===0){vocal(0,.34,330,560,"ah",.22,{vibrato:7,depth:8});vocal(.20,.32,480,700,"ee",.19,{vibrato:8,depth:9});}
+        else if(v===1){vocal(0,.42,300,510,"ooh",.21,{vibrato:6,depth:7});vocal(.25,.30,500,760,"ee",.18,{vibrato:8,depth:9});}
+        else{vocal(0,.30,390,650,"ee",.20,{vibrato:9,depth:10});vocal(.18,.36,470,720,"ah",.19,{vibrato:7,depth:9});}
+        break;
+      }
+      case "select": vocal(0,.30,360,620,"ee",.22,{vibrato:8,depth:9}); vocal(.18,.30,470,710,"ah",.18,{vibrato:7,depth:8}); break;
+      case "resume": vocal(0,.30,330,570,"oh",.20,{vibrato:6,depth:7}); vocal(.18,.28,500,720,"ee",.18,{vibrato:8,depth:8}); break;
+      case "random": vocal(0,.38,300,520,"ooh",.22,{vibrato:6,depth:8}); vocal(.24,.34,450,760,"ee",.20,{vibrato:9,depth:10}); break;
+      case "rank": vocal(0,.34,360,500,"ooh",.19,{vibrato:5,depth:7}); vocal(.20,.28,520,690,"ee",.16,{vibrato:7,depth:8}); break;
+      case "identityFocus": vocal(0,.28,310,470,"ooh",.17,{vibrato:5,depth:6}); break;
+      case "identityDone": vocal(0,.28,380,600,"ee",.20,{vibrato:8,depth:9}); vocal(.18,.28,520,760,"ee",.17,{vibrato:8,depth:9}); break;
+      case "country": vocal(0,.34,320,500,"ooh",.18,{vibrato:5,depth:6}); vocal(.20,.28,470,650,"ah",.16,{vibrato:6,depth:7}); break;
+      case "enterWorld": vocal(0,.34,350,590,"ah",.23,{vibrato:7,depth:9}); vocal(.22,.38,520,850,"ee",.23,{vibrato:9,depth:11}); break;
+      case "rideWarp": vocal(0,.54,360,720,"ooh",.19,{vibrato:8,depth:12}); vocal(.24,.46,520,880,"ee",.15,{vibrato:9,depth:12}); break;
+      case "rideFlux": vocal(0,.38,410,690,"ee",.18,{vibrato:10,depth:12}); break;
+      case "rideChrono": vocal(0,.64,360,230,"ooh",.16,{vibrato:4,depth:6}); break;
+      case "rideMidas": vocal(0,.48,320,560,"oh",.17,{vibrato:5,depth:7}); break;
+      case "rideInvincible": vocal(0,.42,380,650,"ee",.16,{vibrato:7,depth:8}); break;
       case "greet":
       default:{
         const variant=Math.floor(Math.random()*3);
@@ -13020,6 +13065,7 @@ function activateWarp(reason,tier=1){
 
   playWarpOrbSound(tier);
   playVixVoice("warp");
+  window.vixPersonalityPowerRide?.("warp",duration);
   triggerWarpBreakthrough("warp");
   launchSurge=Math.max(launchSurge,18+tier*3);
   showPowerAnnouncement("WARP",tier);
@@ -13141,6 +13187,7 @@ function activateInvincible(reason){
   updateCenterReactor();
   showPowerAnnouncement("INVINCIBLE",1);
   playVixVoice("invincible",.92);
+  window.vixPersonalityPowerRide?.("invincible",INVINCIBLE_DURATION_SECONDS);
   triggerVixPowerReaction("invincible");
   if(navigator.vibrate)navigator.vibrate([18,28,18]);
   trackGame("invincible_orb_collected",{trigger_reason:reason||"unknown",duration_seconds:INVINCIBLE_DURATION_SECONDS,distance:Math.floor(distance),flow_number:currentFlowIndex+1});
@@ -16698,5 +16745,86 @@ makeStarField();makeFluxDustField();makeLaneGuides();resetEnvironmentForRun();up
 })();
 </script>
 
+\n<script id="vixPersonality10Script">
+(()=>{
+  const reduced=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const timers=new Set();
+  const later=(fn,ms)=>{const id=setTimeout(()=>{timers.delete(id);fn()},ms);timers.add(id);return id};
+  const voice=(kind,intensity=.72)=>window.playVixVoice?.(kind,intensity);
+  function popVix(vix,amount=1.055,y=-3){
+    if(!vix||reduced())return;
+    const old=vix.style.transform;
+    vix.style.transition='transform .13s cubic-bezier(.2,.85,.25,1)';
+    vix.style.transform=`translateY(${y}px) scale(${amount})`;
+    later(()=>{vix.style.transform=old||''},145);
+  }
+  // Multi-stage emotional ride: initial voice remains in the power collector; these are quieter follow-up reactions.
+  window.vixPersonalityPowerRide=(kind,duration=4)=>{
+    const map={warp:'rideWarp',flux:'rideFlux',chrono:'rideChrono',midas:'rideMidas',invincible:'rideInvincible'};
+    const vkind=map[kind]; if(!vkind)return;
+    const d=Math.max(1.2,Number(duration)||4);
+    later(()=>voice(vkind,.66),Math.min(1500,d*1000*.27));
+    if(d>=5.2)later(()=>voice(vkind,.52),Math.min(d*1000*.62,d*1000-700));
+  };
+
+  // Progress-earned encouragement. It is intentionally sparse and milestone based, never a chatter timer.
+  let nextEncourage=650,lastEncourageAt=0,lastRunSeen=false;
+  const encourageLoop=()=>{
+    const running=!!window.runStarted && !window.paused && !window.gameOver;
+    if(running && !lastRunSeen){nextEncourage=Math.max(650,(Number(window.distance)||0)+650)}
+    lastRunSeen=running;
+    const d=Number(window.distance)||0, now=performance.now();
+    if(running && d>=nextEncourage && now-lastEncourageAt>9000){
+      lastEncourageAt=now; nextEncourage=d+650+Math.random()*450; voice('encourage',.62);
+      const cam=document.getElementById('vixReactionCam'); if(cam)popVix(cam,1.035,-2);
+    }
+    requestAnimationFrame(encourageLoop);
+  };
+  requestAnimationFrame(encourageLoop);
+
+  // Stronger touch-linked scroll physics for iOS: Vix follows the finger/flick and springs home.
+  function touchScrollPhysics(scroller,vix){
+    if(!scroller||!vix||scroller.dataset.vixPersonalityScroll)return;
+    scroller.dataset.vixPersonalityScroll='1';
+    let lastY=null,lastT=0,reset=0;
+    const pose=(y)=>{
+      const yy=Math.max(-7,Math.min(7,y));
+      vix.style.setProperty('--vix-hud-scroll-y',`${yy}px`);
+      vix.style.setProperty('--vix-hud-scroll-scale',String(1+Math.abs(yy)*.0022));
+      vix.style.setProperty('--vix-hud-scroll-tilt',`${Math.max(-.7,Math.min(.7,yy*.09))}deg`);
+    };
+    scroller.addEventListener('touchstart',e=>{lastY=e.touches[0]?.clientY??null;lastT=performance.now();clearTimeout(reset)},{passive:true});
+    scroller.addEventListener('touchmove',e=>{if(lastY==null||reduced())return;const y=e.touches[0]?.clientY??lastY;const now=performance.now();const dy=y-lastY;const dt=Math.max(8,now-lastT);lastY=y;lastT=now;pose((dy/dt)*16.67*.72);clearTimeout(reset);reset=setTimeout(()=>pose(0),90)},{passive:true});
+    scroller.addEventListener('touchend',()=>{lastY=null;clearTimeout(reset);pose(1.1);reset=setTimeout(()=>pose(0),90)},{passive:true});
+  }
+  function wireScroll(){
+    touchScrollPhysics(document.getElementById('archiveList'),document.querySelector('#flowArchive .v90Vix'));
+    touchScrollPhysics(document.querySelector('#worldLeaderboard .v9615WorldScrollBody'),document.querySelector('#worldLeaderboard .v90Vix'));
+  }
+  wireScroll(); new MutationObserver(wireScroll).observe(document.body,{childList:true,subtree:true});
+
+  // Important UI choices get a Vix emotion layered over the normal UI click.
+  document.addEventListener('click',e=>{
+    const t=e.target.closest?.('button,[data-family-flow]'); if(!t)return;
+    let kind=null;
+    if(t.id==='todayVectorPlay')kind='random';
+    else if(t.id==='hubResumeButton'||t.id==='pauseResume')kind='resume';
+    else if(t.matches('[data-family-flow]')||t.id==='personalBestPlay'||t.id==='hubRetryButton')kind='select';
+    else if(t.id==='worldBoardLaunch'||t.classList.contains('worldFlowTab')||t.closest?.('[data-world-flow]'))kind='rank';
+    if(kind){voice(kind,.68);const v=t.closest('#flowArchive')?.querySelector('.v90Vix')||document.querySelector('#worldLeaderboard .v90Vix');popVix(v,1.045,-2)}
+  },true);
+
+  // Identity screen: Vix is present for the player's arcade identity creation/edit.
+  const identityVix=document.getElementById('identityVix');
+  const identityPop=()=>{if(!identityVix)return;identityVix.classList.remove('vixPop');void identityVix.offsetWidth;identityVix.classList.add('vixPop')};
+  identityVix?.addEventListener('click',()=>{voice('greet',.72);identityPop()});
+  const initials=document.getElementById('identityInitialsInput');
+  let initialsDone=false;
+  initials?.addEventListener('focus',()=>{voice('identityFocus',.58);identityPop()});
+  initials?.addEventListener('input',()=>{const done=(initials.value||'').length===3;if(done&&!initialsDone){voice('identityDone',.66);identityPop()}initialsDone=done});
+  document.getElementById('identityCountrySelect')?.addEventListener('change',e=>{if(e.target.value){voice('country',.62);identityPop()}});
+  document.getElementById('identityEnter')?.addEventListener('click',()=>{voice('enterWorld',.72);identityPop()},true);
+})();
+</script>\n
 </body>
 </html>
