@@ -5400,7 +5400,7 @@ html.vix-hard-blink #vixVision .vixEye{
 <style id="v96ClearFlowStyle">
 /* V96.3 — CLEAR: offensive Flow only. */
 #clearLaserFx{position:fixed;inset:0;z-index:47;pointer-events:none;overflow:visible}
-#clearLaserFx line{stroke:#7ff7ff;stroke-width:3.2;stroke-linecap:round;filter:drop-shadow(0 0 5px #25dfff) drop-shadow(0 0 10px #25dfff);opacity:0}
+#clearLaserFx line{stroke:#eaffff;stroke-width:11.5;stroke-linecap:round;filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 8px #7ff7ff) drop-shadow(0 0 18px #25dfff) drop-shadow(0 0 30px rgba(37,223,255,.72));opacity:0}
 #clearLaserFx.fire line{animation:clearBeamFlash .18s ease-out}
 @keyframes clearBeamFlash{0%{opacity:0}18%{opacity:1}62%{opacity:.92}100%{opacity:0}}
 #vixReactionCam.clear-charge .vixCamEye{filter:brightness(2.2) drop-shadow(0 0 7px #7ff7ff) drop-shadow(0 0 14px #25dfff)!important}
@@ -16386,10 +16386,10 @@ window.addEventListener("pageshow",()=>{
 let clearVoidsDestroyed=0;
 let clearLastShotAt=0;
 let clearLockedTarget=null;
-const CLEAR_LOCK_RANGE=185;
-const CLEAR_MIN_RANGE=42;
-const CLEAR_ALIGN_RADIUS=5.8;
-const CLEAR_SHOT_COOLDOWN=310;
+const CLEAR_LOCK_RANGE=255;
+const CLEAR_MIN_RANGE=24;
+const CLEAR_ALIGN_RADIUS=8.4;
+const CLEAR_SHOT_COOLDOWN=145;
 
 function clearFlowActive(){
   return !personalBestMode &&
@@ -16533,8 +16533,9 @@ function updateClearFlow(){
     if(score<bestScore){best=b;bestScore=score;}
   }
   clearLockedTarget=best;
-  setClearEyeState("clear-charge",!!best);
-  if(best && now-clearLastShotAt>=CLEAR_SHOT_COOLDOWN){
+  const readyToFire=!!best && now-clearLastShotAt>=CLEAR_SHOT_COOLDOWN;
+  setClearEyeState("clear-charge",!!best && !readyToFire);
+  if(readyToFire){
     destroyClearVoid(best);
     clearLockedTarget=null;
     setClearEyeState("clear-charge",false);
