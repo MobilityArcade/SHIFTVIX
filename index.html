@@ -8294,23 +8294,25 @@ function playVixVoice(kind="greet",intensity=1){
     if(!audioCtx||audioCtx.state!=="running")return;
 
     const now=audioCtx.currentTime;
-    const fastRepeat=(kind==="ring")?.052:.095;
+    // Rings may retrigger rhythmically; emotional vocals get room to finish.
+    const fastRepeat=(kind==="ring")?.16:.22;
     if(kind===vixVoiceLastKind && now-vixVoiceLastAt<fastRepeat)return;
-    if(kind!=="ring" && now-vixVoiceLastAt<.045)return;
+    if(kind!=="ring" && now-vixVoiceLastAt<.075)return;
     vixVoiceLastAt=now;
     vixVoiceLastKind=kind;
 
+    const amount=Math.max(.65,Math.min(1.35,Number(intensity)||1));
     const master=audioCtx.createGain();
-    const filter=audioCtx.createBiquadFilter();
-    const amount=Math.max(.55,Math.min(1.25,Number(intensity)||1));
-    master.gain.setValueAtTime(.0001,now);
-    master.gain.linearRampToValueAtTime(.145*amount,now+.012);
-    master.gain.exponentialRampToValueAtTime(.0001,now+.72);
-    filter.type="lowpass";
-    filter.frequency.setValueAtTime(5200,now);
-    filter.Q.setValueAtTime(.70,now);
-    master.connect(filter).connect(audioCtx.destination);
+    const comp=audioCtx.createDynamicsCompressor();
+    master.gain.setValueAtTime(.88*amount,now);
+    comp.threshold.setValueAtTime(-18,now);
+    comp.knee.setValueAtTime(14,now);
+    comp.ratio.setValueAtTime(3.2,now);
+    comp.attack.setValueAtTime(.004,now);
+    comp.release.setValueAtTime(.16,now);
+    master.connect(comp).connect(audioCtx.destination);
 
+    // Original HUD chirp vocabulary is intentionally retained for Vix taps.
     const chirp=(delay,duration,f0,f1,amp=.65,type="triangle",vibrato=0)=>{
       const t=now+delay;
       const osc=audioCtx.createOscillator();
@@ -8322,29 +8324,105 @@ function playVixVoice(kind="greet",intensity=1){
       gain.gain.linearRampToValueAtTime(amp,t+Math.min(.018,duration*.22));
       gain.gain.exponentialRampToValueAtTime(.0001,t+duration);
       if(vibrato>0){
-        const lfo=audioCtx.createOscillator();
-        const lfoGain=audioCtx.createGain();
-        lfo.type="sine";
-        lfo.frequency.setValueAtTime(vibrato,t);
-        lfoGain.gain.setValueAtTime(Math.min(28,f0*.035),t);
+        const lfo=audioCtx.createOscillator(), lfoGain=audioCtx.createGain();
+        lfo.type="sine"; lfo.frequency.setValueAtTime(vibrato,t);
+        lfoGain.gain.setValueAtTime(Math.min(30,f0*.04),t);
         lfo.connect(lfoGain).connect(osc.frequency);
-        lfo.start(t);lfo.stop(t+duration);
+        lfo.start(t); lfo.stop(t+duration);
       }
       osc.connect(gain).connect(master);
-      osc.start(t);osc.stop(t+duration+.02);
+      osc.start(t); osc.stop(t+duration+.03);
+    };
+
+    // V96.1.6 — Vix Voice 1.1 Emotional Vocal engine.
+    // Two resonant formants turn a synth tone into an expressive non-verbal
+    // "ah / ooh / ee" character voice, clearly separate from arcade SFX.
+    const vocal=(delay,duration,p0,p1,vowel="ah",amp=.30,opts={})=>{
+      const t=now+delay;
+      const source=audioCtx.createOscillator();
+      const sourceGain=audioCtx.createGain();
+      const dry=audioCtx.createGain();
+      const form1=audioCtx.createBiquadFilter();
+      const form2=audioCtx.createBiquadFilter();
+      const f1Gain=audioCtx.createGain();
+      const f2Gain=audioCtx.createGain();
+      const vowels={
+        ah:[780,1250],
+        ooh:[390,880],
+        ee:[430,2250],
+        oh:[520,1050]
+      };
+      const vf=vowels[vowel]||vowels.ah;
+      source.type=opts.type||"triangle";
+      source.frequency.setValueAtTime(Math.max(70,p0),t);
+      source.frequency.exponentialRampToValueAtTime(Math.max(70,p1),t+duration);
+      sourceGain.gain.setValueAtTime(.0001,t);
+      sourceGain.gain.linearRampToValueAtTime(amp,t+Math.min(.045,duration*.18));
+      sourceGain.gain.setValueAtTime(amp*.92,t+duration*.55);
+      sourceGain.gain.exponentialRampToValueAtTime(.0001,t+duration);
+      dry.gain.setValueAtTime(.16,t);
+      form1.type="bandpass"; form1.frequency.setValueAtTime(vf[0],t); form1.Q.setValueAtTime(5.2,t);
+      form2.type="bandpass"; form2.frequency.setValueAtTime(vf[1],t); form2.Q.setValueAtTime(7.0,t);
+      f1Gain.gain.setValueAtTime(1.0,t); f2Gain.gain.setValueAtTime(.72,t);
+      source.connect(sourceGain);
+      sourceGain.connect(dry).connect(master);
+      sourceGain.connect(form1).connect(f1Gain).connect(master);
+      sourceGain.connect(form2).connect(f2Gain).connect(master);
+      if(opts.vibrato){
+        const lfo=audioCtx.createOscillator(), lg=audioCtx.createGain();
+        lfo.type="sine"; lfo.frequency.setValueAtTime(opts.vibrato,t);
+        lg.gain.setValueAtTime(opts.depth||14,t);
+        lfo.connect(lg).connect(source.frequency); lfo.start(t); lfo.stop(t+duration);
+      }
+      source.start(t); source.stop(t+duration+.04);
     };
 
     switch(kind){
-      case "ring": chirp(0,.105,780,1320,.54,"sine",10); chirp(.028,.085,1180,1640,.25,"triangle"); break;
-      case "void": chirp(0,.19,480,275,.66,"triangle",7); chirp(.028,.15,720,390,.27,"sine"); break;
-      case "damage": chirp(0,.18,310,108,.78,"sawtooth",13); chirp(.025,.11,620,210,.28,"square"); break;
-      case "flux": chirp(0,.12,690,1120,.62,"triangle",14); chirp(.135,.13,860,1510,.66,"sine",16); break;
-      case "chrono": chirp(0,.34,760,190,.66,"sine",6); chirp(.055,.30,1040,310,.26,"triangle",5); break;
-      case "midas": chirp(0,.17,420,650,.52,"triangle",7); chirp(.075,.18,610,910,.45,"sine",8); chirp(.155,.20,820,1240,.38,"sine",9); break;
-      case "warp": chirp(0,.27,430,1540,.72,"triangle",18); chirp(.055,.22,760,2020,.31,"sine",20); break;
+      case "ring":
+        // Bright, delighted little "AH!" — short enough for consecutive rings.
+        vocal(0,.38,300,520,"ah",.34,{vibrato:8,depth:10});
+        vocal(.035,.30,600,820,"ee",.11,{vibrato:10,depth:12});
+        break;
+      case "void":
+        // Rounded surprised "OOH?" as Vix crosses a hollow threshold.
+        vocal(0,.52,330,245,"ooh",.38,{vibrato:5,depth:9});
+        vocal(.06,.40,500,355,"oh",.12,{vibrato:5,depth:7});
+        break;
+      case "damage":
+        // Unmistakable hurt "AAH!" followed by a small falling groan.
+        vocal(0,.34,520,235,"ah",.46,{type:"sawtooth",vibrato:13,depth:24});
+        vocal(.20,.42,285,155,"oh",.27,{vibrato:7,depth:12});
+        break;
+      case "flux":
+        // Playful energized two-part "EE-YAH!" matching the double pulse.
+        vocal(0,.27,410,690,"ee",.30,{vibrato:12,depth:15});
+        vocal(.20,.36,480,760,"ah",.34,{vibrato:11,depth:16});
+        break;
+      case "chrono":
+        // Long dreamy "OOOOH..." that audibly stretches with slow time.
+        vocal(0,.78,430,185,"ooh",.38,{vibrato:4,depth:8});
+        vocal(.10,.66,610,260,"oh",.13,{vibrato:4,depth:6});
+        break;
+      case "midas":
+        // Warm delighted "OOH-AH!".
+        vocal(0,.38,310,470,"ooh",.31,{vibrato:6,depth:9});
+        vocal(.25,.43,410,650,"ah",.35,{vibrato:7,depth:11});
+        break;
+      case "warp":
+        // Vix's biggest expression: a rising, playful "WHEEE!" sensation.
+        vocal(0,.82,350,920,"ee",.42,{vibrato:9,depth:18});
+        vocal(.06,.72,520,1280,"ee",.14,{vibrato:11,depth:20});
+        break;
       case "win":
-      case "flowComplete": chirp(0,.15,610,820,.56,"triangle",7); chirp(.115,.16,790,1080,.54,"sine",8); chirp(.235,.20,1010,1510,.58,"sine",10); break;
-      case "loss": chirp(0,.27,560,245,.60,"triangle",5); chirp(.13,.26,390,185,.31,"sine",4); break;
+      case "flowComplete":
+        vocal(0,.34,350,560,"ah",.30,{vibrato:7,depth:10});
+        vocal(.24,.36,480,760,"ee",.32,{vibrato:8,depth:12});
+        vocal(.50,.42,620,980,"ee",.34,{vibrato:9,depth:14});
+        break;
+      case "loss":
+        vocal(0,.62,390,185,"oh",.32,{vibrato:4,depth:8});
+        vocal(.20,.50,280,145,"ooh",.18,{vibrato:4,depth:6});
+        break;
       case "greet":
       default:{
         const variant=Math.floor(Math.random()*3);
