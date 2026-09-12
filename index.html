@@ -5375,6 +5375,17 @@ button{
 }
 </style>
 
+
+
+<style id="vixPersonality22NaturalBlinkFixStyle">
+/* Personality 2.2.1 — FIX: actual reaction-cam eye class is .vixCamEye.
+   Preserve the eye's existing translateY(-50%) while blinking. */
+#vixReactionCam.vix-natural-blink .vixCamEye{
+  transform:translateY(-50%) scaleY(.08) !important;
+  transition:transform 52ms ease-in !important;
+}
+</style>
+
 </head>
 <body>
 <div id="worldIdentitySetup" aria-hidden="true">
@@ -17016,6 +17027,65 @@ makeStarField();makeFluxDustField();makeLaneGuides();resetEnvironmentForRun();up
   document.addEventListener('touchstart',()=>getCtx(),{passive:true,once:true});
   wire();
   new MutationObserver(wire).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+
+
+<script id="vixPersonality22NaturalBlinkFix">
+(()=>{
+  const cam=document.getElementById('vixReactionCam');
+  if(!cam)return;
+
+  let blinkTimer=0,reopenTimer=0,doubleTimer=0;
+
+  function expressionOwnsEyes(){
+    return cam.classList.contains('damage') ||
+           cam.classList.contains('endingWin') ||
+           cam.classList.contains('endingLoss');
+  }
+
+  function schedule(min=2800,max=6200){
+    clearTimeout(blinkTimer);
+    blinkTimer=setTimeout(blink,min+Math.random()*(max-min));
+  }
+
+  function doClose(ms){
+    cam.classList.add('vix-natural-blink');
+    clearTimeout(reopenTimer);
+    reopenTimer=setTimeout(()=>cam.classList.remove('vix-natural-blink'),ms);
+  }
+
+  function blink(){
+    // Blink only when the little gameplay reaction-cam is actually visible.
+    if(document.hidden || !cam.classList.contains('active') || expressionOwnsEyes()){
+      schedule(900,1800);
+      return;
+    }
+
+    doClose(105+Math.random()*45);
+
+    // Small chance of a natural double blink.
+    if(Math.random()<.13){
+      clearTimeout(doubleTimer);
+      doubleTimer=setTimeout(()=>{
+        if(!document.hidden && cam.classList.contains('active') && !expressionOwnsEyes()){
+          doClose(90+Math.random()*30);
+        }
+      },210+Math.random()*100);
+    }
+
+    schedule();
+  }
+
+  document.addEventListener('visibilitychange',()=>{
+    cam.classList.remove('vix-natural-blink');
+    if(!document.hidden)schedule(1200,2600);
+  });
+
+  // First gameplay blink arrives soon enough to be noticeable in testing,
+  // then settles into the natural irregular cadence.
+  schedule(1600,3000);
 })();
 </script>
 
