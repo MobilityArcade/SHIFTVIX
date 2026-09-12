@@ -5349,6 +5349,32 @@ button{
 #worldIdentitySetup .identityEnter{box-shadow:0 0 24px rgba(255,255,255,.08)}
 @media(max-width:699px){.identityVix{width:96px;height:96px;margin-top:-7px}.identityVix .v90Vix{transform:translate(-50%,-50%) scale(.72)!important}}
 </style>\n
+
+<style id="vixPersonality21HudGestureStyle">
+/* Personality 2.1 — HUD Vix can follow 360° finger gestures while staying anchored. */
+#flowArchive .v90Vix,
+#worldLeaderboard .v90Vix{
+  transform:
+    translate(var(--vix-hud-scroll-x,0px),var(--vix-hud-scroll-y,0px))
+    rotate(var(--vix-hud-scroll-tilt,0deg))
+    scale(var(--vix-hud-scroll-scale,1)) !important;
+  transition:transform .085s cubic-bezier(.2,.8,.25,1);
+  will-change:transform;
+}
+#worldIdentitySetup #identityVix{
+  --vix-hud-scroll-x:0px;
+  --vix-hud-scroll-y:0px;
+  --vix-hud-scroll-scale:1;
+  --vix-hud-scroll-tilt:0deg;
+  transform:
+    translate(var(--vix-hud-scroll-x),var(--vix-hud-scroll-y))
+    rotate(var(--vix-hud-scroll-tilt))
+    scale(var(--vix-hud-scroll-scale)) !important;
+  transition:transform .085s cubic-bezier(.2,.8,.25,1);
+  will-change:transform;
+}
+</style>
+
 </head>
 <body>
 <div id="worldIdentitySetup" aria-hidden="true">
@@ -16877,5 +16903,121 @@ makeStarField();makeFluxDustField();makeLaneGuides();resetEnvironmentForRun();up
   document.getElementById('identityEnter')?.addEventListener('click',()=>{voice('enterWorld',.72);identityPop()},true);
 })();
 </script>\n
+
+
+
+
+
+
+
+<script id="vixPersonality21ClickWheelScroll">
+(()=>{
+  const reduced=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const bound=new WeakSet();
+  let localCtx=null, lastTick=0, playfulAt=0, wiggles=0;
+
+  function getCtx(){
+    let c=window.audioCtx||window.audioContext||window.ctx||localCtx;
+    if(!c && (window.AudioContext||window.webkitAudioContext)){
+      try{ c=localCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(_){}
+    }
+    if(c?.state==='suspended') c.resume?.().catch(()=>{});
+    return c;
+  }
+
+  // Personality 2.1.2 — clean discrete click-wheel tick.
+  // No noise buffer / scraping texture. Each scroll detent is a tiny electronic click.
+  function wheelTick(strength=.5){
+    const c=getCtx(); if(!c)return;
+    const now=performance.now();
+    if(now-lastTick<34)return; // keeps fast scrolling crisp instead of machine-gunning
+    lastTick=now;
+    try{
+      const t=c.currentTime;
+      const osc=c.createOscillator(), gain=c.createGain();
+      const osc2=c.createOscillator(), gain2=c.createGain();
+      osc.type='sine'; osc.frequency.setValueAtTime(1180,t); osc.frequency.exponentialRampToValueAtTime(760,t+.026);
+      osc2.type='triangle'; osc2.frequency.setValueAtTime(2050,t); osc2.frequency.exponentialRampToValueAtTime(1450,t+.014);
+      const v=.010+clamp(strength,0,1)*.010;
+      gain.gain.setValueAtTime(.0001,t);
+      gain.gain.exponentialRampToValueAtTime(v,t+.003);
+      gain.gain.exponentialRampToValueAtTime(.0001,t+.032);
+      gain2.gain.setValueAtTime(.0001,t);
+      gain2.gain.exponentialRampToValueAtTime(v*.32,t+.002);
+      gain2.gain.exponentialRampToValueAtTime(.0001,t+.016);
+      osc.connect(gain);gain.connect(c.destination);
+      osc2.connect(gain2);gain2.connect(c.destination);
+      osc.start(t);osc.stop(t+.04);osc2.start(t);osc2.stop(t+.022);
+    }catch(_){}
+  }
+
+  function pose(vix,x,y){
+    if(!vix||reduced())return;
+    const xx=clamp(x,-10,10),yy=clamp(y,-10,10),m=Math.hypot(xx,yy);
+    vix.style.setProperty('--vix-hud-scroll-x',xx.toFixed(2)+'px');
+    vix.style.setProperty('--vix-hud-scroll-y',yy.toFixed(2)+'px');
+    vix.style.setProperty('--vix-hud-scroll-scale',String(1+Math.min(.026,m*.0019)));
+    vix.style.setProperty('--vix-hud-scroll-tilt',clamp(xx*.055,-.65,.65).toFixed(2)+'deg');
+  }
+  function home(vix){pose(vix,0,0)}
+
+  function bind(surface,vix){
+    if(!surface||!vix||bound.has(surface))return; bound.add(surface);
+    let active=false,lx=0,ly=0,reset=0,lastScroll=surface.scrollTop||0,accum=0;
+
+    const start=(x,y)=>{getCtx();active=true;lx=x;ly=y;clearTimeout(reset)};
+    const move=(x,y)=>{
+      if(!active)return;
+      const dx=x-lx,dy=y-ly; lx=x;ly=y;
+      pose(vix,dx*.8,dy*.8);
+      accum+=Math.hypot(dx,dy);
+      if(accum>=18){ wheelTick(.42); accum=0; wiggles++; }
+      const now=performance.now();
+      if(wiggles>=5&&now-playfulAt>4500){
+        wiggles=0;playfulAt=now;window.playVixVoice?.('greet',.42);
+      }
+      clearTimeout(reset);reset=setTimeout(()=>home(vix),95);
+    };
+    const end=()=>{active=false;accum=0;clearTimeout(reset);reset=setTimeout(()=>home(vix),70)};
+
+    surface.addEventListener('pointerdown',e=>start(e.clientX,e.clientY),{passive:true});
+    surface.addEventListener('pointermove',e=>move(e.clientX,e.clientY),{passive:true});
+    surface.addEventListener('pointerup',end,{passive:true});
+    surface.addEventListener('pointercancel',end,{passive:true});
+
+    surface.addEventListener('scroll',()=>{
+      getCtx();
+      const top=surface.scrollTop||0,dy=top-lastScroll;lastScroll=top;
+      accum+=Math.abs(dy);
+      // One tick for each small scroll "detent", like a traditional click wheel.
+      if(accum>=24){wheelTick(clamp(accum/80,.32,.72));accum%=24;}
+      pose(vix,0,clamp(-dy*.42,-8,8));
+      clearTimeout(reset);reset=setTimeout(()=>home(vix),95);
+    },{passive:true});
+
+    surface.addEventListener('wheel',e=>{
+      getCtx();
+      accum+=Math.abs(e.deltaY);
+      if(accum>=24){wheelTick(clamp(accum/90,.3,.7));accum%=24;}
+      pose(vix,0,clamp(-e.deltaY*.045,-8,8));
+      clearTimeout(reset);reset=setTimeout(()=>home(vix),95);
+    },{passive:true});
+  }
+
+  function wire(){
+    bind(document.getElementById('archiveList'),document.querySelector('#flowArchive .v90Vix'));
+    bind(document.querySelector('#worldLeaderboard .v9615WorldScrollBody'),document.querySelector('#worldLeaderboard .v90Vix'));
+    const ident=document.getElementById('worldIdentitySetup');
+    bind(ident?.querySelector('.identityCard')||ident,document.getElementById('identityVix'));
+  }
+
+  document.addEventListener('pointerdown',()=>getCtx(),{passive:true,once:true});
+  document.addEventListener('touchstart',()=>getCtx(),{passive:true,once:true});
+  wire();
+  new MutationObserver(wire).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
 </body>
 </html>
