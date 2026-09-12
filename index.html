@@ -8449,6 +8449,25 @@ function playVixVoice(kind="greet",intensity=1){
         vocal(.24,.36,480,760,"ee",.32,{vibrato:8,depth:12});
         vocal(.50,.42,620,980,"ee",.34,{vibrato:9,depth:14});
         break;
+      case "endingWinMid":
+        // Personality 2.0 — happy continuation during the 8-second final coast.
+        vocal(0,.34,360,610,"ah",.21,{vibrato:7,depth:9});
+        vocal(.22,.38,520,850,"ee",.22,{vibrato:9,depth:11});
+        break;
+      case "endingWinLate":
+        // Softer final celebratory trill as the universe fades.
+        vocal(0,.30,420,690,"ee",.16,{vibrato:8,depth:9});
+        vocal(.20,.34,560,880,"ee",.17,{vibrato:9,depth:10});
+        break;
+      case "endingLossMid":
+        // Gentle disappointed "aww..." — supportive, not punishing.
+        vocal(0,.58,330,185,"oh",.19,{vibrato:4,depth:6});
+        vocal(.18,.46,245,150,"ooh",.12,{vibrato:4,depth:5});
+        break;
+      case "endingLossLate":
+        // Quiet final murmur before the transition completes.
+        vocal(0,.52,275,155,"ooh",.13,{vibrato:3.5,depth:5});
+        break;
       case "loss":
         vocal(0,.62,390,185,"oh",.32,{vibrato:4,depth:8});
         vocal(.20,.50,280,145,"ooh",.18,{vibrato:4,depth:6});
@@ -10457,6 +10476,35 @@ function challengeValue(ch){
 let flowCompletionCoastActive=false;
 let finalLifeCoastActive=false;
 let finalLifeReaction="";
+let vixFinalEmotionTimers=[];
+
+function clearVixFinalEmotionTimers(){
+  vixFinalEmotionTimers.forEach(t=>clearTimeout(t));
+  vixFinalEmotionTimers.length=0;
+}
+
+function scheduleVixFinalEmotion(isNewBest){
+  clearVixFinalEmotionTimers();
+  // Keep Vix emotionally present across the full 8-second coast without
+  // talking continuously over the soundtrack.
+  const moments=isNewBest
+    ? [
+        [2250,"endingWinMid",.94],
+        [4750,"endingWinMid",.82],
+        [6500,"endingWinLate",.72]
+      ]
+    : [
+        [2400,"endingLossMid",.90],
+        [5000,"endingLossMid",.76],
+        [6600,"endingLossLate",.66]
+      ];
+  moments.forEach(([delay,kind,intensity])=>{
+    vixFinalEmotionTimers.push(setTimeout(()=>{
+      if(!finalLifeCoastActive)return;
+      playVixVoice(kind,intensity);
+    },delay));
+  });
+}
 let flowCompletionCoastTimeout=null;
 let flowCompletionFadeTimer=null;
 function setFlowCompletionCoast(show, fading=false){
@@ -14266,6 +14314,7 @@ function startFinalLifeCoast(isNewBest){
   flowCompletionCoastActive=true;
   personalBestConnected=false;
   setVixFinalReaction(!!isNewBest);
+  scheduleVixFinalEmotion(!!isNewBest);
 
   const completionFade=document.getElementById("flowCompletionFade");
   if(completionFade){
@@ -14285,6 +14334,7 @@ function startFinalLifeCoast(isNewBest){
     flowCompletionCoastActive=false;
     flowCompletionCoastTimeout=null;
     flowCompletionFadeTimer=null;
+    clearVixFinalEmotionTimers();
     clearVixFinalReaction();
 
     gameOver=true;
@@ -14532,6 +14582,7 @@ function endRun(){
 function resetRun(){
 finalLifeCoastActive=false;
 flowCompletionCoastActive=false;
+clearVixFinalEmotionTimers();
 clearVixFinalReaction();
 if(flowCompletionCoastTimeout){clearTimeout(flowCompletionCoastTimeout);flowCompletionCoastTimeout=null;}
 if(flowCompletionFadeTimer){clearTimeout(flowCompletionFadeTimer);flowCompletionFadeTimer=null;}
