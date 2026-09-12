@@ -188,7 +188,7 @@ Reaction-cam Vix now makes a subtle spring-loaded micro movement in the exact di
 <!-- SHIFTVIX V82 — FORWARD-FLIGHT HUMANOID VIX: smaller hip-width head, tapered trapezoid torso, wider forearm gauntlets, tapered lower-leg boots, dark thruster rings with recessed cyan plasma discs, stronger Superman-style forward pitch; game-native satin finish; gameplay/world/motion preserved -->
 <!-- SHIFTVIX V81 — HUMANOID VIX + GAME-NATIVE FINISH: human-readable rear silhouette with neck, shoulders, elbows, waist/hips, thighs/knees, thruster hands and substantial boots; satin neon-game material replaces chrome; four directional ion plumes; gameplay/world/motion preserved -->
 <!-- SHIFTVIX V82.1 — SUPERMAN FLIGHT + THRUSTER UPDATE FIX: removes stale bloom reference crash and locks stronger forward flight pitch; gameplay/world preserved -->
-<!-- SHIFTVIX V96.1.5 — VIX VOICE 1.0 + HUD SCROLL PHYSICS:
+<!-- SHIFTVIX V96.1.7 — VIX VOICE 1.2 SOFT CHARACTER MIX + HUD SCROLL PHYSICS:
 Adds a lightweight procedural Vix vocal language (ring, hollow Void, damage, Flux, Kronos, Midas, Warp, win/loss/Flow-complete and HUD greeting) using the existing Web Audio path. Flow Hub and World Top 9 Vix heads now react physically to vertical scroll velocity with a subtle 7px inertial shift and spring-home behavior; World Top 9 shared brand header remains anchored while rankings/content scroll beneath it. Gameplay scoring, lane logic, Flow rules, vertical-nav lock, special-orb physics and threshold pulses remain preserved. -->
 <!-- SHIFTVIX V96.1.5.1 — AUDIO + WORLD TOP 9 HEADER FIX: Vix Voice now waits for/resumes the shared AudioContext before synthesizing and is mixed louder against gameplay audio. Local file previews no longer request missing PWA manifest/icon assets. World Top 9 now matches the Flow Hub structure: Vix/SHIFTVIX header is physically outside the scroll body, with an opaque black separation so scrolling cards never ghost behind the header. -->
 <!-- SHIFTVIX V96.1.5.2 — VIX VOICE AUDIBILITY + STARFIELD + LOCAL ERROR CLEANUP:
@@ -8283,7 +8283,7 @@ function playTravelerShiftSound(dx=0,dy=0){
   sheen.start(now+.008); sheen.stop(now+duration);
 }
 // =========================
-// SHIFTVIX V96.1.5 — VIX VOICE 1.0
+// SHIFTVIX V96.1.7 — VIX VOICE 1.2 SOFT CHARACTER MIX
 // Tiny non-verbal procedural robot vocabulary. No speech samples and no copied character audio.
 // The voice rides the existing Web Audio context so it remains lightweight and game-native.
 // =========================
@@ -8304,12 +8304,12 @@ function playVixVoice(kind="greet",intensity=1){
     const amount=Math.max(.65,Math.min(1.35,Number(intensity)||1));
     const master=audioCtx.createGain();
     const comp=audioCtx.createDynamicsCompressor();
-    master.gain.setValueAtTime(.88*amount,now);
-    comp.threshold.setValueAtTime(-18,now);
+    master.gain.setValueAtTime(.56*amount,now);
+    comp.threshold.setValueAtTime(-15,now);
     comp.knee.setValueAtTime(14,now);
-    comp.ratio.setValueAtTime(3.2,now);
-    comp.attack.setValueAtTime(.004,now);
-    comp.release.setValueAtTime(.16,now);
+    comp.ratio.setValueAtTime(2.2,now);
+    comp.attack.setValueAtTime(.012,now);
+    comp.release.setValueAtTime(.24,now);
     master.connect(comp).connect(audioCtx.destination);
 
     // Original HUD chirp vocabulary is intentionally retained for Vix taps.
@@ -8334,7 +8334,7 @@ function playVixVoice(kind="greet",intensity=1){
       osc.start(t); osc.stop(t+duration+.03);
     };
 
-    // V96.1.6 — Vix Voice 1.1 Emotional Vocal engine.
+    // V96.1.6 — Vix Voice 1.2 Soft Character Mix engine.
     // Two resonant formants turn a synth tone into an expressive non-verbal
     // "ah / ooh / ee" character voice, clearly separate from arcade SFX.
     const vocal=(delay,duration,p0,p1,vowel="ah",amp=.30,opts={})=>{
@@ -8357,13 +8357,13 @@ function playVixVoice(kind="greet",intensity=1){
       source.frequency.setValueAtTime(Math.max(70,p0),t);
       source.frequency.exponentialRampToValueAtTime(Math.max(70,p1),t+duration);
       sourceGain.gain.setValueAtTime(.0001,t);
-      sourceGain.gain.linearRampToValueAtTime(amp,t+Math.min(.045,duration*.18));
+      sourceGain.gain.linearRampToValueAtTime(amp,t+Math.min(.075,duration*.24));
       sourceGain.gain.setValueAtTime(amp*.92,t+duration*.55);
       sourceGain.gain.exponentialRampToValueAtTime(.0001,t+duration);
-      dry.gain.setValueAtTime(.16,t);
-      form1.type="bandpass"; form1.frequency.setValueAtTime(vf[0],t); form1.Q.setValueAtTime(5.2,t);
-      form2.type="bandpass"; form2.frequency.setValueAtTime(vf[1],t); form2.Q.setValueAtTime(7.0,t);
-      f1Gain.gain.setValueAtTime(1.0,t); f2Gain.gain.setValueAtTime(.72,t);
+      dry.gain.setValueAtTime(.11,t);
+      form1.type="bandpass"; form1.frequency.setValueAtTime(vf[0]*.96,t); form1.Q.setValueAtTime(3.8,t);
+      form2.type="bandpass"; form2.frequency.setValueAtTime(vf[1]*.92,t); form2.Q.setValueAtTime(4.8,t);
+      f1Gain.gain.setValueAtTime(.82,t); f2Gain.gain.setValueAtTime(.48,t);
       source.connect(sourceGain);
       sourceGain.connect(dry).connect(master);
       sourceGain.connect(form1).connect(f1Gain).connect(master);
@@ -8390,8 +8390,8 @@ function playVixVoice(kind="greet",intensity=1){
         break;
       case "damage":
         // Unmistakable hurt "AAH!" followed by a small falling groan.
-        vocal(0,.34,520,235,"ah",.46,{type:"sawtooth",vibrato:13,depth:24});
-        vocal(.20,.42,285,155,"oh",.27,{vibrato:7,depth:12});
+        vocal(0,.40,470,245,"ah",.38,{type:"triangle",vibrato:9,depth:16});
+        vocal(.24,.46,275,165,"oh",.22,{vibrato:6,depth:9});
         break;
       case "flux":
         // Playful energized two-part "EE-YAH!" matching the double pulse.
@@ -8412,6 +8412,11 @@ function playVixVoice(kind="greet",intensity=1){
         // Vix's biggest expression: a rising, playful "WHEEE!" sensation.
         vocal(0,.82,350,920,"ee",.42,{vibrato:9,depth:18});
         vocal(.06,.72,520,1280,"ee",.14,{vibrato:11,depth:20});
+        break;
+      case "invincible":
+        // V96.1.7 — relieved/excited protective lift: soft “ooh-EEE!”
+        vocal(0,.34,300,430,"ooh",.27,{vibrato:6,depth:8});
+        vocal(.20,.44,420,690,"ee",.30,{vibrato:7,depth:10});
         break;
       case "win":
       case "flowComplete":
@@ -13135,6 +13140,8 @@ function activateInvincible(reason){
   invincibleTime=INVINCIBLE_DURATION_SECONDS;
   updateCenterReactor();
   showPowerAnnouncement("INVINCIBLE",1);
+  playVixVoice("invincible",.92);
+  triggerVixPowerReaction("invincible");
   if(navigator.vibrate)navigator.vibrate([18,28,18]);
   trackGame("invincible_orb_collected",{trigger_reason:reason||"unknown",duration_seconds:INVINCIBLE_DURATION_SECONDS,distance:Math.floor(distance),flow_number:currentFlowIndex+1});
 }
@@ -13625,6 +13632,14 @@ function triggerVixPowerReaction(kind){
     setVixPowerPose(1.065,-4,'.18s');
     later(()=>setVixPowerPose(1.025,-2,'.26s'),260);
     later(()=>setVixPowerPose(1,0,'.34s'),610);
+    return;
+  }
+
+  if(kind==='invincible'){
+    // Protective relief: a gentle expansion/lift, then a caring settle home.
+    setVixPowerPose(1.075,-3,'.16s');
+    later(()=>setVixPowerPose(1.035,-1,'.24s'),240);
+    later(()=>setVixPowerPose(1,0,'.36s'),610);
     return;
   }
 
