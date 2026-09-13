@@ -47,6 +47,17 @@ Gameplay, rankings, starfield HUD treatment, cards, special orbs, controls and a
 <!-- SHIFTVIX V96.5.1.1 — HIGH-GLOSS ERROR FIX: removes undefined legacy Flux dust startup call that stopped gameplay initialization. High-gloss visuals preserved. -->
 <!-- SHIFTVIX V96.5.1 — HIGH-GLOSS MATERIAL WORLD: visual-only polished/glossy treatment across Vix, POV eyes, reaction HUD, collectibles, rings, Voids, special orbs, stardust and CLEAR beams. Gameplay logic preserved. -->
 <!DOCTYPE html>
+<!-- SHIFTVIX V96.5.3.9 — CRYSTAL CLEAR TABS + WHITE ENTER
+Targeted visual polish on V96.5.3.8: Flow/ranking tab surfaces are fully transparent (no frosted glass) and the arcade identity ENTER label is forced bright white. Gameplay and navigation preserved.
+-->
+<!-- SHIFTVIX V96.5.3.8 — ONE UNIVERSE HUD
+Built directly on V96.5.3.7.
+1) Removes the residual static/twinkling HUD star layers; only the live forward-moving Stardust canvas remains.
+2) Consolidates navigation into the Flow Hub: player identity, pause/resume/restart, Random, all Flows, Endure, and Vix learning content.
+3) Flow cards are split by the existing divider: upper area launches the Flow; lower BEST area opens that Flow's World Top 9.
+4) Tapping Vix in the Flow Hub scrolls to the inline Vix Story. Guide and Nine Flows reveal inline on the same page.
+Gameplay mechanics, scoring, Flow logic, audio, Vix gameplay reactions and leaderboard data are preserved.
+-->
 <html>
 <!-- Google Analytics — SHIFTVIX Retention Analytics -->
 <script>
@@ -12888,7 +12899,7 @@ function flowHubStatusHtml(){
           <div class="hubStatusEyebrow">PAUSED</div>
           <div class="hubStatusLabel">ENDURE</div>
           <div class="hubStatusMessage">HOW FAR CAN YOU GO?</div>
-          <button class="hubResumeButton" id="hubResumeButton" type="button">RESUME</button>
+          <div class="v96538PauseActions"><button class="hubResumeButton" id="hubResumeButton" type="button">RESUME</button><button class="hubResumeButton v96538Restart" id="hubRestartButton" type="button">RESTART</button></div>
         </div>
       `;
     }
@@ -12899,11 +12910,10 @@ function flowHubStatusHtml(){
         <div class="hubStatusEyebrow">PAUSED</div>
         <div class="hubStatusLabel">${flow.category==="CLEAR"&&flow.metric==="clear"?"CLEAR":flow.category}</div>
         <div class="hubStatusMessage">${flow.label}</div>
-        <button
-          class="hubResumeButton"
-          id="hubResumeButton"
-          type="button"
-        >RESUME</button>
+        <div class="v96538PauseActions">
+        <button class="hubResumeButton" id="hubResumeButton" type="button">RESUME</button>
+        <button class="hubResumeButton v96538Restart" id="hubRestartButton" type="button">RESTART</button>
+      </div>
       </div>
     `;
   }
@@ -12984,13 +12994,19 @@ function flowRecordsHtml(){
 
 function renderFlowArchive(){
 
-  const list=
-    document.getElementById("archiveList");
-
+  const list=document.getElementById("archiveList");
   if(!list)return;
 
+  const identityReady=worldIdentityReady();
+  const identityHtml=identityReady
+    ? `<span class="v96538IdentityFlag">${countryFlag(worldCountry())}</span><strong>${worldInitials()}</strong><span>${countryName(worldCountry()).toUpperCase()}</span>`
+    : `<strong>SET PLAYER ID</strong>`;
+
   list.innerHTML=`
-    <button class="worldBoardLaunch" id="worldBoardLaunch" type="button"><strong>WORLD TOP 9</strong><span>VIEW RANKS</span><div class="worldTopArt" aria-hidden="true"><i></i><i></i><i></i><i></i></div></button>
+    <div class="v96538IdentityRow" id="v96538IdentityRow">
+      <div class="v96538IdentityText">${identityHtml}</div>
+      <button class="worldEditIdentity" id="v96538EditIdentity" type="button">EDIT</button>
+    </div>
 
     ${flowHubStatusHtml()}
 
@@ -12998,64 +13014,110 @@ function renderFlowArchive(){
 
     <div class="hubChooseHeader">
       <span>CHOOSE A FLOW</span>
-      <small>8 SKILLS · TODAY'S PICK · ENDURE</small>
+      <small>TOP = PLAY · BEST = WORLD TOP 9</small>
     </div>
 
     ${eightIndependentFlowCardsHtml()}
 
     ${personalBestCardHtml()}
+
+    <section class="v96538LearnSection" id="v96538VixStory" aria-label="Vix the Traveler">
+      <div class="v96538LearnHeading">VIX</div>
+      <div class="v96538LearnSub">THE TRAVELER · ENTER THE NINE</div>
+      <div id="v96538StoryContent" class="v96538StoryContent"></div>
+      <div class="v96538LearnButtons">
+        <button type="button" class="v96538LearnButton" data-v96538-reveal="guide">VIX GUIDE<small>OBJECTS · VALUES · POWER-UPS</small></button>
+        <button type="button" class="v96538LearnButton" data-v96538-reveal="flows">THE NINE FLOWS<small>LEARN EVERY WAY TO PLAY</small></button>
+      </div>
+      <div id="v96538GuideInline" class="v96538InlineLearn" hidden></div>
+      <div id="v96538FlowsInline" class="v96538InlineLearn" hidden></div>
+    </section>
   `;
 
-  document.getElementById("worldBoardLaunch")?.addEventListener("click",()=>openWorldLeaderboard());
+  // Pull the already-approved Vix learning material into this same continuous page.
+  const storySource=document.querySelector("#v91Story .v91Profile");
+  const storyTarget=document.getElementById("v96538StoryContent");
+  if(storySource&&storyTarget)storyTarget.append(storySource.cloneNode(true));
 
-  // Eight permanent Flow cards.
-  list
-    .querySelectorAll("[data-family-flow]")
-    .forEach(button=>{
-      button.addEventListener("click",event=>{
-        event.stopPropagation();
+  const guideSource=document.querySelector("#v91Guide .v96PosterButton");
+  const guideTarget=document.getElementById("v96538GuideInline");
+  if(guideSource&&guideTarget)guideTarget.append(guideSource.cloneNode(true));
 
-        chooseFlowFamily(
-          button.dataset.familyFlow,
-          "flow_hub"
-        );
-      });
-    });
+  const flowsSource=document.querySelector("#v91Flows .v96PosterButton");
+  const flowsTarget=document.getElementById("v96538FlowsInline");
+  if(flowsSource&&flowsTarget)flowsTarget.append(flowsSource.cloneNode(true));
 
-  // Ninth experience: true random surprise Flow.
-  document
-    .getElementById("todayVectorPlay")
-    ?.addEventListener("click",event=>{
+  document.getElementById("v96538EditIdentity")?.addEventListener("click",event=>{
+    event.stopPropagation();
+    openIdentitySetup();
+  });
+
+  // Upper card = play. Lower BEST band = that Flow's World Top 9.
+  list.querySelectorAll("[data-family-flow]").forEach(button=>{
+    button.addEventListener("click",event=>{
       event.stopPropagation();
-      revealAndLaunchTodayPick();
+      const category=button.dataset.familyFlow;
+      if(event.target.closest(".flowChoiceTotal")){
+        openWorldLeaderboard(category);
+        return;
+      }
+      chooseFlowFamily(category,"flow_hub");
     });
+  });
 
-  document
-    .getElementById("personalBestPlay")
-    ?.addEventListener("click",event=>{
-      event.stopPropagation();
-      startPersonalBestMode();
-    });
+  document.getElementById("todayVectorPlay")?.addEventListener("click",event=>{
+    event.stopPropagation();
+    revealAndLaunchTodayPick();
+  });
 
-  document
-    .getElementById("hubResumeButton")
-    ?.addEventListener("click",event=>{
-      event.stopPropagation();
-      closeFlowArchive();
-    });
+  document.getElementById("personalBestPlay")?.addEventListener("click",event=>{
+    event.stopPropagation();
+    if(event.target.closest(".flowChoiceTotal")){
+      openWorldLeaderboard("ENDURE");
+      return;
+    }
+    startPersonalBestMode();
+  });
 
-  document
-    .getElementById("hubRetryButton")
-    ?.addEventListener("click",event=>{
+  document.getElementById("hubResumeButton")?.addEventListener("click",event=>{
+    event.stopPropagation();
+    closeFlowArchive();
+  });
+
+  document.getElementById("hubRestartButton")?.addEventListener("click",event=>{
+    event.stopPropagation();
+    const archive=document.getElementById("flowArchive");
+    archive?.classList.remove("show");
+    archive?.setAttribute("aria-hidden","true");
+    document.body.classList.remove("uiModalOpen");
+    replayReturnFlowIndex=null;
+    resetRun();
+  });
+
+  document.getElementById("hubRetryButton")?.addEventListener("click",event=>{
+    event.stopPropagation();
+    const archive=document.getElementById("flowArchive");
+    archive?.classList.remove("show");
+    archive?.setAttribute("aria-hidden","true");
+    document.body.classList.remove("uiModalOpen");
+    replayReturnFlowIndex=null;
+    resetRun();
+  });
+
+  list.querySelectorAll("[data-v96538-reveal]").forEach(button=>{
+    button.addEventListener("click",event=>{
       event.stopPropagation();
-      // V42 — retry the exact failed Flow from a clean launch state.
-      const archive=document.getElementById("flowArchive");
-      archive?.classList.remove("show");
-      archive?.setAttribute("aria-hidden","true");
-      document.body.classList.remove("uiModalOpen");
-      replayReturnFlowIndex=null;
-      resetRun();
+      const kind=button.dataset.v96538Reveal;
+      const target=document.getElementById(kind==="guide"?"v96538GuideInline":"v96538FlowsInline");
+      if(!target)return;
+      const opening=target.hidden;
+      document.querySelectorAll(".v96538InlineLearn").forEach(el=>el.hidden=true);
+      list.querySelectorAll("[data-v96538-reveal]").forEach(el=>el.classList.remove("active"));
+      target.hidden=!opening;
+      button.classList.toggle("active",opening);
+      if(opening)setTimeout(()=>target.scrollIntoView({behavior:"smooth",block:"start"}),30);
     });
+  });
 
   list.scrollTop=0;
 }
@@ -18599,7 +18661,11 @@ makeStarField();/* V96.5.1.1 FIX: legacy missing makeFluxDustField startup call 
      e.preventDefault();
      e.stopPropagation();
      vix.classList.remove('v91Hello');void vix.offsetWidth;vix.classList.add('v91Hello');
-     showView('story');
+     if(vix.closest('#flowArchive')){
+       document.getElementById('v96538VixStory')?.scrollIntoView({behavior:'smooth',block:'start'});
+     }else{
+       showView('story');
+     }
      return;
    }
    const target=e.target.closest?.('[data-v91view]');if(target){showView(target.dataset.v91view);return;}
@@ -19280,6 +19346,150 @@ makeStarField();/* V96.5.1.1 FIX: legacy missing makeFluxDustField startup call 
   start();
 })();
 </script>
+
+
+<style id="shiftvixV96538OneUniverseHud">
+/* V96.5.3.8 — ONLY the live forward-moving Stardust canvas survives in menu space. */
+#flowArchive::before,#flowArchive::after,
+#worldLeaderboard::before,#worldLeaderboard::after,
+#worldIdentitySetup::before,#worldIdentitySetup::after,
+#v91LearnOverlay::before,#v91LearnOverlay::after,
+#v91Story::before,#v91Story::after,
+#v91Guide::before,#v91Guide::after,
+#v91Flows::before,#v91Flows::after,
+.archiveCard::before,.archiveCard::after,
+.worldBoardPanel::before,.worldBoardPanel::after,
+.identityPanel::before,.identityPanel::after,
+.v91Panel::before,.v91Panel::after,
+.v90BrandHeader::before,.v90BrandHeader::after{
+  content:none!important;
+  display:none!important;
+  background:none!important;
+  animation:none!important;
+}
+#flowArchive .v90Starfield,#flowArchive .worldStarfield,#flowArchive .hudStarfield,
+#worldLeaderboard .v90Starfield,#worldLeaderboard .worldStarfield,#worldLeaderboard .hudStarfield,
+#worldIdentitySetup .v90Starfield,#worldIdentitySetup .worldStarfield,#worldIdentitySetup .hudStarfield,
+#v91LearnOverlay .v90Starfield,#v91LearnOverlay .worldStarfield,#v91LearnOverlay .hudStarfield{
+  display:none!important;opacity:0!important;animation:none!important;
+}
+#flowArchive,#worldLeaderboard,#worldIdentitySetup,#v91LearnOverlay{
+  background:#000!important;
+}
+#flowArchive .archiveCard{
+  background:transparent!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+/* Identity now belongs to the one master Flow Hub. */
+.v96538IdentityRow{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin:0 0 18px;padding:14px 16px;border:1px solid rgba(150,225,255,.42);
+  border-radius:16px;background:linear-gradient(180deg,rgba(13,27,40,.72),rgba(2,8,16,.62));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 0 22px rgba(75,210,255,.08);
+}
+.v96538IdentityText{display:flex;align-items:center;gap:9px;min-width:0;color:#fff;font-size:14px;letter-spacing:1.3px;text-shadow:0 0 9px rgba(255,255,255,.5)}
+.v96538IdentityText strong{font-size:16px}
+.v96538IdentityFlag{font-size:22px}
+.v96538IdentityText span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.86}
+.v96538PauseActions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.v96538PauseActions .hubResumeButton{margin:0!important}
+.v96538Restart{color:#fff!important;text-shadow:0 0 9px rgba(255,255,255,.5)!important}
+
+/* The existing divider becomes the interaction boundary. */
+.flowChoiceCard,.personalBestCard{cursor:pointer!important}
+.flowChoiceTotal{
+  position:relative!important;
+  z-index:6!important;
+  min-height:48px!important;
+  margin-top:12px!important;
+  padding:12px 4px 2px!important;
+  border-top:1px solid rgba(255,255,255,.15)!important;
+  cursor:pointer!important;
+  pointer-events:auto!important;
+}
+.flowChoiceTotal::after{
+  content:"WORLD TOP 9";
+  position:absolute;right:2px;bottom:3px;
+  font-size:8px;font-weight:900;letter-spacing:1.5px;
+  color:rgba(255,255,255,.45);text-shadow:none;
+}
+.flowChoiceTotal:hover,.flowChoiceTotal:active{background:linear-gradient(180deg,transparent,rgba(255,255,255,.035))}
+
+/* Vix learning lives at the bottom of the same vertical universe. */
+.v96538LearnSection{
+  margin:30px 0 12px;padding:22px 0 8px;border-top:1px solid rgba(255,211,106,.25);
+  scroll-margin-top:18px;
+}
+.v96538LearnHeading{font-size:34px;font-weight:1000;letter-spacing:2px;color:#fff;text-shadow:0 0 12px rgba(255,255,255,.55)}
+.v96538LearnSub{margin-top:2px;font-size:10px;font-weight:900;letter-spacing:3px;color:#66eaff}
+.v96538StoryContent{margin-top:16px}
+.v96538StoryContent .v91Profile{margin:0!important}
+.v96538LearnButtons{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.v96538LearnButton{
+  min-height:82px;border-radius:18px;border:1px solid rgba(130,220,255,.45);
+  background:linear-gradient(180deg,rgba(22,35,49,.78),rgba(2,9,19,.8));
+  color:#fff;font-weight:1000;letter-spacing:2px;font-size:15px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.17),0 0 18px rgba(75,210,255,.08);
+}
+.v96538LearnButton small{display:block;margin-top:7px;font-size:8px;letter-spacing:1.4px;color:rgba(255,255,255,.65)}
+.v96538LearnButton.active{border-color:#ffd36a;box-shadow:0 0 20px rgba(255,211,106,.16),inset 0 1px 0 rgba(255,255,255,.18)}
+.v96538InlineLearn{margin-top:16px;scroll-margin-top:18px}
+.v96538InlineLearn[hidden]{display:none!important}
+.v96538InlineLearn .v96PosterButton{width:100%!important;margin:0!important}
+
+/* Separate World Hub launcher is retired; rankings are contextual from BEST. */
+#worldBoardLaunch{display:none!important}
+
+@media(max-width:699px){
+  .v96538IdentityRow{margin-inline:0;padding:12px}
+  .v96538IdentityText{font-size:11px;letter-spacing:.9px}
+  .v96538IdentityText strong{font-size:14px}
+  .v96538LearnButtons{grid-template-columns:1fr}
+  .flowChoiceTotal::after{font-size:7px;letter-spacing:1.1px}
+}
+</style>
+
+
+<style id="shiftvixV96539CrystalClearTabs">
+/* V96.5.3.9 — transparent HUD tabs/cards; live Stardust remains fully visible. */
+#flowArchive .flowChoiceCard,
+#flowArchive .todayPickCard,
+#flowArchive .personalBestCard,
+#worldLeaderboard .worldHubCard,
+#worldLeaderboard .worldFlowCard,
+#worldLeaderboard .worldRankCard,
+#worldLeaderboard .worldPlayerBest,
+#worldLeaderboard .worldPlayerIdentity,
+.v96538IdentityRow,
+.v96538LearnButton{
+  background:transparent!important;
+  background-image:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  box-shadow:none!important;
+}
+/* Keep outlines/dividers so each interactive zone is still unmistakable. */
+#flowArchive .flowChoiceCard,
+#flowArchive .todayPickCard,
+#flowArchive .personalBestCard,
+#worldLeaderboard .worldHubCard,
+#worldLeaderboard .worldFlowCard,
+#worldLeaderboard .worldRankCard,
+#worldLeaderboard .worldPlayerBest,
+#worldLeaderboard .worldPlayerIdentity,
+.v96538IdentityRow,
+.v96538LearnButton{
+  border-color:rgba(160,225,255,.42)!important;
+}
+/* Arcade identity ENTER must stay bright white and readable. */
+#identityEnter,.identityEnter{
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
+  text-shadow:0 0 4px rgba(255,255,255,.95),0 0 10px rgba(160,225,255,.55)!important;
+}
+</style>
 
 </body>
 </html>
