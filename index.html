@@ -1,3 +1,27 @@
+<!-- SHIFTVIX V96.5.3.5 — WORLD TOP 9 CLEAR HEADER + HOLLOW VOID VOICE:
+Built directly on V96.5.3.4.
+Only two requested refinements:
+1) World Top 9 brand/header area is now fully transparent like the Flow Hub — no tempered-glass slab or dark header shadow.
+2) Successful hollow-Void entry keeps the existing ring-pass SFX but Vix's vocal reaction is changed from a falling/downward "ooh"
+   to a bright rising celebratory chirp closer to the ring reaction. Damage audio is untouched.
+Everything else is preserved. -->
+<!-- SHIFTVIX V96.5.3.4 — IDENTITY VIX + WORLD TOP 9 HEADER FIX:
+Built directly on V96.5.3.3.
+Only two visual fixes:
+1) Restore the canonical glossy Vix head on the arcade identity / initials screen.
+2) Make the World Top 9 header use the same clean Starry Night header treatment as the regular Flow Hub,
+   removing the tempered-glass-looking header backdrop.
+Everything else is preserved. -->
+<!-- SHIFTVIX V96.5.3.3 — VOID HUD + VIX UNIFY + GLOSS TEXT:
+Built directly on V96.5.3.2.
+Requested refinements only:
+1) VOIDS Flow art in both Flow Hub and World Top 9 now shows THREE hollow Void targets:
+   glossy red outer rings + cyan/blue inner rings + black centers.
+2) White UI typography receives a stronger pearl/high-gloss treatment.
+3) Identity-screen Vix is locked to the exact same canonical HUD-head styling/positioning as the
+   Flow Hub and World Top 9; the glass button box and gesture/pop wandering are removed.
+4) VOIDS Flow gets more hollow opportunities across the nine lanes without changing other Flows.
+Everything else is preserved. -->
 <!-- SHIFTVIX V96.5.3.2 — CLEAR CIRCLE + ENDURE TIGHTEN:
 Based directly on V96.5.3.1. Only two changes:
 1) CLEAR HUD/World Top 9 keeps its twin-laser animation but uses a simple glossy red circle target with no spiky Void silhouette.
@@ -6320,6 +6344,558 @@ button,.flowChoiceButton,.pauseButton,.identityEnter,.worldRankBack,
 }
 </style>
 
+
+<style id="shiftvixV96533VoidHudVixGlossText">
+/* =========================================================
+   SHIFTVIX V96.5.3.3
+   VOID HUD + CANONICAL VIX + PEARL-GLOSS WHITE TYPE
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   VOIDS — THREE matching hollow-Void icons.
+   Red glossy outer ring + cyan inner ring + black center.
+   Shared .flowVisual-voids is used by Flow Hub and World Top 9.
+   --------------------------------------------------------- */
+.flowVisual-voids{
+  --void-red:#ff402e;
+  --void-red-deep:#9f0d09;
+  --void-blue:#55e8ff;
+  --void-blue-deep:#087b9b;
+  overflow:visible!important;
+}
+
+.flowVisual-voids i:nth-child(1),
+.flowVisual-voids i:nth-child(2),
+.flowVisual-voids i:nth-child(3){
+  border-radius:50%!important;
+  box-sizing:border-box!important;
+  background:
+    radial-gradient(circle at 31% 24%,
+      rgba(255,255,255,.95) 0 5%,
+      rgba(255,169,142,.86) 6% 9%,
+      var(--void-red) 23%,
+      #e11a11 55%,
+      var(--void-red-deep) 82%,
+      #420300 100%)!important;
+  border:4px solid #ff7a37!important;
+  box-shadow:
+    inset 3px 3px 5px rgba(255,255,255,.48),
+    inset -4px -5px 7px rgba(90,0,0,.50),
+    0 0 5px rgba(255,255,255,.26),
+    0 0 13px rgba(255,66,38,.60)!important;
+  animation:v96533VoidHudPulse 2.35s ease-in-out infinite!important;
+}
+
+/* Large lead hollow Void */
+.flowVisual-voids i:nth-child(1){
+  width:68px!important;
+  height:68px!important;
+  right:3%!important;
+  top:21%!important;
+}
+
+/* Two smaller hollows */
+.flowVisual-voids i:nth-child(2){
+  width:41px!important;
+  height:41px!important;
+  right:42%!important;
+  top:13%!important;
+  animation-delay:-.55s!important;
+}
+.flowVisual-voids i:nth-child(3){
+  width:41px!important;
+  height:41px!important;
+  right:46%!important;
+  top:62%!important;
+  animation-delay:-1.15s!important;
+}
+
+/* Cyan inner ring */
+.flowVisual-voids i:nth-child(1)::before,
+.flowVisual-voids i:nth-child(2)::before,
+.flowVisual-voids i:nth-child(3)::before{
+  content:""!important;
+  display:block!important;
+  position:absolute!important;
+  inset:22%!important;
+  border-radius:50%!important;
+  background:transparent!important;
+  border:3px solid var(--void-blue)!important;
+  box-shadow:
+    inset 0 0 7px rgba(85,232,255,.30),
+    0 0 5px rgba(255,255,255,.70),
+    0 0 11px rgba(85,232,255,.90)!important;
+}
+
+/* Black center */
+.flowVisual-voids i:nth-child(1)::after,
+.flowVisual-voids i:nth-child(2)::after,
+.flowVisual-voids i:nth-child(3)::after{
+  content:""!important;
+  display:block!important;
+  position:absolute!important;
+  inset:35%!important;
+  border-radius:50%!important;
+  background:
+    radial-gradient(circle at 34% 28%,#152332 0 8%,#04070b 42%,#000 100%)!important;
+  border:1px solid rgba(140,239,255,.42)!important;
+  box-shadow:
+    inset 1px 1px 3px rgba(255,255,255,.08),
+    0 0 5px rgba(80,220,255,.22)!important;
+}
+
+/* Hide unused fourth/fifth icon pieces for VOIDS so the language is clean. */
+.flowVisual-voids i:nth-child(4),
+.flowVisual-voids i:nth-child(5){
+  display:none!important;
+}
+
+@keyframes v96533VoidHudPulse{
+  0%,100%{transform:scale(.94);filter:brightness(.90) saturate(1.03)}
+  50%{transform:scale(1.07);filter:brightness(1.22) saturate(1.18)}
+}
+
+/* ---------------------------------------------------------
+   WHITE TYPE — stronger polished pearl / chrome readability.
+   Color-coded Flow names remain untouched.
+   --------------------------------------------------------- */
+.flowChoiceObjective,
+.flowChoiceStep,
+.flowChoiceTotal span,
+.worldHubCardObjective,
+.worldHubCardAction,
+.worldHubCardBottom span,
+.worldPlayerIdentity .identityText,
+.worldBoardSub,
+.worldRank,
+.worldName,
+.worldStatus,
+.worldBackendNote,
+.pauseTitle,
+.pauseFlowObjective,
+.pauseHint,
+#objectiveHudLabel,
+#objectiveHudValue,
+#objectiveHudCondition,
+#challengeText,
+#challengePct,
+#modeBanner,
+#powerAnnouncement,
+.identityPanel h2,
+.identitySub,
+.identityField label,
+.identityHint,
+.v90WorldClose,
+.worldBoardClose{
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
+  text-shadow:
+    0 -1px 0 rgba(255,255,255,1),
+    0 1px 0 rgba(0,0,0,.98),
+    0 0 3px rgba(255,255,255,.94),
+    0 0 8px rgba(203,239,255,.54),
+    0 0 16px rgba(100,215,255,.18),
+    0 3px 7px rgba(0,0,0,.82)!important;
+  filter:brightness(1.10) contrast(1.08)!important;
+}
+
+/* Larger white values get a little extra specular punch. */
+.worldValue,
+.flowChoiceTotal strong,
+.worldHubCardBottom strong,
+#objectiveHudValue,
+#challengePct{
+  color:#f9feff!important;
+  -webkit-text-fill-color:#f9feff!important;
+  text-shadow:
+    0 -1px 0 #fff,
+    0 1px 0 rgba(0,0,0,.95),
+    0 0 4px #fff,
+    0 0 9px rgba(184,239,255,.78),
+    0 0 18px rgba(80,210,255,.24),
+    0 4px 8px rgba(0,0,0,.84)!important;
+}
+
+/* Form text remains crisp and glossy without transparent text clipping. */
+.identityInitialsInput,
+.identityCountrySelect,
+.identityEnter,
+.worldEditIdentity{
+  text-shadow:
+    0 -1px 0 rgba(255,255,255,.88),
+    0 1px 0 rgba(0,0,0,.95),
+    0 0 5px rgba(215,245,255,.36)!important;
+}
+
+/* ---------------------------------------------------------
+   CANONICAL VIX — identity Vix uses the exact same head language
+   as Flow Hub / World Top 9, without a glass button rectangle.
+   --------------------------------------------------------- */
+#identityVix{
+  width:clamp(82px,13vw,118px)!important;
+  height:auto!important;
+  aspect-ratio:1/1!important;
+  margin:0 auto 12px!important;
+  padding:0!important;
+  border:0!important;
+  outline:0!important;
+  background:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  overflow:visible!important;
+  transform:none!important;
+}
+
+/* The inner head is no longer absolutely floating inside a larger glass box. */
+#identityVix .v90Vix{
+  position:relative!important;
+  left:auto!important;
+  top:auto!important;
+  width:100%!important;
+  height:100%!important;
+  margin:0!important;
+  transform:none!important;
+  transform-origin:50% 58%!important;
+  animation:v90VixIdle 5.6s ease-in-out infinite!important;
+}
+
+/* Disable personality pop/gesture transforms only on identity Vix.
+   Blink + the same tiny canonical idle remain. */
+#identityVix.vixPop{
+  animation:none!important;
+}
+#worldIdentitySetup #identityVix{
+  --vix-hud-scroll-x:0px!important;
+  --vix-hud-scroll-y:0px!important;
+  --vix-hud-scroll-scale:1!important;
+  --vix-hud-scroll-tilt:0deg!important;
+  transform:none!important;
+}
+
+/* Remove any pseudo/glass decoration inherited from generic buttons. */
+#identityVix::before,
+#identityVix::after{
+  content:none!important;
+  display:none!important;
+}
+
+/* Canonical shell/face/ears/eyes across all three HUD locations. */
+#flowArchive .v90VixShell,
+#worldLeaderboard .v90VixShell,
+#worldIdentitySetup .v90VixShell{
+  background:
+    radial-gradient(circle at 31% 21%,
+      #ffffff 0 8%,
+      #edf5ff 15%,
+      #c7d2e6 43%,
+      #899ab9 72%,
+      #4e5b72 100%)!important;
+  border:2px solid rgba(255,255,255,.92)!important;
+  box-shadow:
+    inset 8px 8px 14px rgba(255,255,255,.42),
+    inset -11px -12px 18px rgba(28,43,70,.52),
+    0 0 10px rgba(255,255,255,.52),
+    0 0 24px rgba(90,220,255,.30)!important;
+}
+#flowArchive .v90VixFace,
+#worldLeaderboard .v90VixFace,
+#worldIdentitySetup .v90VixFace{
+  background:
+    radial-gradient(circle at 33% 22%,
+      rgba(95,123,158,.62) 0 5%,
+      #132237 17%,
+      #060b13 63%,
+      #010205 100%)!important;
+  border:2px solid rgba(93,223,255,.78)!important;
+  box-shadow:
+    inset 6px 6px 12px rgba(255,255,255,.10),
+    inset -10px -11px 18px rgba(0,0,0,.88),
+    0 0 11px rgba(90,220,255,.34)!important;
+}
+#flowArchive .v90VixEye,
+#worldLeaderboard .v90VixEye,
+#worldIdentitySetup .v90VixEye{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  background:
+    radial-gradient(ellipse at 34% 24%,
+      #ffffff 0 10%,
+      #ddfbff 13%,
+      #88edff 34%,
+      #42cde8 65%,
+      #147c9d 100%)!important;
+  border:1px solid rgba(235,255,255,.94)!important;
+  box-shadow:
+    inset 2px 3px 4px rgba(255,255,255,.78),
+    inset -3px -4px 5px rgba(0,70,105,.42),
+    0 0 8px rgba(255,255,255,.90),
+    0 0 17px rgba(87,224,255,.96),
+    0 0 29px rgba(70,205,255,.48)!important;
+}
+#flowArchive .v90VixEar,
+#worldLeaderboard .v90VixEar,
+#worldIdentitySetup .v90VixEar{
+  background:
+    linear-gradient(115deg,
+      #ffffff 0 8%,
+      #8aebff 22%,
+      #40cce9 51%,
+      #187b99 78%,
+      #dffaff 100%)!important;
+  border:1px solid rgba(255,255,255,.84)!important;
+  box-shadow:
+    inset 2px 2px 4px rgba(255,255,255,.58),
+    inset -2px -3px 4px rgba(0,70,100,.34),
+    0 0 10px rgba(70,215,255,.64)!important;
+}
+
+@media(max-width:699px){
+  #identityVix{
+    width:clamp(82px,20vw,104px)!important;
+    margin-bottom:10px!important;
+  }
+}
+</style>
+
+
+<style id="shiftvixV96534IdentityAndWorldHeaderFix">
+/* =========================================================
+   V96.5.3.4 — IDENTITY VIX + WORLD TOP 9 HEADER FIX
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   IDENTITY VIX — force canonical visible head.
+   --------------------------------------------------------- */
+#identityVix{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  width:clamp(86px,13vw,118px)!important;
+  height:auto!important;
+  aspect-ratio:1/1!important;
+  margin:0 auto 12px!important;
+  padding:0!important;
+  background:transparent!important;
+  background-image:none!important;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+  transform:none!important;
+}
+
+#identityVix .v90Vix{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  position:relative!important;
+  left:auto!important;
+  top:auto!important;
+  width:100%!important;
+  height:100%!important;
+  margin:0!important;
+  transform:none!important;
+  animation:v90VixIdle 5.6s ease-in-out infinite!important;
+}
+
+/* In case an older rule hides the inner pieces, explicitly restore them. */
+#identityVix .v90VixShell,
+#identityVix .v90VixFace,
+#identityVix .v90VixEar,
+#identityVix .v90VixEye{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+
+/* Same glossy shell/face/ears/eyes as the main HUD heads */
+#identityVix .v90VixShell{
+  background:
+    radial-gradient(circle at 31% 21%,
+      #ffffff 0 8%,
+      #edf5ff 15%,
+      #c7d2e6 43%,
+      #899ab9 72%,
+      #4e5b72 100%)!important;
+  border:2px solid rgba(255,255,255,.92)!important;
+  box-shadow:
+    inset 8px 8px 14px rgba(255,255,255,.42),
+    inset -11px -12px 18px rgba(28,43,70,.52),
+    0 0 10px rgba(255,255,255,.52),
+    0 0 24px rgba(90,220,255,.30)!important;
+}
+#identityVix .v90VixFace{
+  background:
+    radial-gradient(circle at 33% 22%,
+      rgba(95,123,158,.62) 0 5%,
+      #132237 17%,
+      #060b13 63%,
+      #010205 100%)!important;
+  border:2px solid rgba(93,223,255,.78)!important;
+  box-shadow:
+    inset 6px 6px 12px rgba(255,255,255,.10),
+    inset -10px -11px 18px rgba(0,0,0,.88),
+    0 0 11px rgba(90,220,255,.34)!important;
+}
+#identityVix .v90VixEye{
+  background:
+    radial-gradient(ellipse at 34% 24%,
+      #ffffff 0 10%,
+      #ddfbff 13%,
+      #88edff 34%,
+      #42cde8 65%,
+      #147c9d 100%)!important;
+  border:1px solid rgba(235,255,255,.94)!important;
+  box-shadow:
+    inset 2px 3px 4px rgba(255,255,255,.78),
+    inset -3px -4px 5px rgba(0,70,105,.42),
+    0 0 8px rgba(255,255,255,.90),
+    0 0 17px rgba(87,224,255,.96),
+    0 0 29px rgba(70,205,255,.48)!important;
+}
+#identityVix .v90VixEar{
+  background:
+    linear-gradient(115deg,
+      #ffffff 0 8%,
+      #8aebff 22%,
+      #40cce9 51%,
+      #187b99 78%,
+      #dffaff 100%)!important;
+  border:1px solid rgba(255,255,255,.84)!important;
+  box-shadow:
+    inset 2px 2px 4px rgba(255,255,255,.58),
+    inset -2px -3px 4px rgba(0,70,100,.34),
+    0 0 10px rgba(70,215,255,.64)!important;
+}
+
+/* ---------------------------------------------------------
+   WORLD TOP 9 HEADER — match Flow Hub, remove tempered glass look.
+   --------------------------------------------------------- */
+#worldLeaderboard .v90WorldShell,
+#worldLeaderboard .v90WorldHeader,
+#worldLeaderboard .v90BrandHeader,
+#worldLeaderboard .worldBoardTop,
+#worldLeaderboard .worldBoardHeader,
+#worldLeaderboard .v90WorldFrame{
+  background:transparent!important;
+  background-image:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+/* Keep only the outer unified shell/frame, same light border feel as Flow Hub. */
+#worldLeaderboard .v90WorldFrame{
+  border:1px solid rgba(115,225,255,.34)!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.10),
+    0 0 0 1px rgba(0,0,0,.74),
+    0 8px 28px rgba(0,0,0,.30)!important;
+}
+
+/* Remove the translucent header slab/strip while leaving the content/card area alone. */
+#worldLeaderboard .v90WorldHeader::before,
+#worldLeaderboard .v90WorldHeader::after,
+#worldLeaderboard .v90BrandHeader::before,
+#worldLeaderboard .v90BrandHeader::after,
+#worldLeaderboard .worldBoardTop::before,
+#worldLeaderboard .worldBoardTop::after{
+  content:none!important;
+  display:none!important;
+}
+
+/* Preserve the Starry Night background visible right through the header. */
+#worldLeaderboard .v90Starfield,
+#worldLeaderboard .worldStarfield,
+#worldLeaderboard .hudStarfield{
+  display:block!important;
+  opacity:1!important;
+  visibility:visible!important;
+}
+
+/* Prevent any generic polished-panel rule from painting behind the World Top 9 brand header. */
+#worldLeaderboard .v90BrandHeader,
+#worldLeaderboard .v90WorldHeader{
+  border:0!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+
+/* Match spacing/visual hierarchy with Flow Hub header. */
+#worldLeaderboard .v90BrandHeader{
+  padding-top:0!important;
+  margin-top:0!important;
+}
+#worldLeaderboard .v90BrandWord,
+#worldLeaderboard .v90BrandTag{
+  position:relative!important;
+  z-index:2!important;
+}
+#worldLeaderboard .v90Vix{
+  position:relative!important;
+  z-index:3!important;
+}
+
+@media(max-width:699px){
+  #identityVix{
+    width:clamp(84px,21vw,106px)!important;
+  }
+}
+</style>
+
+
+<style id="shiftvixV96535World9ClearHeader">
+/* =========================================================
+   V96.5.3.5 — WORLD TOP 9 HEADER = FLOW HUB CLEAR BACKGROUND
+   ========================================================= */
+
+/* Remove the remaining tempered/dark slab from the fixed World Top 9 header. */
+#worldLeaderboard .v90WorldHeaderWrap{
+  background:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  border:0!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+/* No pseudo overlay, gradient, blur, tint, or shine behind Vix/SHIFTVIX. */
+#worldLeaderboard .v90WorldHeaderWrap::before,
+#worldLeaderboard .v90WorldHeaderWrap::after,
+#worldLeaderboard .v90BrandHeader::before,
+#worldLeaderboard .v90BrandHeader::after{
+  content:none!important;
+  display:none!important;
+}
+
+/* The brand header itself remains completely open to the living Starry Night field. */
+#worldLeaderboard .v90BrandHeader{
+  background:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  border:0!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+/* Preserve fixed-header layout/spacing without adding a visual plate. */
+#worldLeaderboard .v90WorldHeaderWrap{
+  padding-top:1px!important;
+  padding-bottom:7px!important;
+}
+
+/* Keep the stars visible right through the header. */
+#worldLeaderboard .v90Starfield,
+#worldLeaderboard .worldStarfield,
+#worldLeaderboard .hudStarfield{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+</style>
+
 </head>
 <body>
 <div id="worldIdentitySetup" aria-hidden="true">
@@ -9455,9 +10031,10 @@ function playVixVoice(kind="greet",intensity=1){
         vocal(.035,.30,600,820,"ee",.11,{vibrato:10,depth:12});
         break;
       case "void":
-        // Rounded surprised "OOH?" as Vix crosses a hollow threshold.
-        vocal(0,.52,330,245,"ooh",.38,{vibrato:5,depth:9});
-        vocal(.06,.40,500,355,"oh",.12,{vibrato:5,depth:7});
+        // V96.5.3.5 — successful hollow-Void entry is a reward, not damage:
+        // bright rising "AH-EE!" close to the Ring language, with a little more lift.
+        vocal(0,.30,330,575,"ah",.31,{vibrato:8,depth:10});
+        vocal(.055,.27,590,860,"ee",.15,{vibrato:10,depth:12});
         break;
       case "damage":
         // Unmistakable hurt "AAH!" followed by a small falling groan.
@@ -13809,8 +14386,15 @@ function spawnVoidVolley(reason="normal"){
   */
   let hollowTargetCount=0;
   if(reason!=="tutorial" && flowAllowsHollowVoids()){
-    const hollowChance=voidsFlow ? .78 : .46;
-    hollowTargetCount=Math.random()<hollowChance ? 1 : 0;
+    if(voidsFlow){
+      // V96.5.3.3 — VOIDS is about actively crossing the nine-lane field
+      // to hunt hollow passages. Always provide one hollow opportunity,
+      // and occasionally two when the pressure wall is large enough.
+      hollowTargetCount=1;
+      if(count>=3 && Math.random()<.42)hollowTargetCount=2;
+    }else{
+      hollowTargetCount=Math.random()<.46 ? 1 : 0;
+    }
   }
 
   for(let i=0;i<count;i++){
@@ -16377,9 +16961,20 @@ if(silentTutorialComplete || PROTOTYPE_FORCE_GAMEPLAY_SYSTEMS){
           pressure
         );
 
-      voidSpawnCooldown=
-        base+
-        Math.random()*variance;
+      const voidsObjective=
+        activeChallenge?.metric==="voids";
+
+      if(voidsObjective){
+        // More frequent hollow-Void hunting in VOIDS only.
+        // Still leaves readable space between pressure walls.
+        voidSpawnCooldown=
+          Math.max(.62,base*.82)+
+          Math.random()*Math.max(.24,variance*.72);
+      }else{
+        voidSpawnCooldown=
+          base+
+          Math.random()*variance;
+      }
     }else{
       voidSpawnCooldown=.28;
     }
@@ -18174,8 +18769,8 @@ makeStarField();/* V96.5.1.1 FIX: legacy missing makeFluxDustField startup call 
   function wire(){
     bind(document.getElementById('archiveList'),document.querySelector('#flowArchive .v90Vix'));
     bind(document.querySelector('#worldLeaderboard .v9615WorldScrollBody'),document.querySelector('#worldLeaderboard .v90Vix'));
-    const ident=document.getElementById('worldIdentitySetup');
-    bind(ident?.querySelector('.identityCard')||ident,document.getElementById('identityVix'));
+    // V96.5.3.3 — identity Vix stays anchored like the two main HUD Vix heads.
+    // No 360-degree gesture binding on the identity screen.
   }
 
   document.addEventListener('pointerdown',()=>getCtx(),{passive:true,once:true});
@@ -18295,6 +18890,51 @@ makeStarField();/* V96.5.1.1 FIX: legacy missing makeFluxDustField startup call 
   },250);
 
   window.addEventListener("load",()=>setTimeout(pass,250));
+})();
+</script>
+
+
+<script id="shiftvixV96534IdentityVixRepair">
+(function(){
+  function getCanonicalVix(){
+    return document.querySelector("#flowArchive .v90Vix") ||
+           document.querySelector("#flowHub .v90Vix") ||
+           document.querySelector("#worldLeaderboard .v90Vix");
+  }
+
+  function ensureIdentityVix(){
+    const host=document.getElementById("identityVix");
+    if(!host)return;
+
+    const hasHead=
+      host.querySelector(".v90VixShell") &&
+      host.querySelector(".v90VixFace") &&
+      host.querySelector(".v90VixEye");
+
+    if(hasHead)return;
+
+    const source=getCanonicalVix();
+    if(!source)return;
+
+    const clone=source.cloneNode(true);
+    clone.removeAttribute("id");
+
+    host.replaceChildren(clone);
+    host.classList.add("v96534IdentityVixReady");
+  }
+
+  function pass(){
+    try{ensureIdentityVix();}catch(e){}
+  }
+
+  window.addEventListener("load",()=>{
+    setTimeout(pass,120);
+    setTimeout(pass,500);
+    setTimeout(pass,1200);
+  });
+
+  const mo=new MutationObserver(pass);
+  mo.observe(document.documentElement,{subtree:true,childList:true});
 })();
 </script>
 
