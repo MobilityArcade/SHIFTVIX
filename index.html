@@ -1,3 +1,13 @@
+<!-- SHIFTVIX V96.5.3.7 — UNIFIED TRANSPARENT LIVE DUST:
+Built directly on V96.5.3.6.
+Visual consistency pass only:
+1) Removes legacy/static starfield pseudo-layers from Flow Hub, World Top 9, Identity, Story, Guide and Nine Flows.
+2) Makes the major HUD / learning-panel backgrounds transparent so one live dust field shows cleanly through them.
+3) Uses the same full-screen live dust host for the entire learning overlay, eliminating dust clipping at Story/Guide/Flows panel borders.
+4) Removes remaining tempered-glass / blur effects from World Top 9 header and other top-level shells.
+Gameplay, rankings, controls, scoring, audio, special orbs and Flow logic are unchanged. -->
+<!-- SHIFTVIX V96.5.3.6 — UNIVERSAL LIVE DUST BACKGROUND:
+Built directly on V96.5.3.5. Adds one lightweight ambient "The Nine" dust layer behind Flow Hub, World Top 9, Identity, Story, Guide and Nine Flows overlays. Game state remains paused/frozen; only the menu dust continues moving at a slower ambient speed. Gameplay resumes exactly where it was. -->
 <!-- SHIFTVIX V96.5.3.5 — WORLD TOP 9 CLEAR HEADER + HOLLOW VOID VOICE:
 Built directly on V96.5.3.4.
 Only two requested refinements:
@@ -6893,6 +6903,236 @@ button,.flowChoiceButton,.pauseButton,.identityEnter,.worldRankBack,
   display:block!important;
   visibility:visible!important;
   opacity:1!important;
+}
+</style>
+
+
+<style id="shiftvixV96536UniversalDustCss">
+/* Universal live background: same universe, slower while inside HUDs. */
+.v96536-live-dust{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  pointer-events:none!important;
+  z-index:0!important;
+  background:#000!important;
+}
+/* Keep overlay content above the live dust without adding a separate opaque backdrop. */
+#flowArchive,#worldLeaderboard,#worldIdentitySetup,#v91Story,#v91Guide,#v91Flows{
+  isolation:isolate!important;
+}
+#flowArchive>.v96536-live-dust,
+#worldLeaderboard>.v96536-live-dust,
+#worldIdentitySetup>.v96536-live-dust,
+#v91Story>.v96536-live-dust,
+#v91Guide>.v96536-live-dust,
+#v91Flows>.v96536-live-dust{z-index:0!important}
+#flowArchive>*:not(.v96536-live-dust),
+#worldLeaderboard>*:not(.v96536-live-dust),
+#worldIdentitySetup>*:not(.v96536-live-dust),
+#v91Story>*:not(.v96536-live-dust),
+#v91Guide>*:not(.v96536-live-dust),
+#v91Flows>*:not(.v96536-live-dust){position:relative;z-index:1}
+</style>
+
+
+<style id="shiftvixV96537UnifiedTransparentLiveDust">
+/* =========================================================
+   V96.5.3.7 — ONE UNIVERSE / ONE LIVE DUST LANGUAGE
+   ========================================================= */
+
+/* ---------- 1) REMOVE ALL LEGACY STATIC STARFIELD LAYERS ---------- */
+#flowArchive::before,
+#flowArchive::after,
+#worldLeaderboard::before,
+#worldLeaderboard::after,
+#worldIdentitySetup::before,
+#worldIdentitySetup::after,
+#v91LearnOverlay::before,
+#v91LearnOverlay::after,
+#v91Story::before,
+#v91Story::after,
+#v91Guide::before,
+#v91Guide::after,
+#v91Flows::before,
+#v91Flows::after,
+.v9615WorldScrollBody::before,
+.v9615WorldScrollBody::after{
+  content:none!important;
+  display:none!important;
+  background:none!important;
+  animation:none!important;
+  box-shadow:none!important;
+  filter:none!important;
+}
+
+/* ---------- 2) LIVE DUST ALWAYS FILLS THE ENTIRE HUD / OVERLAY ---------- */
+.v96536-live-dust{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:100%!important;
+  min-height:100%!important;
+  pointer-events:none!important;
+  z-index:0!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  opacity:1!important;
+}
+
+/* The four true universal hosts are full-screen canvases. */
+#flowArchive,
+#worldLeaderboard,
+#worldIdentitySetup,
+#v91LearnOverlay{
+  isolation:isolate!important;
+  background:transparent!important;
+  background-image:none!important;
+  overflow:hidden!important;
+}
+
+/* Keep actual content above the one moving dust field. */
+#flowArchive > *:not(.v96536-live-dust),
+#worldLeaderboard > *:not(.v96536-live-dust),
+#worldIdentitySetup > *:not(.v96536-live-dust),
+#v91LearnOverlay > *:not(.v96536-live-dust){
+  position:relative!important;
+  z-index:1!important;
+}
+
+/* ---------- 3) TOP-LEVEL HUD SHELLS ARE SEE-THROUGH ---------- */
+/* Preserve borders / layout / readability, remove the tinted slab. */
+#flowArchive .archiveCard,
+#worldLeaderboard .worldBoardPanel,
+#worldIdentitySetup .identityPanel,
+#v91LearnOverlay .v91Panel{
+  background:transparent!important;
+  background-image:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  box-shadow:none!important;
+}
+
+/* Keep only a clean outline so the layout still reads on iPhone/iPad. */
+#flowArchive .archiveCard,
+#worldLeaderboard .worldBoardPanel,
+#worldIdentitySetup .identityPanel,
+#v91LearnOverlay .v91Panel{
+  border-color:rgba(150,225,255,.32)!important;
+}
+
+/* ---------- 4) WORLD TOP 9: REMOVE THE LAST TEMPERED-GLASS LOOK ---------- */
+#worldLeaderboard .v90WorldHeaderWrap,
+#worldLeaderboard .v90BrandHeader,
+#worldLeaderboard .v90WorldShell,
+#worldLeaderboard .v90WorldHeader,
+#worldLeaderboard .worldBoardTop,
+#worldLeaderboard .worldBoardHeader,
+#worldLeaderboard .v9615WorldScrollBody{
+  background:transparent!important;
+  background-image:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  box-shadow:none!important;
+  filter:none!important;
+}
+
+#worldLeaderboard .v90WorldHeaderWrap::before,
+#worldLeaderboard .v90WorldHeaderWrap::after,
+#worldLeaderboard .v90BrandHeader::before,
+#worldLeaderboard .v90BrandHeader::after,
+#worldLeaderboard .worldBoardTop::before,
+#worldLeaderboard .worldBoardTop::after,
+#worldLeaderboard .v9615WorldScrollBody::before,
+#worldLeaderboard .v9615WorldScrollBody::after{
+  content:none!important;
+  display:none!important;
+}
+
+/* ---------- 5) FLOW HUD: SAME TRANSPARENCY LANGUAGE ---------- */
+#flowArchive .v90HubShell,
+#flowArchive .v90HubFrame,
+#flowArchive .v90BrandHeader,
+#flowArchive .archiveHeader,
+#flowArchive .archiveList{
+  background:transparent!important;
+  background-image:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  box-shadow:none!important;
+}
+
+/* ---------- 6) IDENTITY SCREEN: SAME LIVE SPACE ---------- */
+#worldIdentitySetup .identityPanel{
+  background:transparent!important;
+  background-image:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  box-shadow:none!important;
+}
+
+/* Keep form controls readable as intentional glossy controls. */
+#worldIdentitySetup .identityInitialsInput,
+#worldIdentitySetup .identityCountrySelect,
+#worldIdentitySetup .identityEnter{
+  background:linear-gradient(
+    180deg,
+    rgba(31,47,64,.88) 0%,
+    rgba(8,16,26,.93) 55%,
+    rgba(3,8,15,.97) 100%
+  )!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+/* ---------- 7) STORY / GUIDE / FLOWS: DUST CONTINUES BEYOND EVERY BORDER ---------- */
+#v91LearnOverlay{
+  background:transparent!important;
+  background-image:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+#v91LearnOverlay .v91Panel,
+#v91Story,
+#v91Guide,
+#v91Flows{
+  background:transparent!important;
+  background-image:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+/* Inner artwork/cards remain readable, but don't manufacture a second starfield. */
+#v91LearnOverlay .v94StoryFrame,
+#v91LearnOverlay .v96PosterFrame,
+#v91LearnOverlay .v91Card{
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+/* No hidden old star canvases competing with the universal dust. */
+#flowArchive .v90Starfield,
+#flowArchive .worldStarfield,
+#flowArchive .hudStarfield,
+#worldLeaderboard .v90Starfield,
+#worldLeaderboard .worldStarfield,
+#worldLeaderboard .hudStarfield,
+#worldIdentitySetup .v90Starfield,
+#worldIdentitySetup .worldStarfield,
+#worldIdentitySetup .hudStarfield,
+#v91LearnOverlay .v90Starfield,
+#v91LearnOverlay .worldStarfield,
+#v91LearnOverlay .hudStarfield{
+  display:none!important;
+}
+
+/* The app/body black is now the single base beneath the shared moving dust. */
+html,body{
+  background:#000!important;
 }
 </style>
 
@@ -18935,6 +19175,109 @@ makeStarField();/* V96.5.1.1 FIX: legacy missing makeFluxDustField startup call 
 
   const mo=new MutationObserver(pass);
   mo.observe(document.documentElement,{subtree:true,childList:true});
+})();
+</script>
+
+
+<script id="shiftvixV96536UniversalLiveDust">
+(function(){
+  const HOST_IDS=["flowArchive","worldLeaderboard","worldIdentitySetup","v91LearnOverlay"];
+  const palette=[
+    [255,255,255],[125,139,167],[85,216,255],[255,112,212],[119,100,255],[255,154,47]
+  ];
+  const states=new Map();
+  let raf=0,last=performance.now();
+
+  function visible(el){
+    if(!el)return false;
+    const cs=getComputedStyle(el);
+    return cs.display!=="none" && cs.visibility!=="hidden" && cs.opacity!=="0" && el.getAttribute("aria-hidden")!=="true";
+  }
+
+  function make(host){
+    if(states.has(host))return states.get(host);
+    const c=document.createElement("canvas");
+    c.className="v96536-live-dust";
+    c.setAttribute("aria-hidden","true");
+    host.prepend(c);
+    const s={host,c,ctx:c.getContext("2d"),w:0,h:0,dpr:1,p:[]};
+    states.set(host,s);
+    resize(s,true);
+    return s;
+  }
+
+  function resetParticle(q,w,h,fresh=false){
+    const a=Math.random()*Math.PI*2;
+    const r=fresh?Math.random()*.54:.025+Math.random()*.10;
+    q.x=.5+Math.cos(a)*r;
+    q.y=.5+Math.sin(a)*r;
+    q.v=.052+Math.random()*.080; // deliberately slower than gameplay
+    q.sz=.55+Math.random()*1.35;
+    q.c=palette[(Math.random()*palette.length)|0];
+    q.alpha=.42+Math.random()*.54;
+    q.tw=Math.random()*Math.PI*2;
+  }
+
+  function resize(s,force=false){
+    const r=s.host.getBoundingClientRect();
+    const d=Math.min(2,window.devicePixelRatio||1);
+    const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+    if(!force && w===s.w && h===s.h && d===s.dpr)return;
+    s.w=w;s.h=h;s.dpr=d;
+    s.c.width=Math.round(w*d);s.c.height=Math.round(h*d);
+    s.c.style.width=w+"px";s.c.style.height=h+"px";
+    s.ctx.setTransform(d,0,0,d,0,0);
+    const target=Math.max(170,Math.min(430,Math.round((w*h)/3300)));
+    while(s.p.length<target){const q={};resetParticle(q,w,h,true);s.p.push(q)}
+    if(s.p.length>target)s.p.length=target;
+  }
+
+  function draw(s,dt,t){
+    resize(s);
+    const {ctx,w,h}=s;
+    ctx.clearRect(0,0,w,h);
+    /* V96.5.3.7 — no extra black plate; body/app black shows through naturally. */
+    const aspect=w/h;
+    for(const q of s.p){
+      let dx=q.x-.5,dy=q.y-.5;
+      const mag=Math.sqrt(dx*dx+dy*dy)||.001;
+      const speed=q.v*dt;
+      q.x+=dx/mag*speed/aspect;
+      q.y+=dy/mag*speed;
+      dx=q.x-.5;dy=q.y-.5;
+      const rr=Math.sqrt((dx*aspect)*(dx*aspect)+dy*dy);
+      if(q.x<-.08||q.x>1.08||q.y<-.08||q.y>1.08||rr>.82){resetParticle(q,w,h,false);continue}
+      const depth=Math.min(1,rr/.74);
+      const size=q.sz*(.75+depth*2.9);
+      const alpha=q.alpha*(.72+.18*Math.sin(t*.002+q.tw));
+      const x=q.x*w,y=q.y*h;
+      const [r,g,b]=q.c;
+      // soft glossy dust, intentionally matching gameplay's luminous particle language
+      const grd=ctx.createRadialGradient(x-size*.25,y-size*.25,.1,x,y,size*2.5);
+      grd.addColorStop(0,`rgba(255,255,255,${Math.min(1,alpha)})`);
+      grd.addColorStop(.22,`rgba(${r},${g},${b},${alpha})`);
+      grd.addColorStop(.58,`rgba(${r},${g},${b},${alpha*.28})`);
+      grd.addColorStop(1,`rgba(${r},${g},${b},0)`);
+      ctx.fillStyle=grd;ctx.beginPath();ctx.arc(x,y,size*2.5,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle=`rgba(${r},${g},${b},${Math.min(1,alpha+.18)})`;
+      ctx.beginPath();ctx.arc(x,y,Math.max(.45,size*.48),0,Math.PI*2);ctx.fill();
+    }
+  }
+
+  function frame(now){
+    const dt=Math.min(.035,(now-last)/1000);last=now;
+    let any=false;
+    for(const id of HOST_IDS){
+      const host=document.getElementById(id);if(!host)continue;
+      const s=make(host);
+      if(visible(host)){draw(s,dt,now);any=true}
+    }
+    raf=requestAnimationFrame(frame);
+  }
+  function start(){if(!raf){last=performance.now();raf=requestAnimationFrame(frame)}}
+  window.addEventListener("load",()=>setTimeout(start,80));
+  window.addEventListener("resize",()=>states.forEach(s=>resize(s,true)));
+  start();
 })();
 </script>
 
